@@ -27,7 +27,11 @@ def test_applicability_and_status_rules(synthetic_registry: Path, make_project) 
     assert "t.python-only" in rec  # python project
     assert rej["t.tagged"] == "not_applicable"  # tag-only, not requested
     assert rej["t.under-review"] == "not_curated"
-    assert rej["t.native"] == "needs_runtime"
+    assert rej["t.native"] == "not_applicable"  # tag-only: no runtime hint unless requested
+    _rec2, _opt2, rej2 = _result_ids(
+        evaluate(reg, profile, _ctx(wanted_tags=frozenset({"native"})))
+    )
+    assert rej2["t.native"] == "needs_runtime"
     assert rej["t.conflicts-always"] == "conflict"  # lower score loses
 
 

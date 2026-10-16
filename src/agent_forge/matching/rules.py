@@ -268,17 +268,6 @@ def _evaluate_one(
             "reference_only",
             ["reference-only capability: informs recommendations, never installed"],
         )
-    if cap.install_strategy == InstallStrategy.NATIVE_PLUGIN:
-        hints = [
-            f"{r.name}: {r.description}" + (f" ({r.install_hint})" if r.install_hint else "")
-            for r in cap.runtime_requirements
-        ]
-        return Rejection(
-            cap,
-            platform,
-            "needs_runtime",
-            ["requires a native runtime/plugin that Agent Forge will not install", *hints],
-        )
     if platform not in cap.platforms:
         return Rejection(
             cap,
@@ -307,6 +296,19 @@ def _evaluate_one(
     applies, specificity, reasons = _applicability(cap, profile, ctx)
     if not applies:
         return Rejection(cap, platform, "not_applicable", reasons)
+
+    # Applicability comes first so a backend-only project never sees UI runtime hints.
+    if cap.install_strategy == InstallStrategy.NATIVE_PLUGIN:
+        hints = [
+            f"{r.name}: {r.description}" + (f" ({r.install_hint})" if r.install_hint else "")
+            for r in cap.runtime_requirements
+        ]
+        return Rejection(
+            cap,
+            platform,
+            "needs_runtime",
+            ["requires a native runtime/plugin that Agent Forge will not install", *hints],
+        )
 
     if cap.id in installed:
         if installed[cap.id] == cap.version:

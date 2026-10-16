@@ -26,13 +26,13 @@ SCAN → ASSIGN → PLAN → DIFF → APPROVE → APPLY → VALIDATE   (→ ROLL
 python -m venv .venv && .venv/Scripts/activate      # or source .venv/bin/activate
 pip install -e ".[dev]"
 agent-forge init
-agent-forge scan   "../my project"
-agent-forge assign "../my project" --want security
-agent-forge diff    plan-…
-agent-forge approve plan-… --shared-files
-agent-forge apply   plan-…
-agent-forge validate "../my project"
+agent-forge forge "../my project"                 # one shot: scan → plan → diff → confirm → apply → validate
+agent-forge forge "../my project" --dry-run       # look first, write nothing
 ```
+
+Or step by step: `scan` → `assign --want security` → `diff plan-…` → `approve plan-… --shared-files`
+→ `apply plan-…` → `validate`. Only capabilities that fit the project are selected: a backend
+service never receives UI/UX material, a React app does.
 
 Docs: [getting started](docs/getting-started.md) · [CLI reference](docs/cli-reference.md) ·
 [architecture](docs/architecture.md) · [capability model](docs/capability-model.md) ·

@@ -11,6 +11,7 @@ non-ASCII characters are supported everywhere.
 | `sources sync [ID] [--update]` | no | Fetch upstream, report changed files; `--update` moves the checkout (refuses if dirty or pinned). |
 | `catalog [--category --platform --project-type --status --source --kind]` | no | List capabilities. |
 | `catalog show ID` | no | Full metadata, provenance, destinations, equivalents, review rationale. |
+| `forge PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional] [--shared-files] [--yes] [--dry-run] [--show-diff]` | **yes** (after confirmation) | One-shot: scan → upgrade managed capabilities → add recommended ones → diff → one confirmation → approve + apply → validate. Only project-relevant capabilities are selected (a backend-only project gets no UI/UX items). Without `--shared-files`, CLAUDE.md/AGENTS.md sections are dropped, not written. `--dry-run` saves plans and writes nothing. |
 | `scan PATH [--report FILE]` | no | Read-only profile. Report goes to `state/reports/` unless `--report` (never inside the target). |
 | `assign PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional]` | no | Recommend and write a plan. |
 | `upgrade PATH [--platform]` | no | Compare managed capabilities with the registry; write a plan. |

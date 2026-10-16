@@ -851,6 +851,44 @@ def diff(
     _run(body)
 
 
+def _approve_plan(store, reg, plan, *, shared_files: bool, by: str | None) -> list:
+    """Shared approval logic: staleness checks, shared-file gate, digest binding. Returns extra ops."""
+    from agent_forge.errors import StalePlanError
+    from agent_forge.planner import render_plan_diff
+
+    if plan.status not in (PlanStatus.DRAFT, PlanStatus.APPROVED, PlanStatus.REVOKED):
+        raise PlanError(f"plan is {plan.status.value}; create a new plan")
+    if not plan.operations:
+        raise PlanError("plan has no operations; nothing to approve")
+    diffs = render_plan_diff(plan, Path(plan.target.canonical_path))
+    stale = [d.op.path for d in diffs if d.stale]
+    if stale:
+        plan.status = PlanStatus.STALE
+        store.save_plan(plan)
+        raise StalePlanError(
+            "plan is stale; target files changed since planning: " + ", ".join(stale),
+            hint="Re-run `assign`/`upgrade`.",
+        )
+    if reg.digest != plan.registry_digest:
+        plan.status = PlanStatus.STALE
+        store.save_plan(plan)
+        raise StalePlanError("registry changed since planning", hint="Re-run `assign`/`upgrade`.")
+    extra = plan.operations_needing_extra_approval()
+    if extra and not shared_files:
+        raise PlanError(
+            "plan modifies shared files: " + ", ".join(o.path for o in extra),
+            hint="Review `diff`, then re-run with --shared-files to approve those operations explicitly.",
+        )
+    plan.approval.status = "approved"
+    plan.approval.approved_at = now_iso()
+    plan.approval.approved_by = by
+    plan.approval.plan_digest = plan.content_digest()
+    plan.approval.extra_approvals = [o.op_id for o in extra] if shared_files else []
+    plan.status = PlanStatus.APPROVED
+    store.save_plan(plan)
+    return extra
+
+
 @app.command()
 def approve(
     plan_id: str,
@@ -870,8 +908,6 @@ def approve(
     """Approve a plan. The approval is bound to the plan's content digest; any change invalidates it."""
 
     def body() -> None:
-        from agent_forge.planner import render_plan_diff
-
         ws = _ws(workspace)
         store = _store(ws)
         plan = store.load_plan(plan_id)
@@ -883,43 +919,8 @@ def approve(
             store.save_plan(plan)
             console.print(f"[yellow]approval revoked for {plan_id}[/]")
             return
-        if plan.status not in (PlanStatus.DRAFT, PlanStatus.APPROVED, PlanStatus.REVOKED):
-            raise PlanError(f"plan is {plan.status.value}; create a new plan")
-        if not plan.operations:
-            raise PlanError("plan has no operations; nothing to approve")
-        diffs = render_plan_diff(plan, Path(plan.target.canonical_path))
-        stale = [d.op.path for d in diffs if d.stale]
-        if stale:
-            from agent_forge.errors import StalePlanError
-
-            plan.status = PlanStatus.STALE
-            store.save_plan(plan)
-            raise StalePlanError(
-                "plan is stale; target files changed since planning: " + ", ".join(stale),
-                hint="Re-run `assign`/`upgrade`.",
-            )
         reg = _registry(ws)
-        if reg.digest != plan.registry_digest:
-            from agent_forge.errors import StalePlanError
-
-            plan.status = PlanStatus.STALE
-            store.save_plan(plan)
-            raise StalePlanError(
-                "registry changed since planning", hint="Re-run `assign`/`upgrade`."
-            )
-        extra = plan.operations_needing_extra_approval()
-        if extra and not shared_files:
-            raise PlanError(
-                "plan modifies shared files: " + ", ".join(o.path for o in extra),
-                hint="Review `diff`, then re-run with --shared-files to approve those operations explicitly.",
-            )
-        plan.approval.status = "approved"
-        plan.approval.approved_at = now_iso()
-        plan.approval.approved_by = by
-        plan.approval.plan_digest = plan.content_digest()
-        plan.approval.extra_approvals = [o.op_id for o in extra] if shared_files else []
-        plan.status = PlanStatus.APPROVED
-        store.save_plan(plan)
+        extra = _approve_plan(store, reg, plan, shared_files=shared_files, by=by)
         console.print(
             f"[green]approved[/] {plan_id} (digest {plan.approval.plan_digest[:16]}, {len(plan.operations)} operations"
             + (f", {len(extra)} shared-file" if extra else "")
@@ -983,6 +984,210 @@ def apply(
             f"next: [bold]agent-forge validate {plan.target.canonical_path}[/]   "
             f"rollback: [bold]agent-forge rollback {tx.transaction_id}[/]"
         )
+
+    _run(body)
+
+
+# ---- forge (one-shot upgrade) -----------------------------------------------------------
+
+
+@app.command()
+def forge(
+    path: Annotated[Path, typer.Argument(help="Target project directory.")],
+    workspace: WorkspaceOpt = None,
+    platform: Annotated[
+        list[str] | None,
+        typer.Option("--platform", "-p", help="claude_code, codex (default: detected)."),
+    ] = None,
+    want: Annotated[
+        list[str] | None, typer.Option("--want", help="Request capabilities carrying this tag.")
+    ] = None,
+    request: Annotated[
+        list[str] | None, typer.Option("--request", help="Force-consider a capability id.")
+    ] = None,
+    exclude: Annotated[
+        list[str] | None, typer.Option("--exclude", help="Never select this capability id.")
+    ] = None,
+    include_optional: Annotated[
+        bool, typer.Option("--include-optional", help="Promote optional candidates.")
+    ] = False,
+    shared_files: Annotated[
+        bool,
+        typer.Option(
+            "--shared-files",
+            help="Allow managed sections in CLAUDE.md / AGENTS.md (otherwise those ops are dropped).",
+        ),
+    ] = False,
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Non-interactive: approve and apply without prompting."),
+    ] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Scan, plan and show the diff only; write nothing.")
+    ] = False,
+    show_diff: Annotated[
+        bool, typer.Option("--show-diff", help="Print full unified diffs before confirming.")
+    ] = False,
+    as_json: JsonOpt = False,
+) -> None:
+    """One-shot upgrade: scan the project, upgrade what Agent Forge already manages, add the
+    capabilities that fit, show the diff, ask once, then apply and validate.
+
+    Still approval-first: every write is a saved plan with a digest-bound approval and a
+    recoverable transaction. Hooks and MCP servers are reported, never installed.
+    """
+
+    def body() -> int:
+        from agent_forge.apply.engine import apply_plan
+        from agent_forge.matching.rules import choose_platforms
+        from agent_forge.planner import build_assign_plan, build_upgrade_plan, render_plan_diff
+        from agent_forge.scanner.project_profile import scan_project
+        from agent_forge.validation.engine import validate_target
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        store = _store(ws)
+        out = err_console if as_json else console
+        report: dict[str, Any] = {"target": str(path), "steps": []}
+
+        # 1. scan
+        profile = scan_project(path, limits=ws.scan_limits)
+        platforms, notes = choose_platforms(profile, _platform_list(platform))
+        if not as_json:
+            _print_profile(profile)
+            for n in notes:
+                out.print(f"[dim]note:[/] {n}")
+        report["profile"] = {
+            "canonical_path": profile.canonical_path,
+            "languages": sorted(profile.language_names),
+            "frameworks": sorted(profile.framework_names),
+            "project_types": sorted(profile.project_type_names),
+            "platforms": [p.value for p in platforms],
+            "managed": [m.capability_id for m in profile.managed],
+        }
+        base_ctx = _ctx(tuple(platforms), want, request, exclude, include_optional)
+
+        def execute(plan, label: str) -> dict[str, Any]:
+            step: dict[str, Any] = {"label": label, "plan_id": plan.plan_id}
+            dropped = []
+            if not shared_files:
+                dropped = [o.path for o in plan.operations_needing_extra_approval()]
+                plan.operations = [o for o in plan.operations if not o.requires_extra_approval]
+                plan.selected = [
+                    s
+                    for s in plan.selected
+                    if any(o.capability_id == s.capability_id for o in plan.operations)
+                ]
+                if plan.operations and all(o.kind.value == "manifest" for o in plan.operations):
+                    plan.operations = []
+            if dropped:
+                plan.notes.append(
+                    "shared-file operations dropped (re-run with --shared-files): "
+                    + ", ".join(dropped)
+                )
+            store.save_plan(plan)
+            step["selected"] = [s.capability_id for s in plan.selected]
+            step["rejected"] = {r.capability_id: r.category for r in plan.rejected}
+            step["dropped_shared_files"] = dropped
+            if not as_json:
+                out.rule(label)
+                _print_plan_summary(plan)
+            if not plan.operations:
+                step["status"] = "nothing_to_do"
+                if not as_json:
+                    out.print("[green]nothing to do[/]")
+                return step
+            diffs = render_plan_diff(plan, Path(plan.target.canonical_path))
+            if show_diff and not as_json:
+                for d in diffs:
+                    out.rule(f"{d.op.op_id} {d.summary}")
+                    out.print(Syntax(d.unified or "(no textual change)", "diff", theme="ansi_dark"))
+            elif not as_json:
+                for d in diffs:
+                    out.print(f"  {d.summary}")
+            if dry_run:
+                step["status"] = "planned"
+                if not as_json:
+                    out.print(
+                        f"[yellow]dry run:[/] plan saved as {plan.plan_id}; "
+                        f"continue with `agent-forge approve {plan.plan_id}"
+                        + (" --shared-files" if plan.operations_needing_extra_approval() else "")
+                        + f"` then `agent-forge apply {plan.plan_id}`"
+                    )
+                return step
+            n_shared = len(plan.operations_needing_extra_approval())
+            if not yes:
+                if not sys.stdin.isatty():
+                    raise PlanError(
+                        "interactive confirmation required (no TTY)",
+                        hint="Re-run with --yes (and --shared-files if needed) or use --dry-run.",
+                    )
+                question = f"Approve and apply {len(plan.operations)} operation(s)"
+                if n_shared:
+                    question += f" including {n_shared} change(s) to shared files"
+                if not typer.confirm(question + "?", default=False):
+                    step["status"] = "declined"
+                    out.print(f"[yellow]declined[/]; plan {plan.plan_id} kept as draft")
+                    return step
+            _approve_plan(store, reg, plan, shared_files=shared_files, by="agent-forge forge")
+            tx = apply_plan(ws, store, reg, plan, confirm=None)
+            step["status"] = "applied"
+            step["transaction_id"] = tx.transaction_id
+            if not as_json:
+                out.print(
+                    f"[green]applied[/] {len([o for o in tx.operations if o.applied])} operation(s)"
+                    f"; transaction {tx.transaction_id}"
+                )
+            return step
+
+        # 2. upgrade what is already managed
+        if profile.managed:
+            up = build_upgrade_plan(reg, profile, base_ctx)
+            up.notes = [*notes, *up.notes]
+            report["steps"].append(execute(up, "upgrade managed capabilities"))
+            if report["steps"][-1]["status"] == "applied":
+                profile = scan_project(path, limits=ws.scan_limits)
+
+        # 3. add what fits
+        plan, _ = build_assign_plan(reg, profile, base_ctx)
+        plan.notes = [*notes, *plan.notes]
+        report["steps"].append(execute(plan, "add recommended capabilities"))
+
+        # 4. validate
+        applied = any(s["status"] == "applied" for s in report["steps"])
+        exit_code = 0
+        if applied:
+            profile = scan_project(path, limits=ws.scan_limits)
+            rep = validate_target(ws, reg, store, profile)
+            report["validation"] = {
+                "ok": rep.ok,
+                "errors": [f.message for f in rep.errors],
+                "warnings": [f.message for f in rep.warnings],
+            }
+            if not as_json:
+                out.rule("validate")
+                for f in rep.findings:
+                    color = {"error": "red", "warning": "yellow", "info": "dim"}[f.level]
+                    out.print(f"[{color}]{f.level:7}[/] [{f.scope}] {f.message}")
+                out.print(
+                    f"managed now: {', '.join(m.capability_id for m in profile.managed) or '-'}"
+                )
+                out.print("[green]validation OK[/]" if rep.ok else "[red]validation FAILED[/]")
+            if not rep.ok:
+                exit_code = ValidationFailed.exit_code
+        needs_runtime = {
+            r.capability_id: r.reasons for r in plan.rejected if r.category == "needs_runtime"
+        }
+        report["needs_runtime"] = needs_runtime
+        if needs_runtime and not as_json:
+            out.rule("available with a native runtime (not installed by Agent Forge)")
+            for cid, reasons in needs_runtime.items():
+                out.print(f"[bold]{cid}[/]")
+                for line in reasons[1:]:
+                    out.print(f"    {line}")
+        if as_json:
+            _print_json(report)
+        return exit_code
 
     _run(body)
 

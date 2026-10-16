@@ -95,7 +95,8 @@ def test_full_cli_lifecycle(real_workspace, make_project) -> None:
     selected = {s["capability_id"] for s in plan["selected"]}
     assert "ecc.security-review" in selected and "uiux.guidelines" in selected
     rejected = {r["capability_id"]: r["category"] for r in plan["rejected"]}
-    assert rejected["rea.reverse-engineer-anything"] == "needs_runtime"
+    assert rejected["rea.reverse-engineer-anything"] == "not_applicable"  # tag-only
+    assert rejected["uiux.full-toolkit"] == "needs_runtime"  # frontend: hinted, not installed
     assert "ecc.coding-standards" in rejected and "ecc.rules.common" in selected
     # diff
     out = run("diff", pid, "--workspace", ws, "--json").stdout

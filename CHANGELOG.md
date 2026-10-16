@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `agent-forge forge PATH`: one-shot scan → upgrade managed → add recommended → diff →
+  single confirmation → approve + apply → validate. `--dry-run`, `--show-diff`,
+  `--shared-files`, `--yes`, `--json`.
+
+### Changed
+- Matching evaluates applicability *before* runtime requirements, so native capabilities
+  (REA, full UI UX Pro Max toolkit) are hinted only for projects they fit; a backend-only
+  project no longer sees UI/UX runtime suggestions.
+- `.gitattributes` forces LF so registry digests and managed-file hashes match across OSes.
+
 ## 0.1.0 — 2026-10-16
 
 Initial release (built from the Agent Forge master prompt).

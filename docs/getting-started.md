@@ -34,7 +34,24 @@ Cloning is only needed to re-curate (`scripts/curate.py`) or to verify provenanc
 (`validate` reports "checkout not present" otherwise). Installing capabilities does not need
 the checkouts.
 
-## Upgrade a project (the main flow)
+## One command: `forge`
+
+```bash
+agent-forge forge "/path/to/my app"                       # interactive: shows plan + diff, asks once
+agent-forge forge "/path/to/my app" --shared-files        # also allow a managed section in CLAUDE.md / AGENTS.md
+agent-forge forge "/path/to/my app" --dry-run --show-diff # plan + full diff, write nothing
+agent-forge forge "/path/to/my app" --yes --shared-files --json   # CI / scripted
+```
+
+`forge` scans the project, upgrades what Agent Forge already manages, adds the capabilities
+whose applicability rules match (languages, frameworks, project type, existing assets), then
+approves and applies after a single confirmation and validates the result. It is strictly
+project-aware: a backend-only service gets security/error-handling/TDD material, never UI/UX
+guidance; a Next.js app gets the UI guidelines too. Capabilities that need a native runtime
+(REA, the full UI UX Pro Max toolkit) are listed with install hints only when they are
+relevant and requested (`--want reverse-engineering`, `--want design-system`).
+
+## Step by step (the same flow, one command at a time)
 
 ```bash
 agent-forge scan   "/path/to/my app"               # read-only profile

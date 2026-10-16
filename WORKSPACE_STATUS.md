@@ -9,7 +9,7 @@ commits made** (left for the maintainer to review and commit).
 |---|---|---|
 | A — Discovery & design | done | `docs/discovery-report.md`, `docs/adr/0001-architecture-decisions.md`, platform conventions verified against official docs |
 | B — Python foundation | done | `pyproject.toml` (hatchling), `src/agent_forge` (~6.6k lines), schemas exported to `registry/schema/`, `agent-forge --help` works |
-| C — Read-only MVP | done | `init`, `sources list/clone/sync`, `catalog`, `scan`, `assign`, `upgrade` (plan only), `diff`, `plans` |
+| C — Read-only MVP | done | `init`, `sources list/clone/sync`, `catalog`, `scan`, `assign`, `upgrade` (plan only), `diff`, `plans`; plus `forge` (one-shot, still approval-first) |
 | D — Curation | done (initial) | 14 capabilities in `registry/capabilities/` with provenance SHAs; `docs/source-curation.md` lists inclusions and exclusions |
 | E — Adapters | done | Claude Code (skill/rule/agent/instruction), Codex (skill/instruction); unsupported kinds reported |
 | F — Apply engine | done | `approve`, `apply`, `validate`, `status`, `rollback`, `reindex`; transactions + backups |
@@ -20,7 +20,7 @@ commits made** (left for the maintainer to review and commit).
 
 ```
 ruff check src tests scripts   -> All checks passed
-pytest -q                      -> 73 passed, 2 skipped (symlink creation needs privilege;
+pytest -q                      -> 93 passed, 2 skipped (symlink creation needs privilege;
                                   Windows junction tests run and pass)
 agent-forge validate           -> 15 checks, 0 errors, 0 warnings (provenance verified)
 ```
