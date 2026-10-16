@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from agent_forge.adapters import get_adapter
 from agent_forge.apply.filesystem_safety import resolve_in_root
+from agent_forge.apply.jsonmerge import contains_fragment
 from agent_forge.apply.sections import find_section
 from agent_forge.config import WorkspaceConfig
 from agent_forge.errors import ApplyError, SafetyViolation
@@ -161,6 +162,20 @@ def validate_target(
                 problems = get_adapter(platform).validate_content(kind, rel, text)
                 for pr in problems:
                     rep.add("warning", "adapter", f"{rel}: {pr}")
+        for rel, fragment in rec.json_merges.items():
+            try:
+                p = resolve_in_root(root, rel)
+                text = p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+                present = contains_fragment(text, fragment)
+            except (SafetyViolation, ApplyError) as exc:
+                rep.add("error", "managed", f"{rec.capability_id}: {rel}: {exc.message}")
+                continue
+            if not present:
+                rep.add(
+                    "warning",
+                    "managed",
+                    f"{rec.capability_id}: merged entries no longer present in {rel} (edited?)",
+                )
         for rel, sid in rec.sections.items():
             try:
                 p = resolve_in_root(root, rel)

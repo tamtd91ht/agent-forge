@@ -51,6 +51,21 @@ guidance; a Next.js app gets the UI guidelines too. Capabilities that need a nat
 (REA, the full UI UX Pro Max toolkit) are listed with install hints only when they are
 relevant and requested (`--want reverse-engineering`, `--want design-system`).
 
+Three kinds of change need their own approval class and are asked for separately
+(interactively, or via flags):
+
+```bash
+agent-forge forge "/path/to/my app" --shared-files --hooks --mcp   # grant all three
+```
+
+- `--shared-files` — a managed section in `CLAUDE.md` / `AGENTS.md`
+- `--hooks` — hook entries merged into `.claude/settings.json` plus small scripts under
+  `.claude/hooks/agent-forge/` (secret-file guard, format-on-edit); they run commands
+- `--mcp` — MCP servers merged into `.mcp.json` (Context7 docs, Playwright browser); they
+  launch processes and use the network, and Claude Code will ask you to trust them too
+
+Without a flag the matching capabilities are left out and listed as `needs_approval`.
+
 ## Step by step (the same flow, one command at a time)
 
 ```bash

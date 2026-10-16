@@ -11,13 +11,13 @@ non-ASCII characters are supported everywhere.
 | `sources sync [ID] [--update]` | no | Fetch upstream, report changed files; `--update` moves the checkout (refuses if dirty or pinned). |
 | `catalog [--category --platform --project-type --status --source --kind]` | no | List capabilities. |
 | `catalog show ID` | no | Full metadata, provenance, destinations, equivalents, review rationale. |
-| `forge PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional] [--shared-files] [--yes] [--dry-run] [--show-diff]` | **yes** (after confirmation) | One-shot: scan → upgrade managed capabilities → add recommended ones → diff → one confirmation → approve + apply → validate. Only project-relevant capabilities are selected (a backend-only project gets no UI/UX items). Without `--shared-files`, CLAUDE.md/AGENTS.md sections are dropped, not written. `--dry-run` saves plans and writes nothing. |
+| `forge PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional] [--shared-files] [--hooks] [--mcp] [--yes] [--dry-run] [--show-diff]` | **yes** (after confirmation) | One-shot: scan → upgrade managed capabilities → add recommended ones → diff → one confirmation → approve + apply → validate. Only project-relevant capabilities are selected (a backend-only project gets no UI/UX items). Approval classes not granted (`--shared-files`, `--hooks`, `--mcp`) are asked for interactively, or left out of the plan with `--yes`; those capabilities are reported as `needs_approval`. `--dry-run` saves plans and writes nothing. |
 | `scan PATH [--report FILE]` | no | Read-only profile. Report goes to `state/reports/` unless `--report` (never inside the target). |
 | `assign PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional]` | no | Recommend and write a plan. |
 | `upgrade PATH [--platform]` | no | Compare managed capabilities with the registry; write a plan. |
 | `plans [--target P]` | no | List saved plans. |
 | `diff PLAN_ID [--full]` | no | Unified diffs against the current target; flags stale files and shared-file ops. |
-| `approve PLAN_ID [--shared-files] [--by NAME] [--revoke]` | no | Bind approval to the plan digest. Refuses stale plans. |
+| `approve PLAN_ID [--shared-files] [--hooks] [--mcp] [--by NAME] [--revoke]` | no | Bind approval to the plan digest. Refuses stale plans. Each approval class must be granted explicitly: `--shared-files` (CLAUDE.md/AGENTS.md sections), `--hooks` (entries merged into `.claude/settings.json`, they run commands), `--mcp` (servers merged into `.mcp.json`, they launch processes). |
 | `apply PLAN_ID [--yes]` | **yes** | Pre-flight, confirm, transactional write. `--yes` skips only the prompt. |
 | `validate [PATH] [--no-provenance]` | no | Registry/provenance checks; with PATH also managed files, config syntax, duplicates, transactions. |
 | `status PATH` | no | Managed capabilities, drift, outdated versions, conflicts, recent transactions and plans. |

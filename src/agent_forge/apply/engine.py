@@ -19,6 +19,7 @@ from agent_forge import __version__
 from agent_forge.adapters import get_adapter
 from agent_forge.apply.backup import BackupStore
 from agent_forge.apply.filesystem_safety import assert_regular_file_or_missing, resolve_in_root
+from agent_forge.apply.jsonmerge import parse_fragment
 from agent_forge.config import WorkspaceConfig
 from agent_forge.errors import ApplyError, ApprovalError, SafetyViolation, StalePlanError
 from agent_forge.models.plan import OperationKind, Plan, PlanStatus
@@ -69,19 +70,30 @@ def preflight(plan: Plan, reg: Registry, *, require_registry_match: bool = True)
         msg = "registry changed since the plan was created"
         (rep.problems if require_registry_match else rep.warnings).append(msg)
     extra_ok = set(plan.approval.extra_approvals)
+    # Operations on the same path are applied in order, so each one is checked against the
+    # *projected* content left by the previous one, not against the file on disk.
+    running: dict[str, str | None] = {}
     for op in plan.operations:
-        try:
-            current = _current_bytes(root, op.path)
-        except SafetyViolation as exc:
-            rep.problems.append(f"{op.op_id} {op.path}: {exc.message}")
-            continue
-        current_hash = (
-            sha256_text(normalize_newlines(current.decode("utf-8", errors="replace")))
-            if current is not None
-            else None
-        )
+        if op.path not in running:
+            try:
+                current = _current_bytes(root, op.path)
+            except SafetyViolation as exc:
+                rep.problems.append(f"{op.op_id} {op.path}: {exc.message}")
+                continue
+            running[op.path] = (
+                normalize_newlines(current.decode("utf-8", errors="replace"))
+                if current is not None
+                else None
+            )
+        current_text = running[op.path]
+        current_hash = sha256_text(current_text) if current_text is not None else None
         if current_hash != op.before_sha256:
             rep.problems.append(f"{op.op_id} {op.path}: file changed since planning (stale)")
+        else:
+            try:
+                running[op.path] = projected_content(op, current_text)
+            except (ApplyError, ValueError) as exc:
+                rep.problems.append(f"{op.op_id} {op.path}: cannot project content: {exc}")
         if op.platform is not None and not get_adapter(op.platform).path_allowed(op.path):
             rep.problems.append(
                 f"{op.op_id} {op.path}: outside managed roots for {op.platform.value}"
@@ -92,7 +104,8 @@ def preflight(plan: Plan, reg: Registry, *, require_registry_match: bool = True)
             )
         if op.requires_extra_approval and op.op_id not in extra_ok:
             rep.problems.append(
-                f"{op.op_id} {op.path}: shared-file change needs explicit approval (`approve --shared-files`)"
+                f"{op.op_id} {op.path}: {op.approval_class} change needs explicit approval "
+                f"(`approve --{op.approval_class.replace('_file', '-files').replace('_', '-')}`)"
             )
         if op.content is not None and op.content_sha256 != sha256_text(op.content):
             rep.problems.append(f"{op.op_id}: content hash mismatch (plan corrupted)")
@@ -148,6 +161,9 @@ def apply_plan(
                 path=op.path,
                 capability_id=op.capability_id,
                 section_id=op.section_id,
+                fragment=parse_fragment(op.content or "{}")
+                if op.kind == OperationKind.MERGE_JSON
+                else None,
             )
             tx.operations.append(rec)
             dest = resolve_in_root(root, op.path)

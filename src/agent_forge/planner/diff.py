@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import contextlib
 import difflib
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from agent_forge.apply.filesystem_safety import resolve_in_root
+from agent_forge.apply.jsonmerge import parse_fragment, remove_fragment, replace_fragment
 from agent_forge.apply.sections import remove_section, upsert_section
-from agent_forge.errors import SafetyViolation
+from agent_forge.errors import ApplyError, SafetyViolation
 from agent_forge.models.plan import FileOperation, OperationKind, Plan
 from agent_forge.util import normalize_newlines, sha256_text
 
@@ -51,13 +54,28 @@ def projected_content(op: FileOperation, current: str | None) -> str | None:
     if op.kind == OperationKind.REMOVE_SECTION:
         assert op.section_id
         return remove_section(current or "", op.section_id)
+    if op.kind == OperationKind.MERGE_JSON:
+        new = parse_fragment(op.content or "{}")
+        old = json.loads(op.previous_content) if op.previous_content else None
+        return replace_fragment(current, old, new, path_hint=op.path)
+    if op.kind == OperationKind.REMOVE_JSON:
+        return remove_fragment(current, parse_fragment(op.content or "{}"), path_hint=op.path)
     if op.kind == OperationKind.REMOVE:
         return None
     raise ValueError(f"unknown operation kind {op.kind}")
 
 
-def diff_operation(root: Path, op: FileOperation, *, context: int = 3) -> OpDiff:
-    current, warnings = _read_current(root, op.path)
+def diff_operation(
+    root: Path,
+    op: FileOperation,
+    *,
+    context: int = 3,
+    current_override: tuple[str | None] | None = None,
+) -> OpDiff:
+    if current_override is not None:
+        current, warnings = current_override[0], []
+    else:
+        current, warnings = _read_current(root, op.path)
     current_sha = sha256_text(current) if current is not None else None
     stale = current_sha != op.before_sha256
     new = projected_content(op, current)
@@ -89,4 +107,18 @@ def diff_operation(root: Path, op: FileOperation, *, context: int = 3) -> OpDiff
 
 
 def render_plan_diff(plan: Plan, root: Path) -> list[OpDiff]:
-    return [diff_operation(root, op) for op in plan.operations]
+    """Diff every operation; operations on the same path are chained in plan order."""
+    out: list[OpDiff] = []
+    running: dict[str, str | None] = {}
+    for op in plan.operations:
+        if op.path in running:
+            d = diff_operation(root, op, current_override=(running[op.path],))
+        else:
+            d = diff_operation(root, op)
+            cur, _ = _read_current(root, op.path)
+            running[op.path] = cur
+        if not d.stale:
+            with contextlib.suppress(ApplyError, ValueError):
+                running[op.path] = projected_content(op, running[op.path])
+        out.append(d)
+    return out

@@ -1,0 +1,40 @@
+schema_version: "1"
+id: forge.hook.guard-secrets-python
+name: Guard secret files (Python hook)
+description: PreToolUse hook that blocks Edit/Write on .env, key, certificate and credential files; implemented in stdlib Python for Python projects.
+version: 1.0.0
+kind: hook
+category: safety.hooks
+purpose: Stops the agent from editing credential stores by mistake. Exit code 2 blocks the tool call and explains why; the file is never read.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: 40-line stdlib script with no network and no writes; the hook entry references it through $CLAUDE_PROJECT_DIR (documented hook env var). Installed only for Python projects so `python` is guaranteed to exist. Merged into .claude/settings.json as a JSON fragment; every other setting and hook is preserved. Requires `approve --hooks`.
+applicability:
+  languages: [python]
+  tags: [security, hooks, guard]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-guard-secrets
+conflicts: [forge.hook.guard-secrets-node]
+removal: delete_managed_files
+risk: medium
+benefit_score: 6
+maintenance_cost: 1

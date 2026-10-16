@@ -3,7 +3,7 @@
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (14)
+## Curated (20)
 
 | Capability | From | Decision | Why |
 |---|---|---|---|
@@ -21,6 +21,11 @@ recorded revision. "Verbatim" means byte-identical to upstream.
 | `uiux.full-toolkit` | UI UX Pro Max (whole skill set) | `native_plugin` with `uipro` hints | installer copies 3 MB data + scripts; sub-skills call external APIs |
 | `rea.reverse-engineer-anything` | REA `.agents/skills/reverse-engineer-anything` + MCP server | `native_plugin`, tag-only, risk high | skill is inert without the REA runtime; runtime attaches debuggers |
 | `forge.managed-notice` | workspace | `section_merge` into `CLAUDE.md` / `AGENTS.md`, always | makes managed skills discoverable; exercises shared-file approval |
+| `forge.hook.guard-secrets-python` / `-node` | workspace | hook (class `hook`): PreToolUse script blocks edits to `.env*`, keys, credentials; Python variant for Python projects, Node variant for JS/TS (mutually conflicting) | stdlib / dependency-free, exit 2 blocks the tool call, never reads the file |
+| `forge.hook.python-ruff-format` | workspace | hook: PostToolUse `ruff format` on the edited `.py`; no-op without ruff | single file, no network |
+| `forge.hook.node-prettier-format` | workspace | hook: PostToolUse runs the project's `node_modules/.bin/prettier` on the edited file; no-op if absent | never uses npx |
+| `mcp.context7` | ECC `mcp-configs/mcp-servers.json` (template) | mcp (class `mcp`): `npx -y @upstash/context7-mcp@latest`, always | docs lookup for any project; network, downloads on first use |
+| `mcp.playwright` | ECC `mcp-configs/mcp-servers.json` (template) | mcp: `npx -y @playwright/mcp@latest`, frontend/fullstack only | browser automation; `--browser chrome` flag dropped |
 
 ## Excluded on purpose
 

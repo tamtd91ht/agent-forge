@@ -60,12 +60,28 @@ apply time. A plan can therefore be applied at most once.
 The target copy makes the project self-describing for other machines and is validated, never
 trusted blindly (schema + unsafe-path checks). The workspace keeps transactions and backups.
 
-### D9. Hooks and MCP are not installable kinds in v0.1
+### D9. Hooks and MCP are not installable kinds in v0.1 — superseded by D13
 
 Both execute code (hook commands, MCP server processes). Upstream hooks (ECC) write under
-`~/.claude` and probe the network. They are recorded in adapters as *supported by the
-platform, not managed by Agent Forge*. A later release can add them behind a dedicated
-approval class.
+`~/.claude` and probe the network. v0.1.0 excluded them entirely; D13 adds them behind
+dedicated approval classes.
+
+### D13. Approval classes: `standard`, `shared_file`, `hook`, `mcp`
+
+Every `FileOperation` carries an `approval_class`. `approve` grants classes explicitly
+(`--shared-files`, `--hooks`, `--mcp`); `apply` refuses any operation whose class was not
+granted; `forge` asks per class or leaves ungranted capabilities out of the plan at build
+time (`MatchContext.allowed_classes`), so the managed manifest never lists them.
+
+Hooks and MCP servers are installed as **JSON fragments** (`apply/jsonmerge.py`) merged into
+`.claude/settings.json` / `.mcp.json`: deep-equal hook groups are appended once, MCP servers
+are set by name and a name clash with a different config is a planning error. Removal and
+rollback delete exactly the merged entries, so user-added hooks/servers survive. Upstream
+hook scripts are still excluded; the shipped hooks are workspace-authored, dependency-free,
+act on the single edited file, and no-op when their tool is missing.
+
+Operations on the same path are chained in plan order (planner cache, pre-flight projection,
+diff rendering), which is what allows several capabilities to share one settings file.
 
 ### D10. Codex gets only skills and AGENTS.md sections
 

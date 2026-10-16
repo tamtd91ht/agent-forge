@@ -5,7 +5,17 @@
 ### Added
 - `agent-forge forge PATH`: one-shot scan → upgrade managed → add recommended → diff →
   single confirmation → approve + apply → validate. `--dry-run`, `--show-diff`,
-  `--shared-files`, `--yes`, `--json`.
+  `--shared-files`, `--hooks`, `--mcp`, `--yes`, `--json`.
+- Hook and MCP capabilities with their own approval classes (`approve --hooks`,
+  `approve --mcp`): JSON fragments merged into `.claude/settings.json` / `.mcp.json`,
+  other entries preserved, MCP name conflicts refused, entry-aware rollback and upgrade,
+  `validate` checks merged entries. Plans built for `forge` without a granted class never
+  contain that class (reported as `needs_approval`).
+- Six curated entries: `forge.hook.guard-secrets-python`, `forge.hook.guard-secrets-node`,
+  `forge.hook.python-ruff-format`, `forge.hook.node-prettier-format`, `mcp.context7`,
+  `mcp.playwright`.
+- Operations on the same file are chained in plan order (planner, pre-flight, diff), so two
+  capabilities can merge into one settings file.
 
 ### Changed
 - Matching evaluates applicability *before* runtime requirements, so native capabilities

@@ -217,7 +217,8 @@
       "enum": [
         "create_only",
         "replace_managed",
-        "append_section"
+        "append_section",
+        "json_merge"
       ],
       "title": "MergeStrategy",
       "type": "string"

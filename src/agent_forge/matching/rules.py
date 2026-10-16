@@ -43,6 +43,10 @@ class MatchContext:
     excluded_ids: frozenset[str] = frozenset()
     requested_ids: frozenset[str] = frozenset()
     include_optional: bool = False
+    # Approval classes the caller is prepared to grant. Capabilities whose operations need a
+    # class outside this set are left out of the plan (reported as needs_approval), so that a
+    # plan built for `forge` without --hooks never contains hook entries at all.
+    allowed_classes: frozenset[str] = frozenset({"standard", "shared_file", "hook", "mcp"})
 
 
 @dataclass

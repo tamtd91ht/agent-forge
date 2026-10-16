@@ -47,10 +47,13 @@ def find_equivalents(
 
 
 def _content_matches(asset: AgentAsset, patterns: list[str]) -> bool:
-    haystack = "\n".join(asset.headings)
-    desc = asset.frontmatter.get("description")
-    if isinstance(desc, str):
-        haystack += "\n" + desc
+    parts = list(asset.headings)
+    for value in asset.frontmatter.values():
+        if isinstance(value, str):
+            parts.append(value)
+        elif isinstance(value, list):
+            parts.extend(str(v) for v in value if isinstance(v, str | int))
+    haystack = "\n".join(parts)
     return any(re.search(p, haystack, re.IGNORECASE) for p in patterns)
 
 

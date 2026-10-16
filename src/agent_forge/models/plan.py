@@ -27,6 +27,8 @@ class OperationKind(StrEnum):
     MERGE_SECTION = "merge_section"  # insert/replace a marker-delimited block in a shared file
     REMOVE = "remove"  # delete a managed file (upgrade/removal only)
     REMOVE_SECTION = "remove_section"
+    MERGE_JSON = "merge_json"  # merge a hooks/mcpServers fragment into a JSON settings file
+    REMOVE_JSON = "remove_json"  # remove a previously merged fragment
     MANIFEST = "manifest"  # write .agent-forge/managed.json
 
 
@@ -49,6 +51,13 @@ class FileOperation(BaseModel):
     )
     shared_file: bool = Field(default=False, description="True for CLAUDE.md/AGENTS.md style files")
     requires_extra_approval: bool = False
+    approval_class: str = Field(
+        default="standard",
+        description="standard | shared_file | hook | mcp — which explicit approval flag covers it",
+    )
+    previous_content: str | None = Field(
+        default=None, description="For MERGE_JSON upgrades: the fragment being replaced"
+    )
     reason: str = ""
 
 

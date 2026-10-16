@@ -758,10 +758,13 @@ def _print_plan_summary(plan) -> None:
         for d in plan.user_decisions:
             console.print(f"  - {d}")
     extra = plan.operations_needing_extra_approval()
-    if extra:
+    by_class: dict[str, list[str]] = {}
+    for o in extra:
+        by_class.setdefault(o.approval_class, []).append(o.path)
+    for klass, paths in by_class.items():
         console.print(
-            f"[yellow]{len(extra)} shared-file operation(s) need `approve --shared-files`: "
-            + ", ".join(o.path for o in extra)
+            f"[yellow]{len(paths)} {klass} operation(s) need `approve {APPROVAL_FLAGS.get(klass, klass)}`: "
+            + ", ".join(sorted(set(paths)))
             + "[/]"
         )
     console.print(f"operations: {len(plan.operations)}")
@@ -851,8 +854,20 @@ def diff(
     _run(body)
 
 
-def _approve_plan(store, reg, plan, *, shared_files: bool, by: str | None) -> list:
-    """Shared approval logic: staleness checks, shared-file gate, digest binding. Returns extra ops."""
+APPROVAL_FLAGS = {"shared_file": "--shared-files", "hook": "--hooks", "mcp": "--mcp"}
+
+
+def _approve_plan(
+    store,
+    reg,
+    plan,
+    *,
+    shared_files: bool,
+    by: str | None,
+    hooks: bool = False,
+    mcp: bool = False,
+) -> list:
+    """Shared approval logic: staleness checks, per-class gates, digest binding. Returns extra ops."""
     from agent_forge.errors import StalePlanError
     from agent_forge.planner import render_plan_diff
 
@@ -874,16 +889,26 @@ def _approve_plan(store, reg, plan, *, shared_files: bool, by: str | None) -> li
         store.save_plan(plan)
         raise StalePlanError("registry changed since planning", hint="Re-run `assign`/`upgrade`.")
     extra = plan.operations_needing_extra_approval()
-    if extra and not shared_files:
+    granted = {"shared_file": shared_files, "hook": hooks, "mcp": mcp}
+    missing: dict[str, list[str]] = {}
+    for o in extra:
+        if not granted.get(o.approval_class, False):
+            missing.setdefault(o.approval_class, []).append(o.path)
+    if missing:
+        detail = "; ".join(
+            f"{klass} ({APPROVAL_FLAGS.get(klass, klass)}): {', '.join(sorted(set(paths)))}"
+            for klass, paths in missing.items()
+        )
         raise PlanError(
-            "plan modifies shared files: " + ", ".join(o.path for o in extra),
-            hint="Review `diff`, then re-run with --shared-files to approve those operations explicitly.",
+            "plan needs explicit approval for: " + detail,
+            hint="Review `diff`, then re-run approve with the listed flag(s). Hooks run commands "
+            "and MCP servers launch processes, so each class is approved separately.",
         )
     plan.approval.status = "approved"
     plan.approval.approved_at = now_iso()
     plan.approval.approved_by = by
     plan.approval.plan_digest = plan.content_digest()
-    plan.approval.extra_approvals = [o.op_id for o in extra] if shared_files else []
+    plan.approval.extra_approvals = [o.op_id for o in extra]
     plan.status = PlanStatus.APPROVED
     store.save_plan(plan)
     return extra
@@ -898,6 +923,18 @@ def approve(
         typer.Option(
             "--shared-files",
             help="Also approve operations that modify shared files (CLAUDE.md, AGENTS.md, settings).",
+        ),
+    ] = False,
+    hooks: Annotated[
+        bool,
+        typer.Option(
+            "--hooks", help="Also approve hook entries (they execute commands in your sessions)."
+        ),
+    ] = False,
+    mcp: Annotated[
+        bool,
+        typer.Option(
+            "--mcp", help="Also approve MCP server entries (they launch processes / use network)."
         ),
     ] = False,
     by: Annotated[
@@ -920,7 +957,9 @@ def approve(
             console.print(f"[yellow]approval revoked for {plan_id}[/]")
             return
         reg = _registry(ws)
-        extra = _approve_plan(store, reg, plan, shared_files=shared_files, by=by)
+        extra = _approve_plan(
+            store, reg, plan, shared_files=shared_files, by=by, hooks=hooks, mcp=mcp
+        )
         console.print(
             f"[green]approved[/] {plan_id} (digest {plan.approval.plan_digest[:16]}, {len(plan.operations)} operations"
             + (f", {len(extra)} shared-file" if extra else "")
@@ -1015,7 +1054,21 @@ def forge(
         bool,
         typer.Option(
             "--shared-files",
-            help="Allow managed sections in CLAUDE.md / AGENTS.md (otherwise those ops are dropped).",
+            help="Allow managed sections in CLAUDE.md / AGENTS.md (otherwise those capabilities are left out).",
+        ),
+    ] = False,
+    hooks: Annotated[
+        bool,
+        typer.Option(
+            "--hooks",
+            help="Allow hook capabilities (merged into .claude/settings.json; they run commands).",
+        ),
+    ] = False,
+    mcp: Annotated[
+        bool,
+        typer.Option(
+            "--mcp",
+            help="Allow MCP server capabilities (merged into .mcp.json; they launch processes).",
         ),
     ] = False,
     yes: Annotated[
@@ -1034,7 +1087,8 @@ def forge(
     capabilities that fit, show the diff, ask once, then apply and validate.
 
     Still approval-first: every write is a saved plan with a digest-bound approval and a
-    recoverable transaction. Hooks and MCP servers are reported, never installed.
+    recoverable transaction. Hooks and MCP servers are separate approval classes: they are
+    only planned when --hooks / --mcp are given (or confirmed interactively).
     """
 
     def body() -> int:
@@ -1065,30 +1119,43 @@ def forge(
             "platforms": [p.value for p in platforms],
             "managed": [m.capability_id for m in profile.managed],
         }
-        base_ctx = _ctx(tuple(platforms), want, request, exclude, include_optional)
+        from agent_forge.matching.rules import MatchContext
+
+        # Approval classes granted up front decide what is even planned. Interactive runs
+        # ask for the ungranted classes once, then re-plan with the answers.
+        granted = {"standard"}
+        if shared_files:
+            granted.add("shared_file")
+        if hooks:
+            granted.add("hook")
+        if mcp:
+            granted.add("mcp")
+        if not yes and not dry_run and sys.stdin.isatty():
+            for klass, flag, what in (
+                ("shared_file", "--shared-files", "managed sections in CLAUDE.md / AGENTS.md"),
+                ("hook", "--hooks", "hook entries in .claude/settings.json (they run commands)"),
+                ("mcp", "--mcp", "MCP servers in .mcp.json (they launch processes)"),
+            ):
+                if klass not in granted and typer.confirm(f"Allow {what}? [{flag}]", default=False):
+                    granted.add(klass)
+        base_ctx = MatchContext(
+            platforms=tuple(platforms),
+            wanted_tags=frozenset(want or []),
+            requested_ids=frozenset(request or []),
+            excluded_ids=frozenset(exclude or []),
+            include_optional=include_optional,
+            allowed_classes=frozenset(granted),
+        )
+        report["approval_classes"] = sorted(granted)
 
         def execute(plan, label: str) -> dict[str, Any]:
             step: dict[str, Any] = {"label": label, "plan_id": plan.plan_id}
-            dropped = []
-            if not shared_files:
-                dropped = [o.path for o in plan.operations_needing_extra_approval()]
-                plan.operations = [o for o in plan.operations if not o.requires_extra_approval]
-                plan.selected = [
-                    s
-                    for s in plan.selected
-                    if any(o.capability_id == s.capability_id for o in plan.operations)
-                ]
-                if plan.operations and all(o.kind.value == "manifest" for o in plan.operations):
-                    plan.operations = []
-            if dropped:
-                plan.notes.append(
-                    "shared-file operations dropped (re-run with --shared-files): "
-                    + ", ".join(dropped)
-                )
             store.save_plan(plan)
             step["selected"] = [s.capability_id for s in plan.selected]
             step["rejected"] = {r.capability_id: r.category for r in plan.rejected}
-            step["dropped_shared_files"] = dropped
+            step["needs_approval"] = {
+                r.capability_id: r.reasons for r in plan.rejected if r.category == "needs_approval"
+            }
             if not as_json:
                 out.rule(label)
                 _print_plan_summary(plan)
@@ -1108,28 +1175,48 @@ def forge(
             if dry_run:
                 step["status"] = "planned"
                 if not as_json:
+                    flags = " ".join(
+                        sorted(
+                            {
+                                APPROVAL_FLAGS[o.approval_class]
+                                for o in plan.operations_needing_extra_approval()
+                            }
+                        )
+                    )
                     out.print(
                         f"[yellow]dry run:[/] plan saved as {plan.plan_id}; "
                         f"continue with `agent-forge approve {plan.plan_id}"
-                        + (" --shared-files" if plan.operations_needing_extra_approval() else "")
+                        + (f" {flags}" if flags else "")
                         + f"` then `agent-forge apply {plan.plan_id}`"
                     )
                 return step
-            n_shared = len(plan.operations_needing_extra_approval())
+            classes: dict[str, int] = {}
+            for o in plan.operations_needing_extra_approval():
+                classes[o.approval_class] = classes.get(o.approval_class, 0) + 1
             if not yes:
                 if not sys.stdin.isatty():
                     raise PlanError(
                         "interactive confirmation required (no TTY)",
-                        hint="Re-run with --yes (and --shared-files if needed) or use --dry-run.",
+                        hint="Re-run with --yes (plus --shared-files/--hooks/--mcp as needed) or use --dry-run.",
                     )
                 question = f"Approve and apply {len(plan.operations)} operation(s)"
-                if n_shared:
-                    question += f" including {n_shared} change(s) to shared files"
+                if classes:
+                    question += " including " + ", ".join(
+                        f"{n} {k.replace('_', ' ')} change(s)" for k, n in classes.items()
+                    )
                 if not typer.confirm(question + "?", default=False):
                     step["status"] = "declined"
                     out.print(f"[yellow]declined[/]; plan {plan.plan_id} kept as draft")
                     return step
-            _approve_plan(store, reg, plan, shared_files=shared_files, by="agent-forge forge")
+            _approve_plan(
+                store,
+                reg,
+                plan,
+                shared_files="shared_file" in granted,
+                hooks="hook" in granted,
+                mcp="mcp" in granted,
+                by="agent-forge forge",
+            )
             tx = apply_plan(ws, store, reg, plan, confirm=None)
             step["status"] = "applied"
             step["transaction_id"] = tx.transaction_id
@@ -1382,6 +1469,7 @@ def rollback(
                     "restore": "green",
                     "delete": "green",
                     "remove_section": "green",
+                    "remove_json": "green",
                     "skip": "dim",
                     "conflict": "red",
                 }[c.action]

@@ -105,7 +105,10 @@ def test_full_cli_lifecycle(real_workspace, make_project) -> None:
     assert not any(d["stale"] for d in diffs)
     # approve requires --shared-files because CLAUDE.md changes
     run("approve", pid, "--workspace", ws, expect=6)
-    run("approve", pid, "--workspace", ws, "--shared-files")
+    # hooks and MCP servers are separate approval classes
+    assert "forge.hook.guard-secrets-node" in selected and "mcp.context7" in selected
+    run("approve", pid, "--workspace", ws, "--shared-files", expect=6)
+    run("approve", pid, "--workspace", ws, "--shared-files", "--hooks", "--mcp")
     # apply without tty and without --yes is refused
     run("apply", pid, "--workspace", ws, expect=6)
     out = run("apply", pid, "--workspace", ws, "--yes", "--json").stdout

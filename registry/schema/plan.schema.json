@@ -79,6 +79,12 @@
           "description": "Expected hash after apply when computable",
           "title": "After Sha256"
         },
+        "approval_class": {
+          "default": "standard",
+          "description": "standard | shared_file | hook | mcp \u2014 which explicit approval flag covers it",
+          "title": "Approval Class",
+          "type": "string"
+        },
         "before_sha256": {
           "anyOf": [
             {
@@ -165,6 +171,19 @@
           ],
           "default": null
         },
+        "previous_content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MERGE_JSON upgrades: the fragment being replaced",
+          "title": "Previous Content"
+        },
         "reason": {
           "default": "",
           "title": "Reason",
@@ -209,6 +228,8 @@
         "merge_section",
         "remove",
         "remove_section",
+        "merge_json",
+        "remove_json",
         "manifest"
       ],
       "title": "OperationKind",

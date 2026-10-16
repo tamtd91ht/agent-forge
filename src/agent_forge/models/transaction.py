@@ -34,6 +34,9 @@ class AppliedOperation(BaseModel):
     )
     applied: bool = False
     error: str | None = None
+    fragment: dict | None = Field(
+        default=None, description="For merge_json operations: the fragment that was merged"
+    )
 
 
 class Transaction(BaseModel):

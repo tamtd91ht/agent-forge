@@ -10,9 +10,10 @@ conventions. Adapters never write files; they detect, inventory, bound and valid
 | Inventory | instructions, `.claude/rules/*.md`, `.claude/skills/*/SKILL.md`, `.claude/agents/*.md`, `.claude/commands/*.md`, hooks in `settings*.json`, `.mcp.json` servers | instructions, `.agents/skills/*/SKILL.md`, `.codex/agents/*.toml`, `.codex/config.toml`, `.codex/hooks.json` |
 | Managed roots (writes allowed) | `CLAUDE.md`, `.claude/`, `.mcp.json`, `.agent-forge/` | `AGENTS.md`, `.agents/skills/`, `.codex/`, `.agent-forge/` |
 | Shared files (extra approval) | `CLAUDE.md`, `.claude/CLAUDE.md`, `.claude/settings.json`, `.mcp.json` | `AGENTS.md`, `AGENTS.override.md`, `.codex/config.toml`, `.codex/hooks.json` |
-| Installable kinds | skill, rule, agent, instruction | skill, instruction |
+| Installable kinds | skill, rule, agent, instruction, hook (`.claude/settings.json` fragment, class `hook`), mcp (`.mcp.json` fragment, class `mcp`) | skill, instruction |
 | Content rules | skill: frontmatter `name` without forbidden chars, `description` recommended; agent: `name` + `description`, no `:`/leading `-`, ≤256; rule: `paths` list of globs | skill: `name` + `description` required, lowercase name equal to directory; instruction sections kept small (32 KiB AGENTS.md cap) |
-| Not managed in v0.1 | hooks (33 events, execute commands), `.mcp.json` (launches processes), plugins | rules (no equivalent), subagents (`.codex/agents/*.toml`, trusted projects only), hooks (per-hash trust), MCP (`config.toml`, trusted only) |
+| Fragment rules | hooks: known event names (33), handler types `command/http/mcp_tool/prompt/agent`, integer timeouts; MCP: `type` in stdio/http/sse/ws, `command` for stdio, `url` + `type` otherwise | — |
+| Not managed | plugins / marketplaces, `.claude/settings.local.json` | rules (no equivalent), subagents (`.codex/agents/*.toml`, trusted projects only), hooks (per-hash trust), MCP (`config.toml`, trusted only) |
 
 ## Reporting unsupported features
 

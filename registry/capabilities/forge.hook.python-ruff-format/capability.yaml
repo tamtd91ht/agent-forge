@@ -1,0 +1,42 @@
+schema_version: "1"
+id: forge.hook.python-ruff-format
+name: Format Python on edit (ruff)
+description: PostToolUse hook that runs `ruff format` on each Python file the agent edits; silent no-op when ruff is absent.
+version: 1.0.0
+kind: hook
+category: quality.hooks
+purpose: Keeps agent edits formatted without asking the agent to remember; only the edited file is touched.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: Stdlib script; runs one subprocess (`ruff format -- <file>`) and only when ruff is on PATH. No network. Installed for Python projects; declared runtime requirement `ruff` is optional because the script degrades to a no-op. Requires `approve --hooks`.
+applicability:
+  languages: [python]
+  tags: [formatting, hooks, quality]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-python-format
+runtime_requirements:
+  - name: ruff
+    description: "optional; `pip install ruff` or add to dev dependencies — without it the hook does nothing"
+removal: delete_managed_files
+risk: medium
+benefit_score: 5
+maintenance_cost: 1

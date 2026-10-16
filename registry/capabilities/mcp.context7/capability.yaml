@@ -1,0 +1,49 @@
+schema_version: "1"
+id: mcp.context7
+name: Context7 documentation MCP
+description: Project-scoped MCP server that gives the agent live, version-specific library documentation lookup (resolve-library-id, query-docs).
+version: 1.0.0
+kind: mcp
+category: knowledge.mcp
+purpose: Reduces hallucinated API usage by letting the agent fetch current docs for the libraries the project actually depends on.
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - mcp-configs/mcp-servers.json
+license:
+  spdx: MIT
+  attribution: "Server template from Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa; the server itself is @upstash/context7-mcp (MIT, Upstash)"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: Stdio server launched with `npx -y @upstash/context7-mcp@latest`; it downloads the package on first use and calls the Context7 API over the network, which is why it is its own approval class (`approve --mcp`) and Claude Code will additionally ask the user to trust the project server. No API key required for basic use. Merged into .mcp.json; other servers are preserved; a pre-existing `context7` entry with a different config is a planning conflict, never overwritten.
+  notes:
+    - "Upstream template pins no version (@latest); pin in a fork if reproducibility matters."
+applicability:
+  always: true
+  tags: [docs, mcp, knowledge]
+platforms: [claude_code]
+install_strategy: section_merge
+destinations:
+  - platform: claude_code
+    source: claude_code/mcp.json
+    dest: .mcp.json
+    merge: json_merge
+    section_id: mcp-context7
+equivalents:
+  - kind: mcp
+    content_patterns: ["context7"]
+    description: a context7 server already declared in .mcp.json
+runtime_requirements:
+  - name: node
+    description: Node.js 18+ with npx
+network: required
+removal: remove_section
+risk: medium
+benefit_score: 6
+maintenance_cost: 1

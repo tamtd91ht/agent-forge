@@ -9,11 +9,19 @@ from pathlib import Path
 from agent_forge import MANAGED_MANIFEST_VERSION, __version__
 from agent_forge.adapters import get_adapter
 from agent_forge.apply.filesystem_safety import resolve_in_root
+from agent_forge.apply.jsonmerge import (
+    conflicts,
+    contains_fragment,
+    parse_fragment,
+    remove_fragment,
+    replace_fragment,
+)
 from agent_forge.apply.sections import find_section, upsert_section
-from agent_forge.errors import PlanError, SafetyViolation
+from agent_forge.errors import ApplyError, PlanError, SafetyViolation
 from agent_forge.matching.rules import Candidate, MatchContext, MatchResult, evaluate
 from agent_forge.models.capability import (
     Capability,
+    CapabilityKind,
     CapabilityStatus,
     Destination,
     InstallStrategy,
@@ -154,10 +162,17 @@ def _ops_for_candidate(
                     after_sha256=sha256_text(projected),
                     shared_file=True,
                     requires_extra_approval=True,
+                    approval_class="shared_file",
                     reason=f"add managed section '{dest.section_id}' to shared file (existing content preserved)",
                 )
             )
             record.sections[dest.dest] = dest.section_id
+            reader.cache[dest.dest] = projected
+            continue
+        if dest.merge == MergeStrategy.JSON_MERGE:
+            op, fragment = _json_merge_op(lc, dest, platform, reader, op_counter, previous=None)
+            ops.append(op)
+            record.json_merges[dest.dest] = fragment
             continue
         for rel, content in _asset_files(lc, dest):
             if not adapter.path_allowed(rel):
@@ -197,7 +212,74 @@ def _ops_for_candidate(
                 )
             )
             record.files[rel] = sha256_text(content)
+            reader.cache[rel] = content
     return ops, record
+
+
+def _json_merge_op(
+    lc: LoadedCapability,
+    dest: Destination,
+    platform: Platform,
+    reader: _TargetReader,
+    op_counter: list[int],
+    *,
+    previous: dict | None,
+) -> tuple[FileOperation, dict]:
+    """Build a MERGE_JSON operation for a hooks / mcpServers fragment."""
+    cap = lc.capability
+    adapter = get_adapter(platform)
+    assert dest.section_id
+    text = _asset_files(lc, dest)[0][1]
+    try:
+        fragment = parse_fragment(text)
+    except ApplyError as exc:
+        raise PlanError(f"{cap.id}: assets/{dest.source}: {exc.message}") from exc
+    problems = adapter.validate_content(cap.kind, dest.dest, text)
+    if problems:
+        raise PlanError(
+            f"{cap.id}: fragment for {dest.dest} fails {adapter.info.display_name} rules: "
+            + "; ".join(problems)
+        )
+    current = reader.read(dest.dest)
+    try:
+        clash = conflicts(remove_fragment(current, previous) if previous else current, fragment)
+        if clash:
+            raise PlanError(
+                f"{cap.id}: {dest.dest} already defines MCP server(s) {', '.join(clash)} with a "
+                "different configuration; remove them or --exclude this capability"
+            )
+        projected = replace_fragment(current, previous, fragment, path_hint=dest.dest)
+    except ApplyError as exc:
+        raise PlanError(f"{cap.id}: {exc.message}") from exc
+    reader.cache[dest.dest] = projected
+    klass = (
+        "hook"
+        if cap.kind == CapabilityKind.HOOK
+        else "mcp"
+        if cap.kind == CapabilityKind.MCP
+        else "shared_file"
+    )
+    op_counter[0] += 1
+    op = FileOperation(
+        op_id=f"op{op_counter[0]:03d}",
+        kind=OperationKind.MERGE_JSON,
+        path=dest.dest,
+        capability_id=cap.id,
+        capability_version=cap.version,
+        platform=platform,
+        section_id=dest.section_id,
+        content=text,
+        content_sha256=sha256_text(text),
+        before_sha256=sha256_text(current) if current is not None else None,
+        after_sha256=sha256_text(projected),
+        shared_file=True,
+        requires_extra_approval=True,
+        approval_class=klass,
+        previous_content=json.dumps(previous, sort_keys=True) if previous else None,
+        reason=f"merge {cap.kind.value} fragment '{dest.section_id}' into {dest.dest} "
+        f"(other entries preserved; needs `approve --{klass if klass != 'shared_file' else 'shared-files'}`)",
+    )
+    return op, fragment
 
 
 def _is_primary(cap: Capability, rel: str) -> bool:
@@ -266,6 +348,7 @@ def build_assign_plan(
     chosen = match.recommended
     order = resolve_dependencies(reg, [c.capability.id for c in chosen])
     by_key = {(c.capability.id, c.platform): c for c in chosen}
+    rejected_for_approval: list[RejectedCapability] = []
     for cid in order:
         for platform in ctx.platforms:
             cand = by_key.get((cid, platform))
@@ -273,11 +356,35 @@ def build_assign_plan(
                 continue
             lc = reg.get(cid)
             cap_ops, record = _ops_for_candidate(lc, platform, reader, plan_id, counter)
+            needed = sorted({o.approval_class for o in cap_ops} - ctx.allowed_classes)
+            if needed:
+                counter[0] -= len(cap_ops)
+                rejected_for_approval.append(
+                    RejectedCapability(
+                        capability_id=cid,
+                        version=lc.capability.version,
+                        reasons=[
+                            "needs explicit approval class(es) not granted: " + ", ".join(needed),
+                            "re-run with "
+                            + " ".join(
+                                {
+                                    "shared_file": "--shared-files",
+                                    "hook": "--hooks",
+                                    "mcp": "--mcp",
+                                }.get(k, k)
+                                for k in needed
+                            ),
+                        ],
+                        category="needs_approval",
+                    )
+                )
+                continue
             ops.extend(cap_ops)
             existing_rec = next((r for r in records if r.capability_id == cid), None)
             if existing_rec is not None:
                 existing_rec.files.update(record.files)
                 existing_rec.sections.update(record.sections)
+                existing_rec.json_merges.update(record.json_merges)
                 existing_rec.version = record.version
                 existing_rec.transaction_id = record.transaction_id
             else:
@@ -309,6 +416,12 @@ def build_assign_plan(
             category=r.category,
         )
         for r in match.rejected
+    ]
+    rejected.extend(rejected_for_approval)
+    selected = [
+        s
+        for s in selected
+        if s.capability_id not in {r.capability_id for r in rejected_for_approval}
     ]
     for opt in match.optional:
         rejected.append(
@@ -485,9 +598,22 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
                         reason="file no longer part of the capability",
                     )
                 )
+        needed = sorted({o.approval_class for o in cap_ops} - ctx.allowed_classes)
+        if needed:
+            counter[0] -= len(cap_ops)
+            rejected.append(
+                RejectedCapability(
+                    capability_id=cap.id,
+                    version=cap.version,
+                    reasons=["upgrade needs approval class(es) not granted: " + ", ".join(needed)],
+                    category="needs_approval",
+                )
+            )
+            continue
         ops.extend(cap_ops)
         rec.files = new_record.files
         rec.sections = new_record.sections
+        rec.json_merges = new_record.json_merges
         rec.version = cap.version
         rec.transaction_id = new_record.transaction_id
         selected.append(
@@ -600,10 +726,23 @@ def _ops_for_candidate_upgrade(
                     after_sha256=sha256_text(projected),
                     shared_file=True,
                     requires_extra_approval=True,
+                    approval_class="shared_file",
                     reason=f"update managed section '{dest.section_id}'",
                 )
             )
             record.sections[dest.dest] = dest.section_id
+            reader.cache[dest.dest] = projected
+            continue
+        if dest.merge == MergeStrategy.JSON_MERGE:
+            previous = old.json_merges.get(dest.dest)
+            current = reader.read(dest.dest)
+            new_fragment = parse_fragment(_asset_files(lc, dest)[0][1])
+            if previous == new_fragment and contains_fragment(current, new_fragment):
+                record.json_merges[dest.dest] = new_fragment
+                continue  # unchanged
+            op, fragment = _json_merge_op(lc, dest, platform, reader, counter, previous=previous)
+            ops.append(op)
+            record.json_merges[dest.dest] = fragment
             continue
         for rel, content in _asset_files(lc, dest):
             if not adapter.path_allowed(rel):
@@ -635,4 +774,5 @@ def _ops_for_candidate_upgrade(
                     reason=f"upgrade {cap.kind.value} '{cap.name}'",
                 )
             )
+            reader.cache[rel] = content
     return ops, record

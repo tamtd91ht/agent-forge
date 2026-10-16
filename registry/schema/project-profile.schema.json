@@ -240,6 +240,15 @@
           "title": "Installed At",
           "type": "string"
         },
+        "json_merges": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "relative path -> JSON fragment merged into that file (hooks / mcpServers)",
+          "title": "Json Merges",
+          "type": "object"
+        },
         "sections": {
           "additionalProperties": {
             "type": "string"

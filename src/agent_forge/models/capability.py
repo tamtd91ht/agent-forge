@@ -67,6 +67,7 @@ class MergeStrategy(StrEnum):
         "replace_managed"  # overwrite only if the existing file is managed and unmodified
     )
     APPEND_SECTION = "append_section"  # add/replace a marker-delimited block inside a shared file
+    JSON_MERGE = "json_merge"  # merge a JSON fragment (hooks / mcpServers) into a settings file
 
 
 class NetworkRequirement(StrEnum):
@@ -157,8 +158,11 @@ class Destination(StrictModel):
 
     @model_validator(mode="after")
     def _section_requires_id(self) -> Destination:
-        if self.merge == MergeStrategy.APPEND_SECTION and not self.section_id:
-            raise ValueError("APPEND_SECTION destinations require section_id")
+        if (
+            self.merge in (MergeStrategy.APPEND_SECTION, MergeStrategy.JSON_MERGE)
+            and not self.section_id
+        ):
+            raise ValueError(f"{self.merge.value} destinations require section_id")
         return self
 
 

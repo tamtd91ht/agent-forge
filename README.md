@@ -34,6 +34,12 @@ Or step by step: `scan` → `assign --want security` → `diff plan-…` → `ap
 → `apply plan-…` → `validate`. Only capabilities that fit the project are selected: a backend
 service never receives UI/UX material, a React app does.
 
+Three change classes need their own explicit approval, on `approve` or `forge`:
+`--shared-files` (sections in CLAUDE.md/AGENTS.md), `--hooks` (entries merged into
+`.claude/settings.json`; they run commands) and `--mcp` (servers merged into `.mcp.json`;
+they launch processes). Merges preserve everything else in those files and roll back
+entry by entry.
+
 Docs: [getting started](docs/getting-started.md) · [CLI reference](docs/cli-reference.md) ·
 [architecture](docs/architecture.md) · [capability model](docs/capability-model.md) ·
 [source curation](docs/source-curation.md) · [adapters](docs/adapters.md) ·

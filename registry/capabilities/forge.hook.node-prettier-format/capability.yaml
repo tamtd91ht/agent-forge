@@ -1,0 +1,42 @@
+schema_version: "1"
+id: forge.hook.node-prettier-format
+name: Format on edit (project Prettier)
+description: PostToolUse hook that runs the project's own node_modules/.bin/prettier on each edited JS/TS/CSS/JSON/Markdown file; no-op when Prettier is not installed locally.
+version: 1.0.0
+kind: hook
+category: quality.hooks
+purpose: Keeps agent edits formatted with the project's existing Prettier configuration; never downloads Prettier.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: Dependency-free Node script; spawns only the locally installed Prettier binary (no npx, no network) on the single edited file. Installed for JS/TS projects. Requires `approve --hooks`.
+applicability:
+  languages: [javascript, typescript]
+  tags: [formatting, hooks, quality]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-node-format
+runtime_requirements:
+  - name: prettier
+    description: "optional; must be a local devDependency — without it the hook does nothing"
+removal: delete_managed_files
+risk: medium
+benefit_score: 5
+maintenance_cost: 1

@@ -1,0 +1,48 @@
+schema_version: "1"
+id: mcp.playwright
+name: Playwright browser MCP
+description: Project-scoped MCP server that lets the agent drive a real browser (navigate, click, fill forms, read the accessibility tree, screenshot) for end-to-end checks of web UIs.
+version: 1.0.0
+kind: mcp
+category: testing.mcp
+purpose: Gives frontend projects a way to verify UI behaviour in a browser instead of trusting static reasoning.
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - mcp-configs/mcp-servers.json
+license:
+  spdx: MIT
+  attribution: "Server template from Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa; the server itself is @playwright/mcp (Apache-2.0, Microsoft)"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: Stdio server via `npx -y @playwright/mcp@latest`; downloads the package and browser binaries on first use and controls a browser, so it is gated behind `approve --mcp` and Claude Code's own project-server trust prompt. The upstream template's `--browser chrome` flag was dropped so the server can pick an installed browser. Only recommended for frontend / fullstack projects.
+applicability:
+  project_types: [frontend, fullstack]
+  tags: [e2e, browser, mcp, testing]
+platforms: [claude_code]
+install_strategy: section_merge
+destinations:
+  - platform: claude_code
+    source: claude_code/mcp.json
+    dest: .mcp.json
+    merge: json_merge
+    section_id: mcp-playwright
+equivalents:
+  - kind: mcp
+    content_patterns: ["playwright", "chrome-devtools", "browser"]
+    description: a browser-automation MCP server already declared in .mcp.json
+runtime_requirements:
+  - name: node
+    description: Node.js 18+ with npx; Playwright downloads browser binaries on first run
+network: required
+permissions: [drives_browser]
+removal: remove_section
+risk: medium
+benefit_score: 6
+maintenance_cost: 2

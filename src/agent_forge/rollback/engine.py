@@ -16,6 +16,7 @@ from pathlib import Path
 from agent_forge import __version__
 from agent_forge.apply.backup import BackupStore
 from agent_forge.apply.filesystem_safety import assert_regular_file_or_missing, resolve_in_root
+from agent_forge.apply.jsonmerge import contains_fragment, remove_fragment
 from agent_forge.apply.sections import find_section, remove_section
 from agent_forge.errors import ApplyError, PlanError, RollbackConflict, SafetyViolation
 from agent_forge.models.plan import OperationKind
@@ -49,7 +50,11 @@ class RollbackPlan:
 
     @property
     def actionable(self) -> list[RollbackCheck]:
-        return [c for c in self.checks if c.action in ("restore", "delete", "remove_section")]
+        return [
+            c
+            for c in self.checks
+            if c.action in ("restore", "delete", "remove_section", "remove_json")
+        ]
 
 
 def _current(root: Path, rel: str) -> tuple[bytes | None, str | None]:
@@ -126,6 +131,27 @@ def plan_rollback(store: Store, tx: Transaction) -> RollbackPlan:
                         )
                     )
                 continue
+            if op.kind == OperationKind.MERGE_JSON and op.fragment:
+                data, _ = _current(root, op.path)
+                text = normalize_newlines((data or b"").decode("utf-8", errors="replace"))
+                try:
+                    present = contains_fragment(text, op.fragment)
+                except ApplyError as exc:
+                    rp.checks.append(RollbackCheck(op, "conflict", exc.message))
+                    continue
+                if not present:
+                    rp.checks.append(
+                        RollbackCheck(op, "skip", "merged entries already removed by the user")
+                    )
+                else:
+                    rp.checks.append(
+                        RollbackCheck(
+                            op,
+                            "remove_json",
+                            "settings edited outside our entries; removing only our entries",
+                        )
+                    )
+                continue
             rp.checks.append(
                 RollbackCheck(op, "conflict", "modified after apply; keeping your version")
             )
@@ -177,13 +203,21 @@ def execute_rollback(store: Store, rp: RollbackPlan, *, partial: bool = False) -
             dest = resolve_in_root(root, check.op.path)
             assert_regular_file_or_missing(dest)
             data_now, cur_hash = _current(root, check.op.path)
-            if check.action == "remove_section":
-                assert check.op.section_id
+            if check.action in ("remove_section", "remove_json"):
                 text = normalize_newlines((data_now or b"").decode("utf-8", errors="replace"))
-                new_text = remove_section(text, check.op.section_id)
+                if check.action == "remove_section":
+                    assert check.op.section_id
+                    new_text = remove_section(text, check.op.section_id)
+                else:
+                    assert check.op.fragment is not None
+                    new_text = remove_fragment(text, check.op.fragment, path_hint=check.op.path)
                 rec.before_sha256 = cur_hash
-                atomic_write_bytes(dest, new_text.encode("utf-8"))
-                rec.after_sha256 = sha256_text(new_text)
+                if new_text == "":
+                    dest.unlink()
+                    rec.after_sha256 = None
+                else:
+                    atomic_write_bytes(dest, new_text.encode("utf-8"))
+                    rec.after_sha256 = sha256_text(new_text)
                 rec.applied = True
                 store.save_transaction(rb)
                 continue

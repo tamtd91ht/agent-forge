@@ -71,6 +71,20 @@
           "default": null,
           "title": "Error"
         },
+        "fragment": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For merge_json operations: the fragment that was merged",
+          "title": "Fragment"
+        },
         "kind": {
           "$ref": "#/$defs/OperationKind"
         },
@@ -110,6 +124,8 @@
         "merge_section",
         "remove",
         "remove_section",
+        "merge_json",
+        "remove_json",
         "manifest"
       ],
       "title": "OperationKind",

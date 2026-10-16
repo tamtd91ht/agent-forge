@@ -51,14 +51,32 @@ Planner and apply additionally require every path to be inside the adapter's man
   back the untouched files). For shared files, only the managed section is removed when the
   rest of the file changed.
 
+## Approval classes
+
+Every operation carries an `approval_class`; `approve` (and `forge`) must grant each class
+explicitly, and `apply` refuses operations whose class was not granted:
+
+| Class | Where it writes | Why it is separate | Flag |
+|---|---|---|---|
+| `standard` | new files under `.claude/skills`, `.claude/rules`, `.claude/agents`, `.agents/skills` | isolated, no execution | (always) |
+| `shared_file` | marker section in `CLAUDE.md` / `AGENTS.md` | touches a file the user owns | `--shared-files` |
+| `hook` | JSON fragment merged into `.claude/settings.json` (+ a script under `.claude/hooks/agent-forge/`) | hooks **execute commands** in every session | `--hooks` |
+| `mcp` | JSON fragment merged into `.mcp.json` | MCP servers **launch processes** and use the network; Claude Code also asks the user to trust project servers | `--mcp` |
+
+Fragments are merged, never overwritten: other hooks, settings and servers are preserved;
+an existing MCP server with the same name but a different config is a planning error.
+Rollback removes exactly the merged entries, even if the user added their own afterwards.
+Curated hooks are dependency-free scripts (Python or Node) that only ever act on the single
+file the agent just edited, never download anything, and exit 0 when their tool is absent.
+
 ## Curated content
 
 - Only `status: curated` capabilities with `license.redistribution_ok: true` can be
   installed; manifests record source URL, commit SHA and upstream paths, and `validate`
   checks that the SHA and paths exist in the checkout.
-- Upstream hooks, MCP declarations, scripts and installers are excluded from the registry
-  in v0.1. Capabilities that need a runtime are `native_plugin`: recommended with install
-  hints, never executed.
+- Upstream hooks and installers are excluded from the registry; the hooks Agent Forge ships
+  are workspace-authored and reviewed line by line. Capabilities that need a runtime are
+  `native_plugin`: recommended with install hints, never executed.
 - Installed assets carry the upstream MIT notice (`LICENSE-*.txt`) or an attribution footer.
 
 ## Reports and logs
@@ -72,4 +90,5 @@ are git-ignored.
 
 - Symlink tests skip on Windows without the symlink privilege (junction tests run instead).
 - `validate` does not run project test commands; it only lists them.
-- Hooks/MCP installation is deferred to a later release with its own approval class.
+- Hooks and MCP servers are Claude Code only; Codex hooks/MCP live in `.codex/*` (trusted
+  projects, per-hash hook trust) and are not managed.

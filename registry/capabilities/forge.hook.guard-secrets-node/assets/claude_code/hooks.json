@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-forge/guard_secrets.mjs\"",
+            "timeout": 10,
+            "statusMessage": "agent-forge: checking for secret files"
+          }
+        ]
+      }
+    ]
+  }
+}

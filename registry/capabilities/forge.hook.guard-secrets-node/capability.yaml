@@ -1,0 +1,40 @@
+schema_version: "1"
+id: forge.hook.guard-secrets-node
+name: Guard secret files (Node hook)
+description: PreToolUse hook that blocks Edit/Write on .env, key, certificate and credential files; implemented in dependency-free Node for JavaScript/TypeScript projects.
+version: 1.0.0
+kind: hook
+category: safety.hooks
+purpose: Stops the agent from editing credential stores by mistake. Exit code 2 blocks the tool call and explains why; the file is never read.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: Same logic as the Python guard, for projects where `node` is guaranteed. No dependencies, no network, no writes. Merged into .claude/settings.json; requires `approve --hooks`.
+applicability:
+  languages: [javascript, typescript]
+  tags: [security, hooks, guard]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-guard-secrets
+conflicts: [forge.hook.guard-secrets-python]
+removal: delete_managed_files
+risk: medium
+benefit_score: 6
+maintenance_cost: 1

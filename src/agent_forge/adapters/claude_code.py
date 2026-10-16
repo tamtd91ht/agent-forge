@@ -39,11 +39,15 @@ class ClaudeCodeAdapter(PlatformAdapter):
             CapabilityKind.RULE,
             CapabilityKind.AGENT,
             CapabilityKind.INSTRUCTION,
+            CapabilityKind.HOOK,  # merged into .claude/settings.json, needs `approve --hooks`
+            CapabilityKind.MCP,  # merged into .mcp.json, needs `approve --mcp`
         ),
         unsupported_notes=(
-            "hooks: supported by the platform, but Agent Forge does not install hooks in this "
-            "release because hook commands execute code; declare them as native_plugin capabilities",
-            "mcp: .mcp.json entries launch processes; not installed automatically in this release",
+            "hooks: merged into .claude/settings.json as JSON fragments; they execute commands, "
+            "so every plan containing them needs `approve --hooks` (or `forge --hooks`)",
+            "mcp: merged into .mcp.json; servers launch processes, so plans need `approve --mcp`; "
+            "Claude Code additionally asks the user to trust project MCP servers on first use",
+            "plugins / marketplaces: not managed",
             "user-scoped ~/.claude is never touched",
         ),
     )
@@ -200,6 +204,111 @@ class ClaudeCodeAdapter(PlatformAdapter):
                 problems.append("rule frontmatter 'paths' must be a list of glob strings")
         elif kind == CapabilityKind.INSTRUCTION and rel_path not in self.info.instruction_files:
             problems.append("instruction sections must target CLAUDE.md or .claude/CLAUDE.md")
+        elif kind in (CapabilityKind.HOOK, CapabilityKind.MCP):
+            return self._validate_fragment(kind, rel_path, content)
         if not body.strip():
             problems.append("content body is empty")
         return problems
+
+    def _validate_fragment(self, kind: CapabilityKind, rel_path: str, content: str) -> list[str]:
+        problems: list[str] = []
+        try:
+            frag = json.loads(content)
+        except ValueError as exc:
+            return [f"fragment is not valid JSON: {exc}"]
+        if not isinstance(frag, dict):
+            return ["fragment must be a JSON object"]
+        if kind == CapabilityKind.HOOK:
+            if rel_path not in (".claude/settings.json", ".claude/settings.local.json"):
+                problems.append("hooks must be merged into .claude/settings.json")
+            if set(frag) != {"hooks"}:
+                problems.append("hook fragment must contain exactly the 'hooks' key")
+            for event, groups in (frag.get("hooks") or {}).items():
+                if event not in HOOK_EVENTS:
+                    problems.append(f"unknown hook event {event!r}")
+                if not isinstance(groups, list):
+                    problems.append(f"hooks.{event} must be a list of matcher groups")
+                    continue
+                for g in groups:
+                    if not isinstance(g, dict) or not isinstance(g.get("hooks"), list):
+                        problems.append(f"hooks.{event}: each group needs a 'hooks' list")
+                        continue
+                    for h in g["hooks"]:
+                        if not isinstance(h, dict) or h.get("type") not in HOOK_HANDLER_TYPES:
+                            problems.append(
+                                f"hooks.{event}: handler type must be one of {sorted(HOOK_HANDLER_TYPES)}"
+                            )
+                        elif h["type"] == "command" and not isinstance(h.get("command"), str):
+                            problems.append(
+                                f"hooks.{event}: command handler needs a 'command' string"
+                            )
+                        elif h["type"] == "prompt" and not isinstance(h.get("prompt"), str):
+                            problems.append(
+                                f"hooks.{event}: prompt handler needs a 'prompt' string"
+                            )
+                        if (
+                            isinstance(h, dict)
+                            and "timeout" in h
+                            and not isinstance(h["timeout"], int)
+                        ):
+                            problems.append(f"hooks.{event}: timeout must be an integer (seconds)")
+        else:
+            if rel_path != ".mcp.json":
+                problems.append("MCP servers must be merged into .mcp.json")
+            if set(frag) != {"mcpServers"}:
+                problems.append("MCP fragment must contain exactly the 'mcpServers' key")
+            for name, cfg in (frag.get("mcpServers") or {}).items():
+                if not isinstance(cfg, dict):
+                    problems.append(f"mcpServers.{name} must be an object")
+                    continue
+                t = cfg.get("type", "stdio")
+                if t not in MCP_TYPES:
+                    problems.append(f"mcpServers.{name}: type must be one of {sorted(MCP_TYPES)}")
+                if t == "stdio" and not isinstance(cfg.get("command"), str):
+                    problems.append(f"mcpServers.{name}: stdio servers need a 'command'")
+                if t != "stdio" and not isinstance(cfg.get("url"), str):
+                    problems.append(f"mcpServers.{name}: {t} servers need a 'url'")
+                if "url" in cfg and "type" not in cfg:
+                    problems.append(f"mcpServers.{name}: entries with 'url' must set 'type'")
+        return problems
+
+
+HOOK_EVENTS = frozenset(
+    {
+        "SessionStart",
+        "Setup",
+        "UserPromptSubmit",
+        "UserPromptExpansion",
+        "PreToolUse",
+        "PermissionRequest",
+        "PermissionDenied",
+        "PostToolUse",
+        "PostToolUseFailure",
+        "PostToolBatch",
+        "Notification",
+        "MessageDisplay",
+        "SubagentStart",
+        "SubagentStop",
+        "TaskCreated",
+        "TaskCompleted",
+        "Stop",
+        "StopFailure",
+        "TeammateIdle",
+        "InstructionsLoaded",
+        "ConfigChange",
+        "CwdChanged",
+        "DirectoryAdded",
+        "FileChanged",
+        "WorktreeCreate",
+        "WorktreeRemove",
+        "PreCompact",
+        "PostCompact",
+        "PreModelSwitch",
+        "PostModelSwitch",
+        "Elicitation",
+        "ElicitationResult",
+        "SessionEnd",
+    }
+)  # fmt: skip  (code.claude.com/docs/en/hooks, 2026-10-16)
+HOOK_HANDLER_TYPES = frozenset({"command", "http", "mcp_tool", "prompt", "agent"})
+MCP_TYPES = frozenset({"stdio", "http", "sse", "ws", "streamable-http"})

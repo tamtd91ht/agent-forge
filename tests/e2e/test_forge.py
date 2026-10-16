@@ -76,8 +76,9 @@ def test_forge_frontend_gets_ui_guidelines(real_workspace, make_project) -> None
     add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
     assert "uiux.guidelines" in add["selected"]
     assert "ecc.error-handling" in add["selected"]  # typescript/javascript
-    # no --shared-files: the CLAUDE.md section is dropped, nothing else is blocked
-    assert add["dropped_shared_files"] == ["CLAUDE.md"]
+    # no --shared-files: the notice capability is left out (needs_approval), nothing else is blocked
+    assert add["rejected"]["forge.managed-notice"] == "needs_approval"
+    assert "forge.managed-notice" in add["needs_approval"]
     assert not (root / "CLAUDE.md").exists()
     assert (root / ".claude" / "skills" / "ui-ux-guidelines" / "SKILL.md").is_file()
 

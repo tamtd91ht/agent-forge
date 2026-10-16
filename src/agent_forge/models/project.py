@@ -77,6 +77,10 @@ class ManagedCapabilityRecord(BaseModel):
     sections: dict[str, str] = Field(
         default_factory=dict, description="relative path -> section_id for merged sections"
     )
+    json_merges: dict[str, dict] = Field(
+        default_factory=dict,
+        description="relative path -> JSON fragment merged into that file (hooks / mcpServers)",
+    )
     drift: list[str] = Field(
         default_factory=list, description="Files whose current hash differs (set by scan)"
     )

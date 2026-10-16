@@ -165,6 +165,68 @@ def synthetic_registry(tmp_path: Path) -> Path:
         base_manifest("t.under-review", status="under_review"),
         skill_assets("under-review"),
     )
+    write_capability(
+        reg,
+        base_manifest(
+            "t.hook",
+            kind="hook",
+            risk="medium",
+            platforms=["claude_code"],
+            destinations=[
+                {
+                    "platform": "claude_code",
+                    "source": "claude_code/hooks.json",
+                    "dest": ".claude/settings.json",
+                    "merge": "json_merge",
+                    "section_id": "t-hook",
+                }
+            ],
+        ),
+        {
+            "claude_code/hooks.json": json.dumps(
+                {
+                    "hooks": {
+                        "PostToolUse": [
+                            {
+                                "matcher": "Edit|Write",
+                                "hooks": [
+                                    {"type": "command", "command": "echo t-hook", "timeout": 5}
+                                ],
+                            }
+                        ]
+                    }
+                }
+            )
+        },
+    )
+    write_capability(
+        reg,
+        base_manifest(
+            "t.mcp",
+            kind="mcp",
+            risk="medium",
+            platforms=["claude_code"],
+            install_strategy="section_merge",
+            destinations=[
+                {
+                    "platform": "claude_code",
+                    "source": "claude_code/mcp.json",
+                    "dest": ".mcp.json",
+                    "merge": "json_merge",
+                    "section_id": "t-mcp",
+                }
+            ],
+        ),
+        {
+            "claude_code/mcp.json": json.dumps(
+                {
+                    "mcpServers": {
+                        "t-server": {"type": "stdio", "command": "npx", "args": ["-y", "t"]}
+                    }
+                }
+            )
+        },
+    )
     return reg
 
 
