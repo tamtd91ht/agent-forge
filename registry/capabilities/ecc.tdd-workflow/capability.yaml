@@ -54,3 +54,6 @@ validation:
 risk: low
 benefit_score: 7
 maintenance_cost: 2
+integrity:
+  assets_sha256: 0cec3e4aae40d174a20b56aafb31081c249759bb4ec3034510a21d2b3662167b
+  pinned_at: "2026-10-16"

@@ -46,3 +46,6 @@ removal: remove_section
 risk: medium
 benefit_score: 6
 maintenance_cost: 2
+integrity:
+  assets_sha256: d43c3c0a594106f1c3365dc80037eda994415a0b310992cfe1bc9623b48a5ff2
+  pinned_at: "2026-10-16"

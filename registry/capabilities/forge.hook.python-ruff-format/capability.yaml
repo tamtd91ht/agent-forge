@@ -40,3 +40,6 @@ removal: delete_managed_files
 risk: medium
 benefit_score: 5
 maintenance_cost: 1
+integrity:
+  assets_sha256: 07ceeeb3b0387859aba30c4ff291fa601f51c41271ef8b72dc4488e578a7bb3c
+  pinned_at: "2026-10-16"

@@ -40,3 +40,6 @@ permissions: [runs_shell]
 risk: medium
 benefit_score: 6
 maintenance_cost: 1
+integrity:
+  assets_sha256: 8d7700baef7fd4664c0f8f34100076f60e4f42eb660a1c0818716ecfde8c84f4
+  pinned_at: "2026-10-16"

@@ -147,6 +147,8 @@ def apply_plan(
         plan_id=plan.plan_id,
         plan_digest=plan.content_digest(),
         forge_version=__version__,
+        registry_digest=plan.registry_digest,
+        profile_fingerprint=plan.target.profile_fingerprint,
         target_canonical_path=plan.target.canonical_path,
         started_at=now_iso(),
         capabilities={s.capability_id: s.version for s in plan.selected},

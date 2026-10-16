@@ -33,6 +33,7 @@ from agent_forge.models.capability import (
     RiskLevel,
 )
 from agent_forge.models.project import ProjectProfile
+from agent_forge.policy.engine import Decision, PolicySet
 from agent_forge.registry.loader import Registry
 
 
@@ -47,6 +48,8 @@ class MatchContext:
     # class outside this set are left out of the plan (reported as needs_approval), so that a
     # plan built for `forge` without --hooks never contains hook entries at all.
     allowed_classes: frozenset[str] = frozenset({"standard", "shared_file", "hook", "mcp"})
+    # Layered policy (default -> workspace -> project). None = built-in default only.
+    policy: PolicySet | None = None
 
 
 @dataclass
@@ -176,29 +179,45 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
 
     # dependencies: pull in automatically when curated + supported; else reject the dependant
     by_id = {c.capability.id: c for c in candidates}
+    # A dependency that was itself rejected for a hard reason (policy, platform, runtime,
+    # exclusion, conflict ...) must not be pulled back in through the back door.
+    _SATISFIABLE = {"not_applicable", "already_installed"}
     for cand in list(candidates):
         for dep in cand.capability.dependencies:
             if dep in by_id:
                 by_id[dep].dependency_of.append(cand.capability.id)
                 continue
+            if dep in installed:
+                continue  # satisfied by an existing managed install
+            blocked = next(
+                (
+                    r
+                    for r in result.rejected
+                    if r.capability.id == dep
+                    and r.platform == cand.platform
+                    and r.category not in _SATISFIABLE
+                ),
+                None,
+            )
             try:
                 dep_cap = reg.get(dep).capability
             except Exception:
                 dep_cap = None
             if (
-                dep_cap is None
+                blocked is not None
+                or dep_cap is None
                 or not dep_cap.installable
                 or cand.platform not in dep_cap.platforms
                 or dep in ctx.excluded_ids
             ):
                 candidates.remove(cand)
+                why = (
+                    f"requires {dep!r}, which was rejected ({blocked.category})"
+                    if blocked is not None
+                    else f"requires {dep!r}, which is not installable on {cand.platform.value}"
+                )
                 result.rejected.append(
-                    Rejection(
-                        cand.capability,
-                        cand.platform,
-                        "dependency_missing",
-                        [f"requires {dep!r}, which is not installable on {cand.platform.value}"],
-                    )
+                    Rejection(cand.capability, cand.platform, "dependency_missing", [why])
                 )
                 break
             dep_cand = Candidate(
@@ -300,6 +319,20 @@ def _evaluate_one(
     applies, specificity, reasons = _applicability(cap, profile, ctx)
     if not applies:
         return Rejection(cap, platform, "not_applicable", reasons)
+
+    # Policy runs after applicability only so that irrelevant capabilities read as
+    # "not applicable" rather than "policy"; a denial is still enforced before planning.
+    if ctx.policy is not None:
+        decision, why = ctx.policy.evaluate(cap, platform)
+        if decision == Decision.DENY:
+            return Rejection(cap, platform, "policy_denied", ["denied by policy", *why])
+        if decision == Decision.REQUIRE_REQUEST and not requested:
+            return Rejection(
+                cap,
+                platform,
+                "policy_requires_request",
+                ["policy requires an explicit --request/--want for this capability", *why],
+            )
 
     # Applicability comes first so a backend-only project never sees UI runtime hints.
     if cap.install_strategy == InstallStrategy.NATIVE_PLUGIN:

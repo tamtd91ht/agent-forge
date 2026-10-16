@@ -22,6 +22,12 @@ non-ASCII characters are supported everywhere.
 | `validate [PATH] [--no-provenance]` | no | Registry/provenance checks; with PATH also managed files, config syntax, duplicates, transactions. |
 | `status PATH` | no | Managed capabilities, drift, outdated versions, conflicts, recent transactions and plans. |
 | `rollback TX_ID [--partial] [--yes]` | **yes** | Reverse a transaction; never overwrites user-modified files. |
+| `remove PATH ID... [--keep-modified]` | no (plan) | Plan removal of managed capabilities: managed files, CLAUDE.md/AGENTS.md sections, merged hook/MCP entries, manifest. Refuses files you edited unless `--keep-modified` (they become user-owned) and refuses when other managed capabilities depend on them. Approve + apply as usual. |
+| `drift PATH` | no | Expected vs actual for every managed file (hash), section (present?) and merged entry (present?). |
+| `repair PATH [--strategy restore\|unmanage] [--capability ID]` | no (plan) | `restore` rewrites drifted files from the registry at the installed version (your edits are replaced, backups kept); `unmanage` drops the capability from the manifest and leaves files alone. |
+| `policy [PATH]` | no | Effective policy layers (default → workspace `policy.yaml` → project `.agent-forge/policy.yaml`) and the allow / require_request / deny verdict per capability and platform. |
+| `audit [--event E] [--limit N]` | no | Append-only log of plans created/approved/revoked, transactions and rollbacks (`state/audit.jsonl`). |
+| `doctor` | no | Environment and workspace health: python/git/node/npx/claude/codex on PATH, registry validity, integrity pins, human sign-off count, policy layers, audit log. |
 | `reindex` | no | Rebuild the SQLite index from JSON documents. |
 
 ## Exit codes

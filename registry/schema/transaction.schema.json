@@ -194,6 +194,19 @@
       "title": "Plan Id",
       "type": "string"
     },
+    "profile_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Project profile fingerprint at plan time",
+      "title": "Profile Fingerprint"
+    },
     "record_sha256": {
       "anyOf": [
         {
@@ -206,6 +219,19 @@
       "default": null,
       "description": "Integrity hash of this record",
       "title": "Record Sha256"
+    },
+    "registry_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Registry digest the plan was built against",
+      "title": "Registry Digest"
     },
     "rollback_of": {
       "anyOf": [

@@ -619,7 +619,13 @@ def _print_profile(profile) -> None:
 # ---- assign / upgrade --------------------------------------------------------------------
 
 
-def _ctx(platforms, want, request, exclude, include_optional):
+def _policies(ws: WorkspaceConfig, target_root: Path | None):
+    from agent_forge.policy import load_policies
+
+    return load_policies(ws.registry_dir, ws.root, target_root)
+
+
+def _ctx(ws, target_root, platforms, want, request, exclude, include_optional):
     from agent_forge.matching.rules import MatchContext
 
     return MatchContext(
@@ -628,7 +634,15 @@ def _ctx(platforms, want, request, exclude, include_optional):
         requested_ids=frozenset(request or []),
         excluded_ids=frozenset(exclude or []),
         include_optional=include_optional,
+        policy=_policies(ws, target_root),
     )
+
+
+def _audit(store, event: str, **fields) -> None:
+    try:
+        store.audit.emit(event, **fields)
+    except OSError as exc:  # the audit log must never break a command
+        err_console.print(f"[yellow]audit log unavailable:[/] {exc}")
 
 
 @app.command()
@@ -667,11 +681,28 @@ def assign(
         reg = _registry(ws)
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
-        ctx = _ctx(tuple(platforms), want, request, exclude, include_optional)
+        ctx = _ctx(
+            ws,
+            Path(profile.canonical_path),
+            tuple(platforms),
+            want,
+            request,
+            exclude,
+            include_optional,
+        )
         plan, _match = build_assign_plan(reg, profile, ctx)
         plan.notes = [*notes, *plan.notes]
         store = _store(ws)
         p = store.save_plan(plan)
+        _audit(
+            store,
+            "PlanCreated",
+            plan_id=plan.plan_id,
+            kind=plan.kind,
+            target=plan.target.canonical_path,
+            registry_digest=plan.registry_digest,
+            operations=len(plan.operations),
+        )
         if as_json:
             _print_json(plan.model_dump(mode="json"))
             return
@@ -702,10 +733,23 @@ def upgrade(
         reg = _registry(ws)
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
-        plan = build_upgrade_plan(reg, profile, _ctx(tuple(platforms), None, None, None, False))
+        plan = build_upgrade_plan(
+            reg,
+            profile,
+            _ctx(ws, Path(profile.canonical_path), tuple(platforms), None, None, None, False),
+        )
         plan.notes = [*notes, *plan.notes]
         store = _store(ws)
         p = store.save_plan(plan)
+        _audit(
+            store,
+            "PlanCreated",
+            plan_id=plan.plan_id,
+            kind=plan.kind,
+            target=plan.target.canonical_path,
+            registry_digest=plan.registry_digest,
+            operations=len(plan.operations),
+        )
         if as_json:
             _print_json(plan.model_dump(mode="json"))
             return
@@ -911,6 +955,15 @@ def _approve_plan(
     plan.approval.extra_approvals = [o.op_id for o in extra]
     plan.status = PlanStatus.APPROVED
     store.save_plan(plan)
+    _audit(
+        store,
+        "PlanApproved",
+        plan_id=plan.plan_id,
+        target=plan.target.canonical_path,
+        plan_digest=plan.approval.plan_digest,
+        approved_by=by,
+        classes=sorted({o.approval_class for o in extra}),
+    )
     return extra
 
 
@@ -954,6 +1007,7 @@ def approve(
             plan.approval.extra_approvals = []
             plan.status = PlanStatus.REVOKED
             store.save_plan(plan)
+            _audit(store, "PlanRevoked", plan_id=plan.plan_id, target=plan.target.canonical_path)
             console.print(f"[yellow]approval revoked for {plan_id}[/]")
             return
         reg = _registry(ws)
@@ -1013,6 +1067,15 @@ def apply(
             return typer.confirm("Write these changes to the target?", default=False)
 
         tx = apply_plan(ws, store, reg, plan, confirm=confirm)
+        _audit(
+            store,
+            "TransactionCompleted",
+            transaction_id=tx.transaction_id,
+            plan_id=plan.plan_id,
+            target=tx.target_canonical_path,
+            status=tx.status.value,
+            capabilities=sorted(tx.capabilities),
+        )
         if as_json:
             _print_json(tx.model_dump(mode="json"))
             return
@@ -1145,6 +1208,7 @@ def forge(
             excluded_ids=frozenset(exclude or []),
             include_optional=include_optional,
             allowed_classes=frozenset(granted),
+            policy=_policies(ws, Path(profile.canonical_path)),
         )
         report["approval_classes"] = sorted(granted)
 
@@ -1218,6 +1282,15 @@ def forge(
                 by="agent-forge forge",
             )
             tx = apply_plan(ws, store, reg, plan, confirm=None)
+            _audit(
+                store,
+                "TransactionCompleted",
+                transaction_id=tx.transaction_id,
+                plan_id=plan.plan_id,
+                target=tx.target_canonical_path,
+                status=tx.status.value,
+                capabilities=sorted(tx.capabilities),
+            )
             step["status"] = "applied"
             step["transaction_id"] = tx.transaction_id
             if not as_json:
@@ -1275,6 +1348,308 @@ def forge(
         if as_json:
             _print_json(report)
         return exit_code
+
+    _run(body)
+
+
+# ---- remove / drift / repair -------------------------------------------------------------
+
+
+@app.command()
+def remove(
+    path: Annotated[Path, typer.Argument(help="Target project directory.")],
+    capability_ids: Annotated[
+        list[str], typer.Argument(help="Managed capability id(s) to remove.")
+    ],
+    workspace: WorkspaceOpt = None,
+    keep_modified: Annotated[
+        bool,
+        typer.Option("--keep-modified", help="Unmanage files you edited instead of refusing."),
+    ] = False,
+    as_json: JsonOpt = False,
+) -> None:
+    """Plan the removal of managed capabilities (files, sections, merged entries). Writes nothing;
+    approve + apply the plan as usual."""
+
+    def body() -> None:
+        from agent_forge.planner.maintenance import build_remove_plan
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        profile = scan_project(path, limits=ws.scan_limits)
+        plan = build_remove_plan(reg, profile, list(capability_ids), keep_modified=keep_modified)
+        store = _store(ws)
+        p = store.save_plan(plan)
+        _audit(
+            store,
+            "PlanCreated",
+            plan_id=plan.plan_id,
+            kind=plan.kind,
+            target=plan.target.canonical_path,
+            registry_digest=plan.registry_digest,
+            operations=len(plan.operations),
+        )
+        if as_json:
+            _print_json(plan.model_dump(mode="json"))
+            return
+        _print_plan_summary(plan)
+        console.print(f"[dim]plan saved: {p}[/]")
+        flags = " ".join(
+            sorted(
+                {APPROVAL_FLAGS[o.approval_class] for o in plan.operations_needing_extra_approval()}
+            )
+        )
+        console.print(
+            f"next: [bold]agent-forge approve {plan.plan_id} {flags}[/] then [bold]agent-forge apply {plan.plan_id}[/]"
+        )
+
+    _run(body)
+
+
+@app.command()
+def drift(
+    path: Annotated[Path, typer.Argument(help="Target project directory.")],
+    workspace: WorkspaceOpt = None,
+    as_json: JsonOpt = False,
+) -> int:
+    """Compare every managed file / section / merged entry with what was installed (read-only)."""
+
+    def body() -> int:
+        from agent_forge.planner.maintenance import drift_report
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        profile = scan_project(path, limits=ws.scan_limits)
+        rep = drift_report(profile)
+        if as_json:
+            _print_json(
+                {
+                    "target": rep.target,
+                    "items": [i.__dict__ for i in rep.items],
+                    "drifted": len(rep.drifted),
+                }
+            )
+            return 0
+        if not rep.items:
+            console.print("no managed capabilities")
+            return 0
+        t = Table(title=f"drift: {len(rep.drifted)} of {len(rep.items)} item(s)")
+        for col in ("capability", "kind", "path", "state", "expected", "actual"):
+            t.add_column(col, overflow="fold")
+        for i in rep.items:
+            color = "green" if i.state == "ok" else "yellow"
+            t.add_row(
+                i.capability_id,
+                i.kind,
+                i.path,
+                f"[{color}]{i.state}[/]",
+                (i.expected or "-")[:12],
+                (i.actual or "-")[:12],
+            )
+        console.print(t)
+        if rep.drifted:
+            console.print(
+                "repair with [bold]agent-forge repair PATH --strategy restore|unmanage[/] (plan + approval)"
+            )
+        return 0
+
+    _run(body)
+    return 0
+
+
+@app.command()
+def repair(
+    path: Annotated[Path, typer.Argument(help="Target project directory.")],
+    workspace: WorkspaceOpt = None,
+    strategy: Annotated[
+        str,
+        typer.Option(
+            "--strategy",
+            help="restore (rewrite from registry; your edits are replaced) | unmanage (drop from manifest, keep files)",
+        ),
+    ] = "restore",
+    capability: Annotated[
+        list[str] | None,
+        typer.Option("--capability", help="Limit to these ids (default: all drifted)."),
+    ] = None,
+    as_json: JsonOpt = False,
+) -> None:
+    """Plan a repair for drifted capabilities. Writes nothing; approve + apply the plan."""
+
+    def body() -> None:
+        from agent_forge.planner.maintenance import build_repair_plan
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        profile = scan_project(path, limits=ws.scan_limits)
+        plan = build_repair_plan(reg, profile, strategy, capability)
+        store = _store(ws)
+        p = store.save_plan(plan)
+        _audit(
+            store,
+            "PlanCreated",
+            plan_id=plan.plan_id,
+            kind=plan.kind,
+            target=plan.target.canonical_path,
+            registry_digest=plan.registry_digest,
+            operations=len(plan.operations),
+        )
+        if as_json:
+            _print_json(plan.model_dump(mode="json"))
+            return
+        _print_plan_summary(plan)
+        if not plan.operations:
+            console.print("[green]nothing to repair[/]")
+        console.print(f"[dim]plan saved: {p}[/]")
+
+    _run(body)
+
+
+# ---- doctor / policy / audit -------------------------------------------------------------
+
+
+@app.command()
+def doctor(workspace: WorkspaceOpt = None, as_json: JsonOpt = False) -> int:
+    """Check the local environment and workspace: tools on PATH, registry, policy, state dirs."""
+
+    def body() -> int:
+        import shutil
+        import subprocess
+
+        checks: list[dict[str, Any]] = []
+
+        def add(name: str, ok: bool, detail: str, *, level: str = "error") -> None:
+            checks.append(
+                {"name": name, "ok": ok, "detail": detail, "level": level if not ok else "ok"}
+            )
+
+        add("python", True, sys.version.split()[0])
+        for tool, needed in (
+            ("git", "required for sources/provenance"),
+            ("node", "needed by node hooks / MCP servers"),
+            ("npx", "needed by MCP servers"),
+            ("claude", "Claude Code CLI"),
+            ("codex", "Codex CLI"),
+        ):
+            where = shutil.which(tool)
+            add(tool, where is not None, where or f"not on PATH ({needed})", level="warning")
+        if shutil.which("git"):
+            v = subprocess.run(["git", "--version"], capture_output=True, text=True, check=False)
+            add("git version", v.returncode == 0, v.stdout.strip())
+        try:
+            ws = _ws(workspace)
+            add("workspace", True, str(ws.root))
+            ws.ensure_state_dirs()
+            add("state dirs", ws.state_dir.is_dir(), str(ws.state_dir))
+            reg = _registry(ws)
+            from agent_forge.registry.validator import validate_registry
+
+            rr = validate_registry(reg)
+            add(
+                "registry",
+                rr.ok,
+                f"{len(reg.items)} capabilities, {len(rr.errors)} error(s), {len(rr.warnings)} warning(s)",
+            )
+            pinned = sum(1 for lc in reg.items.values() if lc.capability.integrity)
+            add(
+                "integrity pins",
+                pinned == len(reg.items),
+                f"{pinned}/{len(reg.items)} pinned",
+                level="warning",
+            )
+            signed = sum(1 for lc in reg.items.values() if lc.capability.review.signed_off_by)
+            add(
+                "human sign-off",
+                signed == len(reg.items),
+                f"{signed}/{len(reg.items)} signed off",
+                level="warning",
+            )
+            ps = _policies(ws, None)
+            add("policy layers", True, ", ".join(ps.names))
+            add("sources manifest", ws.sources_manifest.is_file(), str(ws.sources_manifest))
+            add(
+                "audit log",
+                True,
+                str(ws.audit_path) + (" (present)" if ws.audit_path.exists() else " (empty)"),
+            )
+        except AgentForgeError as exc:
+            add("workspace", False, exc.message)
+        if as_json:
+            _print_json(checks)
+        else:
+            for c in checks:
+                color = {"ok": "green", "warning": "yellow", "error": "red"}[c["level"]]
+                console.print(f"[{color}]{c['level']:7}[/] {c['name']:16} {c['detail']}")
+        return 0 if all(c["ok"] or c["level"] == "warning" for c in checks) else 1
+
+    _run(body)
+    return 0
+
+
+@app.command()
+def policy(
+    path: Annotated[
+        Path | None,
+        typer.Argument(help="Target project (adds its .agent-forge/policy.yaml layer)."),
+    ] = None,
+    workspace: WorkspaceOpt = None,
+    as_json: JsonOpt = False,
+) -> None:
+    """Show the effective policy layers (default -> workspace -> project) and per-capability verdicts."""
+
+    def body() -> None:
+        from agent_forge.policy.engine import describe
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        ps = _policies(ws, path.resolve() if path else None)
+        verdicts = {}
+        for cap in reg.capabilities():
+            for plat in cap.platforms:
+                d, why = ps.evaluate(cap, plat)
+                verdicts.setdefault(cap.id, {})[plat.value] = {"decision": d.value, "reasons": why}
+        if as_json:
+            _print_json({"layers": describe(ps), "verdicts": verdicts})
+            return
+        console.print("layers: " + " -> ".join(ps.names))
+        t = Table(title="policy verdicts")
+        for col in ("capability", "platform", "decision", "reasons"):
+            t.add_column(col, overflow="fold")
+        for cid, per in verdicts.items():
+            for plat, v in per.items():
+                color = {"allow": "green", "require_request": "yellow", "deny": "red"}[
+                    v["decision"]
+                ]
+                t.add_row(cid, plat, f"[{color}]{v['decision']}[/]", "\n".join(v["reasons"]) or "-")
+        console.print(t)
+
+    _run(body)
+
+
+@app.command()
+def audit(
+    workspace: WorkspaceOpt = None,
+    event: Annotated[str | None, typer.Option("--event", help="Filter by event name.")] = None,
+    limit: Annotated[int, typer.Option("--limit")] = 50,
+    as_json: JsonOpt = False,
+) -> None:
+    """Show the append-only audit log (plans created/approved, transactions, rollbacks)."""
+
+    def body() -> None:
+        store = _store(_ws(workspace))
+        rows = store.audit.read(limit=limit, event=event)
+        if as_json:
+            _print_json(rows)
+            return
+        t = Table(title=f"audit ({len(rows)})")
+        for col in ("at", "event", "details"):
+            t.add_column(col, overflow="fold")
+        for r in rows:
+            details = ", ".join(f"{k}={v}" for k, v in r.items() if k not in ("at", "event"))
+            t.add_row(r["at"], r["event"], details)
+        console.print(t)
 
     _run(body)
 
@@ -1494,6 +1869,14 @@ def rollback(
             if not typer.confirm(f"Roll back {len(rp.actionable)} file(s)?", default=False):
                 raise PlanError("rollback cancelled by user")
         rb = execute_rollback(store, rp, partial=partial)
+        _audit(
+            store,
+            "RollbackCompleted",
+            transaction_id=rb.transaction_id,
+            rollback_of=tx.transaction_id,
+            target=tx.target_canonical_path,
+            partial=bool(rp.conflicts),
+        )
         if as_json:
             _print_json(rb.model_dump(mode="json"))
             return

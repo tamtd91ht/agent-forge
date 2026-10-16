@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Added (governance, from ADR-0002)
+- Policy engine: layered `default.yaml` → workspace `policy.yaml` → project
+  `.agent-forge/policy.yaml`, strictest wins; verdicts allow / require_request / deny
+  evaluated before scoring; `agent-forge policy [PATH]`.
+- Structured runtime grants on capabilities (`grants`, kind-derived defaults) feeding policy.
+- Integrity pins (`integrity.assets_sha256`, `scripts/pin_integrity.py`) checked by `validate`;
+  `review.signed_off_by` and policy `require_signoff`.
+- `remove PATH ID...`, `drift PATH`, `repair PATH --strategy restore|unmanage` (all plan-based).
+- Append-only audit log `state/audit.jsonl` and `agent-forge audit`; transactions record
+  registry digest and profile fingerprint.
+- `agent-forge doctor`.
+
+### Fixed
+- A dependency rejected by policy or any other hard rule is no longer pulled back in by a
+  dependant.
+
 ### Added
 - `agent-forge forge PATH`: one-shot scan → upgrade managed → add recommended → diff →
   single confirmation → approve + apply → validate. `--dry-run`, `--show-diff`,

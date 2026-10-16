@@ -163,6 +163,40 @@
       "title": "EquivalentSignal",
       "type": "object"
     },
+    "Grants": {
+      "additionalProperties": false,
+      "description": "What the installed content can do once the agent uses it. Input to the policy engine.\n\nDefaults are derived from `kind` when a manifest does not spell them out: hooks execute\nprocesses, MCP servers execute processes and (usually) access the network.",
+      "properties": {
+        "filesystem_write": {
+          "description": "Project-relative prefixes the content may write to at runtime (not install time)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Filesystem Write",
+          "type": "array"
+        },
+        "network_access": {
+          "default": false,
+          "description": "Talks to the network at runtime",
+          "title": "Network Access",
+          "type": "boolean"
+        },
+        "process_execute": {
+          "default": false,
+          "description": "Runs commands / launches processes",
+          "title": "Process Execute",
+          "type": "boolean"
+        },
+        "secrets_read": {
+          "default": false,
+          "description": "May read credential material",
+          "title": "Secrets Read",
+          "type": "boolean"
+        }
+      },
+      "title": "Grants",
+      "type": "object"
+    },
     "InstallStrategy": {
       "enum": [
         "file_copy",
@@ -172,6 +206,33 @@
       ],
       "title": "InstallStrategy",
       "type": "string"
+    },
+    "Integrity": {
+      "additionalProperties": false,
+      "properties": {
+        "assets_sha256": {
+          "description": "sha256 over assets/ (relative paths + file hashes); pinned by scripts/pin_integrity.py",
+          "title": "Assets Sha256",
+          "type": "string"
+        },
+        "pinned_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pinned At"
+        }
+      },
+      "required": [
+        "assets_sha256"
+      ],
+      "title": "Integrity",
+      "type": "object"
     },
     "LicenseInfo": {
       "additionalProperties": false,
@@ -273,6 +334,31 @@
         "reviewer": {
           "title": "Reviewer",
           "type": "string"
+        },
+        "signed_off_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Signed Off At"
+        },
+        "signed_off_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human who signed off the curation (None = pending)",
+          "title": "Signed Off By"
         }
       },
       "required": [
@@ -450,12 +536,36 @@
       "title": "Equivalents",
       "type": "array"
     },
+    "grants": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Grants"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Structured runtime permissions; derived from kind when omitted"
+    },
     "id": {
       "title": "Id",
       "type": "string"
     },
     "install_strategy": {
       "$ref": "#/$defs/InstallStrategy"
+    },
+    "integrity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Integrity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Pinned digest of assets/; verified by `validate`"
     },
     "kind": {
       "$ref": "#/$defs/CapabilityKind"
@@ -479,7 +589,7 @@
       "default": "none"
     },
     "permissions": {
-      "description": "e.g. 'runs_shell', 'reads_env', 'writes_outside_project'",
+      "description": "Free-form permission tags shown in reports (e.g. 'runs_shell'); see `grants`",
       "items": {
         "type": "string"
       },

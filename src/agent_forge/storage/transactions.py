@@ -11,6 +11,7 @@ from agent_forge.config import WorkspaceConfig
 from agent_forge.errors import PlanError
 from agent_forge.models.plan import Plan
 from agent_forge.models.transaction import Transaction
+from agent_forge.storage.audit import AuditLog
 from agent_forge.storage.database import Database
 from agent_forge.util import read_json, write_json
 
@@ -28,6 +29,7 @@ class Store:
         self.ws = ws
         ws.ensure_state_dirs()
         self.db = Database(ws.database_path)
+        self.audit = AuditLog(ws.audit_path)
 
     # ---- plans ---------------------------------------------------------------------------
 

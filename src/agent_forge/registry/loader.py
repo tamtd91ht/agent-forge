@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from agent_forge.errors import RegistryError
 from agent_forge.models.capability import Capability, CapabilityStatus
-from agent_forge.util import read_yaml, sha256_tree
+from agent_forge.util import read_yaml, sha256_text, sha256_tree
 
 MANIFEST_NAME = "capability.yaml"
 ASSETS_DIRNAME = "assets"
@@ -22,6 +22,7 @@ class LoadedCapability:
     directory: Path
     assets_dir: Path
     content_digest: str
+    assets_digest: str = ""
 
     @property
     def id(self) -> str:
@@ -83,6 +84,7 @@ def _load_one(directory: Path) -> LoadedCapability:
         directory=directory,
         assets_dir=assets_dir,
         content_digest=sha256_tree(directory),
+        assets_digest=sha256_tree(assets_dir) if assets_dir.is_dir() else sha256_text(""),
     )
 
 

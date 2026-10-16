@@ -1,0 +1,31 @@
+# Default policy shipped with the registry (part of the registry digest).
+# Workspace (<workspace>/policy.yaml) and project (<target>/.agent-forge/policy.yaml) layers
+# may only tighten these settings; the strictest verdict always wins.
+version: 1
+name: default
+
+# Capabilities above max_risk are denied outright; at/above require_request_from_risk they
+# are offered only when explicitly requested (--request <id> or --want <tag>).
+max_risk: high
+require_request_from_risk: high
+
+capabilities:
+  deny: []
+  require_request: []
+  allow_only: []
+  deny_tags: []
+
+# Structured runtime grants (see Capability.grants / effective_grants).
+grants:
+  process_execute: allow       # hooks / MCP servers; still gated by `approve --hooks/--mcp`
+  network_access: allow        # MCP servers; still gated by `approve --mcp`
+  secrets_read: deny
+
+# Switch whole approval classes off (e.g. an organisation that forbids project hooks).
+classes:
+  shared_file: allow
+  hook: allow
+  mcp: allow
+
+platforms: []                  # empty = all supported platforms
+require_signoff: false         # set true once every curated entry has a human sign-off

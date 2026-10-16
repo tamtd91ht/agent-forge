@@ -59,7 +59,10 @@ def projected_content(op: FileOperation, current: str | None) -> str | None:
         old = json.loads(op.previous_content) if op.previous_content else None
         return replace_fragment(current, old, new, path_hint=op.path)
     if op.kind == OperationKind.REMOVE_JSON:
-        return remove_fragment(current, parse_fragment(op.content or "{}"), path_hint=op.path)
+        # an empty result means nothing but our entries was in the file: delete it
+        return (
+            remove_fragment(current, parse_fragment(op.content or "{}"), path_hint=op.path) or None
+        )
     if op.kind == OperationKind.REMOVE:
         return None
     raise ValueError(f"unknown operation kind {op.kind}")

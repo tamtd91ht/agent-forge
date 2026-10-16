@@ -20,7 +20,7 @@ commits made** (left for the maintainer to review and commit).
 
 ```
 ruff check src tests scripts   -> All checks passed
-pytest -q                      -> 111 passed, 2 skipped (symlink creation needs privilege;
+pytest -q                      -> 127 passed, 2 skipped (symlink creation needs privilege;
                                   Windows junction tests run and pass)
 agent-forge validate           -> 15 checks, 0 errors, 0 warnings (provenance verified)
 ```
@@ -48,6 +48,13 @@ agent-forge validate           -> 15 checks, 0 errors, 0 warnings (provenance ve
 | tests run in the available environment | yes |
 | docs match behaviour | yes (written from the implemented commands) |
 | no unapproved global configuration changes | yes (nothing outside the workspace and temp fixtures was written) |
+
+## Governance layer (ADR-0002, 2026-10-16)
+
+- Policy engine (`policy/`), structured `grants`, integrity pins (20/20), `signed_off_by`
+  (0/20 — human sign-off still pending), audit log, `remove` / `drift` / `repair` /
+  `policy` / `audit` / `doctor` commands. Runtime plane and evaluation engine deliberately
+  not built; see `docs/adr/0002-upgrade-roadmap.md`.
 
 ## Known limitations / incomplete
 

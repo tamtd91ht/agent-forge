@@ -38,3 +38,6 @@ removal: remove_section
 risk: low
 benefit_score: 3
 maintenance_cost: 0
+integrity:
+  assets_sha256: 5e76551b8bac72686149f7c582a0bda98348666868ba16bc3415eec803014add
+  pinned_at: "2026-10-16"

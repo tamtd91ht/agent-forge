@@ -51,6 +51,26 @@ Planner and apply additionally require every path to be inside the adapter's man
   back the untouched files). For shared files, only the managed section is removed when the
   rest of the file changed.
 
+## Policy (deterministic, layered, tighten-only)
+
+Three YAML layers are merged with "strictest verdict wins": `registry/policies/default.yaml`
+(part of the registry digest), `<workspace>/policy.yaml`, and the untrusted
+`<target>/.agent-forge/policy.yaml` (validated; an invalid file is ignored and reported, it
+can never loosen anything). Each capability gets one verdict before scoring:
+
+| Verdict | Effect |
+|---|---|
+| `allow` | normal rules and ranking |
+| `require_request` | planned only with `--request <id>` / `--want <tag>` |
+| `deny` | rejected as `policy_denied`; dependants of a denied capability are rejected too |
+
+Rules available: `max_risk`, `require_request_from_risk`, `capabilities.{deny,require_request,allow_only,deny_tags}` (id globs), `grants.{process_execute,network_access,secrets_read}`, `classes.{shared_file,hook,mcp}` (switch a class off), `platforms`, `require_signoff`.
+Policy never *grants* anything: approval classes are still enforced by `approve`/`apply`.
+
+Every curated entry pins `integrity.assets_sha256`; `validate` fails if installed content
+in the registry was edited without re-pinning. `review.signed_off_by` records the human who
+approved the curation; `doctor` counts them and `require_signoff: true` makes it mandatory.
+
 ## Approval classes
 
 Every operation carries an `approval_class`; `approve` (and `forge`) must grant each class

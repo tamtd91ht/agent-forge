@@ -87,6 +87,33 @@ Useful flags:
 - `--include-optional` — promote optional candidates (high risk / needs permissions).
 - `--json` on every command for machine-readable output.
 
+## Project policy (optional)
+
+Put a `.agent-forge/policy.yaml` in the project to tighten what Agent Forge may ever plan
+there; it can only restrict, never loosen, the workspace defaults:
+
+```yaml
+name: team
+max_risk: medium                 # deny anything riskier
+classes: { hook: deny }          # never plan hooks here
+capabilities:
+  deny: ["rea.*"]
+  require_request: ["mcp.*"]     # MCP servers only when explicitly requested
+```
+
+`agent-forge policy "/path/to/my app"` shows the merged layers and every verdict.
+
+## Maintain what is installed
+
+```bash
+agent-forge drift  "/path/to/my app"                         # what changed since install
+agent-forge repair "/path/to/my app" --strategy restore      # plan: rewrite drifted files
+agent-forge repair "/path/to/my app" --strategy unmanage     # plan: keep files, stop managing
+agent-forge remove "/path/to/my app" ecc.tdd-workflow        # plan: uninstall one capability
+agent-forge audit                                            # who planned/approved/applied what
+agent-forge doctor                                           # environment + workspace health
+```
+
 ## Undo
 
 ```bash

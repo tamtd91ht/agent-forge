@@ -179,12 +179,39 @@ class ReviewInfo(StrictModel):
     reviewer: str
     rationale: str
     notes: list[str] = Field(default_factory=list)
+    signed_off_by: str | None = Field(
+        default=None, description="Human who signed off the curation (None = pending)"
+    )
+    signed_off_at: str | None = None
 
 
 class RuntimeRequirement(StrictModel):
     name: str
     description: str
     install_hint: str | None = None
+
+
+class Grants(StrictModel):
+    """What the installed content can do once the agent uses it. Input to the policy engine.
+
+    Defaults are derived from `kind` when a manifest does not spell them out: hooks execute
+    processes, MCP servers execute processes and (usually) access the network.
+    """
+
+    process_execute: bool = Field(default=False, description="Runs commands / launches processes")
+    network_access: bool = Field(default=False, description="Talks to the network at runtime")
+    secrets_read: bool = Field(default=False, description="May read credential material")
+    filesystem_write: list[str] = Field(
+        default_factory=list,
+        description="Project-relative prefixes the content may write to at runtime (not install time)",
+    )
+
+
+class Integrity(StrictModel):
+    assets_sha256: str = Field(
+        description="sha256 over assets/ (relative paths + file hashes); pinned by scripts/pin_integrity.py"
+    )
+    pinned_at: str | None = None
 
 
 class Capability(StrictModel):
@@ -213,7 +240,14 @@ class Capability(StrictModel):
     )
     equivalents: list[EquivalentSignal] = Field(default_factory=list)
     permissions: list[str] = Field(
-        default_factory=list, description="e.g. 'runs_shell', 'reads_env', 'writes_outside_project'"
+        default_factory=list,
+        description="Free-form permission tags shown in reports (e.g. 'runs_shell'); see `grants`",
+    )
+    grants: Grants | None = Field(
+        default=None, description="Structured runtime permissions; derived from kind when omitted"
+    )
+    integrity: Integrity | None = Field(
+        default=None, description="Pinned digest of assets/; verified by `validate`"
     )
     network: NetworkRequirement = NetworkRequirement.NONE
     runtime_requirements: list[RuntimeRequirement] = Field(default_factory=list)
@@ -266,6 +300,23 @@ class Capability(StrictModel):
                 f"{self.id}: curated capabilities require license.redistribution_ok=true"
             )
         return self
+
+    @property
+    def effective_grants(self) -> Grants:
+        """Declared grants, or conservative defaults derived from the capability kind."""
+        if self.grants is not None:
+            return self.grants
+        if self.kind == CapabilityKind.HOOK:
+            return Grants(process_execute=True, filesystem_write=["."])
+        if self.kind == CapabilityKind.MCP:
+            return Grants(
+                process_execute=True, network_access=self.network != NetworkRequirement.NONE
+            )
+        if self.install_strategy == InstallStrategy.NATIVE_PLUGIN:
+            return Grants(
+                process_execute=True, network_access=self.network != NetworkRequirement.NONE
+            )
+        return Grants(network_access=self.network == NetworkRequirement.REQUIRED)
 
     @property
     def installable(self) -> bool:

@@ -34,6 +34,14 @@ Or step by step: `scan` → `assign --want security` → `diff plan-…` → `ap
 → `apply plan-…` → `validate`. Only capabilities that fit the project are selected: a backend
 service never receives UI/UX material, a React app does.
 
+Governance: a layered, tighten-only policy (`registry/policies/default.yaml` → workspace
+`policy.yaml` → project `.agent-forge/policy.yaml`) decides allow / require_request / deny per
+capability before anything is planned; curated content is integrity-pinned; every plan,
+approval, transaction and rollback lands in an append-only audit log. Maintenance commands:
+`drift`, `repair`, `remove`, `doctor`, `policy`, `audit`. See
+[ADR-0002](docs/adr/0002-upgrade-roadmap.md) for what was adopted from the upgrade proposal
+and why a runtime plane was not.
+
 Three change classes need their own explicit approval, on `approve` or `forge`:
 `--shared-files` (sections in CLAUDE.md/AGENTS.md), `--hooks` (entries merged into
 `.claude/settings.json`; they run commands) and `--mcp` (servers merged into `.mcp.json`;

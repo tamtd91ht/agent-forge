@@ -52,6 +52,13 @@ def validate_registry(reg: Registry) -> RegistryReport:
                     rep.errors.append(
                         f"{cid}: asset is a symlink (not allowed): assets/{dest.source}"
                     )
+        if cap.integrity is not None and cap.integrity.assets_sha256 != lc.assets_digest:
+            rep.errors.append(
+                f"{cid}: assets digest {lc.assets_digest[:12]} does not match pinned integrity "
+                f"{cap.integrity.assets_sha256[:12]} (assets edited? re-pin with scripts/pin_integrity.py)"
+            )
+        elif cap.integrity is None and cap.status == CapabilityStatus.CURATED:
+            rep.warnings.append(f"{cid}: no pinned integrity digest (run scripts/pin_integrity.py)")
         if cap.license.notice_file:
             nf = lc.assets_dir / cap.license.notice_file
             if not nf.is_file():

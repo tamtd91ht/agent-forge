@@ -46,6 +46,12 @@ class Transaction(BaseModel):
     plan_id: str
     plan_digest: str
     forge_version: str
+    registry_digest: str | None = Field(
+        default=None, description="Registry digest the plan was built against"
+    )
+    profile_fingerprint: str | None = Field(
+        default=None, description="Project profile fingerprint at plan time"
+    )
     target_canonical_path: str
     started_at: str
     finished_at: str | None = None

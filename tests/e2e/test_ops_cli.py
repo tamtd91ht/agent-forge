@@ -1,0 +1,97 @@
+"""CLI: doctor, policy, drift, remove, repair, audit."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+import yaml
+from typer.testing import CliRunner
+
+from agent_forge.cli import app
+
+pytestmark = pytest.mark.e2e
+runner = CliRunner()
+
+
+def run(*args: str, expect: int = 0):
+    result = runner.invoke(app, list(args), catch_exceptions=False)
+    assert result.exit_code == expect, f"{args}\nexit={result.exit_code}\n{result.output}"
+    return result
+
+
+def run_json(*args: str, expect: int = 0):
+    return json.loads(run(*args, expect=expect).stdout)
+
+
+BACKEND = {
+    "pyproject.toml": "[project]\nname='api'\nversion='0'\ndependencies=['fastapi','pytest']\n",
+    "app/main.py": "x = 1\n",
+}
+
+
+def test_doctor_reports_environment(real_workspace) -> None:
+    checks = run_json("doctor", "--workspace", str(real_workspace.root), "--json")
+    names = {c["name"] for c in checks}
+    assert {"python", "git", "workspace", "registry", "policy layers", "integrity pins"} <= names
+    reg = next(c for c in checks if c["name"] == "registry")
+    assert reg["ok"]
+
+
+def test_policy_command_and_project_layer(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("polproj", kind="claude", files=BACKEND)
+    out = run_json("policy", "--workspace", ws, "--json")
+    assert [layer["layer"] for layer in out["layers"]] == ["default"]
+    assert out["verdicts"]["ecc.tdd-workflow"]["claude_code"]["decision"] == "allow"
+    assert (
+        out["verdicts"]["rea.reverse-engineer-anything"]["claude_code"]["decision"]
+        == "require_request"
+    )
+    (root / ".agent-forge").mkdir()
+    (root / ".agent-forge" / "policy.yaml").write_text(
+        yaml.safe_dump(
+            {"name": "team", "classes": {"hook": "deny"}, "capabilities": {"deny": ["ecc.agent.*"]}}
+        ),
+        encoding="utf-8",
+    )
+    out = run_json("policy", str(root), "--workspace", ws, "--json")
+    assert [layer["layer"] for layer in out["layers"]] == ["default", "project"]
+    assert out["verdicts"]["forge.hook.guard-secrets-python"]["claude_code"]["decision"] == "deny"
+    # the project policy shapes forge: no hooks, no ecc agents, even with --hooks granted
+    report = run_json("forge", str(root), "--workspace", ws, "--yes", "--hooks", "--json")
+    add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
+    assert add["rejected"]["forge.hook.guard-secrets-python"] == "policy_denied"
+    assert add["rejected"]["ecc.agent.planner"] == "policy_denied"
+    assert "ecc.security-review" in add["selected"]
+
+
+def test_drift_remove_repair_audit_cycle(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("ops", kind="claude", files=BACKEND)
+    run_json("forge", str(root), "--workspace", ws, "--yes", "--shared-files", "--json")
+    drift = run_json("drift", str(root), "--workspace", ws, "--json")
+    assert drift["drifted"] == 0 and drift["items"]
+    skill = root / ".claude" / "skills" / "tdd-workflow" / "SKILL.md"
+    skill.write_text("edited\n", encoding="utf-8")
+    drift = run_json("drift", str(root), "--workspace", ws, "--json")
+    assert drift["drifted"] == 1
+    # repair (restore) is a plan: approve + apply
+    plan = run_json("repair", str(root), "--workspace", ws, "--strategy", "restore", "--json")
+    assert plan["kind"] == "repair:restore" and plan["operations"]
+    run("approve", plan["plan_id"], "--workspace", ws)
+    run("apply", plan["plan_id"], "--workspace", ws, "--yes")
+    assert skill.read_text(encoding="utf-8") != "edited\n"
+    assert run_json("drift", str(root), "--workspace", ws, "--json")["drifted"] == 0
+    # remove one capability (needs --shared-files only when a section is involved)
+    plan = run_json("remove", str(root), "ecc.security-review", "--workspace", ws, "--json")
+    assert plan["kind"] == "remove"
+    run("approve", plan["plan_id"], "--workspace", ws)
+    run("apply", plan["plan_id"], "--workspace", ws, "--yes")
+    assert not (root / ".claude" / "skills" / "security-review").exists()
+    st = run_json("status", str(root), "--workspace", ws, "--json")
+    assert "ecc.security-review" not in {c["capability"] for c in st["capabilities"]}
+    assert run_json("validate", str(root), "--workspace", ws, "--json")["ok"]
+    events = [r["event"] for r in run_json("audit", "--workspace", ws, "--json")]
+    assert "PlanCreated" in events and "PlanApproved" in events and "TransactionCompleted" in events
+    run("remove", str(root), "not.managed", "--workspace", ws, expect=6)

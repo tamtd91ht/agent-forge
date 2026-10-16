@@ -61,6 +61,10 @@ class WorkspaceConfig:
         return self.state_dir / "agent-forge.sqlite3"
 
     @property
+    def audit_path(self) -> Path:
+        return self.state_dir / "audit.jsonl"
+
+    @property
     def sources_manifest(self) -> Path:
         return self.sources_dir / "sources.yaml"
 
