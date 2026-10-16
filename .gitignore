@@ -1,0 +1,34 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+.mypy_cache/
+
+# --- Agent Forge runtime state (never commit local state, reports, transactions) ---
+state/
+!state/.gitkeep
+sources/checkouts/
+*.local.yaml
+agent-forge.local.yaml
+
+# --- Secrets / env ---
+.env
+.env.*
+*.pem
+*.key
+*.token
+credentials*.json
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

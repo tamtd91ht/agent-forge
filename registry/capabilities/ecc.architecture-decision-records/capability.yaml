@@ -1,0 +1,45 @@
+schema_version: "1"
+id: ecc.architecture-decision-records
+name: Architecture decision records
+description: Capture architectural decisions as numbered ADR files in docs/adr/ with context, alternatives, consequences and an index.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Gives the agent a standard ADR procedure so significant decisions are recorded in a reviewable, discoverable place.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/architecture-decision-records/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/architecture-decision-records/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 180 lines of markdown, no external references. On request only (tag `adr` / `architecture`) since not every project keeps ADRs.
+applicability:
+  tags: [adr, architecture, documentation]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/architecture-decision-records
+    dest: .claude/skills/architecture-decision-records
+    merge: create_only
+  - platform: codex
+    source: codex/architecture-decision-records
+    dest: .agents/skills/architecture-decision-records
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["adr", "decision-record"]
+    description: an existing ADR skill
+risk: low
+benefit_score: 4
+maintenance_cost: 1

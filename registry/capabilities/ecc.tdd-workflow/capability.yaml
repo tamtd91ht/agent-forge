@@ -1,0 +1,56 @@
+schema_version: "1"
+id: ecc.tdd-workflow
+name: TDD workflow
+description: Red-green-refactor test-driven development workflow with coverage targets and plan hand-off.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: Gives the agent a concrete, repeatable procedure for writing a failing test first, implementing the smallest change to green, and refactoring with coverage across unit, integration and E2E tests.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/tdd-workflow/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/tdd-workflow/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Pure markdown (583 lines), no scripts, hooks or MCP dependencies. Mentions an optional `.claude/tdd/` plan location and an informational pre-commit hook section; both are harmless outside ECC. Frontmatter has name + description, so it is valid for both Claude Code and Codex Agent Skills.
+  notes:
+    - "Above the 500-line SKILL.md guideline; acceptable because the body is reference material loaded on demand."
+applicability:
+  always: true
+  tags: [tdd, testing, quality]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/tdd-workflow
+    dest: .claude/skills/tdd-workflow
+    merge: create_only
+  - platform: codex
+    source: codex/tdd-workflow
+    dest: .agents/skills/tdd-workflow
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["^tdd", "test-driven", "test-first"]
+    content_patterns: ["red.?green.?refactor", "test[- ]driven"]
+    description: an existing TDD / test-first skill
+  - kind: instruction
+    content_patterns: ["test[- ]driven development", "red[- ]green[- ]refactor"]
+    description: TDD guidance already present in project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/tdd-workflow/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 2

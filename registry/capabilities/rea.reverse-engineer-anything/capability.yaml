@@ -1,0 +1,45 @@
+schema_version: "1"
+id: rea.reverse-engineer-anything
+name: REA reverse-engineering workflows
+description: Reverse engineer binaries, packaged apps, Electron/JS bundles, firmware and browser behaviour through the REA MCP server (Ghidra, Frida, adb, mitmproxy and more).
+version: 6.5.0
+kind: skill
+category: analysis.reverse-engineering
+purpose: Lets an agent analyse shipped artifacts (binaries, APKs, bundles, captures) when source is unavailable. Only meaningful with the REA runtime registered as an MCP server.
+status: curated
+provenance: upstream
+source:
+  source_id: rea
+  repository: https://github.com/morluto/rea
+  revision: 1b97b0f3707b1cf78ac98bd4ae81638b33cc286f
+  paths:
+    - .agents/skills/reverse-engineer-anything/SKILL.md
+    - server.json
+    - docs/installation.md
+license:
+  spdx: MIT
+  attribution: "REA, Copyright (c) 2026 morluto; see THIRD_PARTY_NOTICES.md and DISCLAIMER.md upstream"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: The skill text states it "supplies instructions; it does not register the REA MCP server". Its tools attach debuggers, inject Frida scripts into processes, drive the user's browser and talk to adb devices. That is a native runtime with high privilege, so Agent Forge records it as a native capability with install hints and never copies the skill alone (it would be dead weight). Only surfaced when a user asks for reverse-engineering (tag), never by default.
+  notes:
+    - "DISCLAIMER.md forbids DRM / anti-cheat / licence bypass; carry that notice when enabling."
+applicability:
+  tags: [reverse-engineering, binary-analysis, security-research]
+platforms: [claude_code, codex]
+install_strategy: native_plugin
+runtime_requirements:
+  - name: node
+    description: Node.js ^22.19 || ^24.11 || >=26 (npm 11)
+  - name: rea-agents
+    description: "REA CLI + MCP server (npm package rea-agents@6.5.0)"
+    install_hint: "claude mcp add --scope local rea -- npx -y rea-agents@6.5.0 mcp   (Codex: codex mcp add rea -- npx -y rea-agents@6.5.0 mcp)"
+  - name: analysis engines
+    description: "bring-your-own: Ghidra, Hopper, IDA, JADX, Frida, adb, tshark as needed (never installed by REA during analysis)"
+permissions: [runs_processes, attaches_debuggers, drives_browser, device_access]
+network: required
+risk: high
+benefit_score: 8
+maintenance_cost: 6

@@ -1,0 +1,48 @@
+schema_version: "1"
+id: ecc.rules.common
+name: Common engineering rules
+description: Always-on Claude Code rules for coding style, testing, security, code review, patterns and development workflow.
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: Installs concise, always-loaded rules (no frontmatter, so they load at launch like CLAUDE.md) that set baseline expectations without a long instruction file.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - rules/common/coding-style.md
+    - rules/common/testing.md
+    - rules/common/security.md
+    - rules/common/code-review.md
+    - rules/common/patterns.md
+    - rules/common/development-workflow.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/ecc-common/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Six of the ten upstream common rules. Excluded on purpose - agents.md (describes ECC's own agent roster), hooks.md (assumes ECC hooks), git-workflow.md (references ECC-managed ~/.claude settings), performance.md (Claude Code CLI flags, not project guidance). Installed under .claude/rules/ecc-common/ so the files keep their upstream names without flattening. Conflicts with ecc.coding-standards to avoid duplicated style guidance; the rule set wins when both are candidates because it is cheaper in context.
+applicability:
+  always: true
+  tags: [standards, rules]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/ecc-common
+    dest: .claude/rules/ecc-common
+    merge: create_only
+conflicts: [ecc.coding-standards]
+equivalents:
+  - kind: rule
+    name_patterns: ["coding-style", "testing", "security", "code-review"]
+    description: rules with the same names already present
+risk: low
+benefit_score: 7
+maintenance_cost: 1

@@ -1,0 +1,49 @@
+schema_version: "1"
+id: uiux.guidelines
+name: UI/UX guidelines
+description: Markdown-only UI/UX quality rules (accessibility, layout, typography, forms, motion, responsive) plus a mobile pre-delivery checklist.
+version: 1.0.0
+kind: skill
+category: design.ui
+purpose: Gives the agent a vetted checklist for building and reviewing user-facing interfaces, so design quality is checked explicitly for frontend projects.
+status: curated
+provenance: adapted
+source:
+  source_id: ui-ux-pro-max
+  repository: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+  revision: 56ea9cf174ed86786187daa9de0e6247cb0747e4
+  paths:
+    - .claude/skills/ui-ux-pro-max/references/quick-reference.md
+    - .claude/skills/ui-ux-pro-max/references/pro-rules.md
+license:
+  spdx: MIT
+  attribution: "UI UX Pro Max, Copyright (c) 2024 Next Level Builder"
+  notice_file: claude_code/ui-ux-guidelines/LICENSE-UI-UX-PRO-MAX.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: The upstream SKILL.md hard-codes ${CLAUDE_PLUGIN_ROOT} paths and requires Python search scripts over 3 MB of CSV data; the two reference files are self-contained markdown. A workspace-authored SKILL.md wraps them with a priority table and points to the upstream CLI for the full toolkit. Only recommended for frontend / fullstack / mobile projects; design guidance is not evidence of implementation quality.
+applicability:
+  project_types: [frontend, fullstack, mobile-or-desktop]
+  frameworks: [react, nextjs, vue, nuxt, svelte, angular, astro, remix, react-native, electron, tailwind]
+  tags: [ui, ux, design, accessibility]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/ui-ux-guidelines
+    dest: .claude/skills/ui-ux-guidelines
+    merge: create_only
+  - platform: codex
+    source: codex/ui-ux-guidelines
+    dest: .agents/skills/ui-ux-guidelines
+    merge: create_only
+conflicts: [uiux.full-toolkit]
+equivalents:
+  - kind: skill
+    name_patterns: ["ui-ux", "ui_ux", "design-system", "^design$", "frontend-design"]
+    description: an existing UI/UX or design-system skill (e.g. the full UI UX Pro Max install)
+risk: low
+benefit_score: 6
+maintenance_cost: 2

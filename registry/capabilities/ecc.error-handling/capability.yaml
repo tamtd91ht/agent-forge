@@ -1,0 +1,46 @@
+schema_version: "1"
+id: ecc.error-handling
+name: Error-handling patterns
+description: Typed errors, propagation, retries, circuit breakers and user-facing error messages for TypeScript, Python and Go.
+version: 1.0.0
+kind: skill
+category: engineering.reliability
+purpose: Gives the agent concrete, language-specific patterns for designing error types and failure handling instead of swallowing exceptions or inventing ad-hoc schemes.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/error-handling/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/error-handling/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 377 lines of markdown covering TS/Python/Go only, so applicability is restricted to those languages. No external references.
+applicability:
+  languages: [typescript, javascript, python, go]
+  tags: [errors, reliability]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/error-handling
+    dest: .claude/skills/error-handling
+    merge: create_only
+  - platform: codex
+    source: codex/error-handling
+    dest: .agents/skills/error-handling
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["error[- ]handling", "exceptions?"]
+    description: an existing error-handling skill
+risk: low
+benefit_score: 5
+maintenance_cost: 2

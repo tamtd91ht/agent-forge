@@ -1,0 +1,42 @@
+schema_version: "1"
+id: ecc.verification-loop
+name: Verification loop
+description: Six-phase verification of a Claude Code session's work (build, types, lint, tests, security grep, diff review) ending in a PASS/FAIL report.
+version: 1.0.0
+kind: skill
+category: engineering.verification
+purpose: Forces the agent to verify its own output with the project's real build/test/lint commands before declaring work done, and to report evidence instead of claims.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/verification-loop/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/verification-loop/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 135 lines of pure markdown, frontmatter declares license MIT. The text is written for Claude Code sessions and mentions PostToolUse hooks as a complement; it does not require them. Not offered for Codex because the wording is Claude-specific and would need adaptation.
+applicability:
+  always: true
+  tags: [verification, quality, testing]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/verification-loop
+    dest: .claude/skills/verification-loop
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["verif", "quality-gate", "pre-commit-check"]
+    description: an existing verification / quality-gate skill
+risk: low
+benefit_score: 7
+maintenance_cost: 1

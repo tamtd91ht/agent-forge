@@ -1,0 +1,239 @@
+{
+  "$defs": {
+    "AppliedOperation": {
+      "additionalProperties": false,
+      "properties": {
+        "after_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None = file removed",
+          "title": "After Sha256"
+        },
+        "applied": {
+          "default": false,
+          "title": "Applied",
+          "type": "boolean"
+        },
+        "backup": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relative path inside the transaction backup dir",
+          "title": "Backup"
+        },
+        "before_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None = file did not exist",
+          "title": "Before Sha256"
+        },
+        "capability_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability Id"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "kind": {
+          "$ref": "#/$defs/OperationKind"
+        },
+        "op_id": {
+          "title": "Op Id",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "section_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Id"
+        }
+      },
+      "required": [
+        "op_id",
+        "kind",
+        "path"
+      ],
+      "title": "AppliedOperation",
+      "type": "object"
+    },
+    "OperationKind": {
+      "enum": [
+        "create",
+        "replace",
+        "merge_section",
+        "remove",
+        "remove_section",
+        "manifest"
+      ],
+      "title": "OperationKind",
+      "type": "string"
+    },
+    "TransactionStatus": {
+      "enum": [
+        "in_progress",
+        "completed",
+        "failed",
+        "partial",
+        "rolled_back",
+        "rollback_conflict"
+      ],
+      "title": "TransactionStatus",
+      "type": "string"
+    }
+  },
+  "$id": "https://agent-forge.local/schema/transaction.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capabilities": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "capability_id -> version",
+      "title": "Capabilities",
+      "type": "object"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Finished At"
+    },
+    "forge_version": {
+      "title": "Forge Version",
+      "type": "string"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "operations": {
+      "items": {
+        "$ref": "#/$defs/AppliedOperation"
+      },
+      "title": "Operations",
+      "type": "array"
+    },
+    "plan_digest": {
+      "title": "Plan Digest",
+      "type": "string"
+    },
+    "plan_id": {
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "record_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Integrity hash of this record",
+      "title": "Record Sha256"
+    },
+    "rollback_of": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Transaction id this one reverses",
+      "title": "Rollback Of"
+    },
+    "schema_version": {
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "started_at": {
+      "title": "Started At",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/TransactionStatus",
+      "default": "in_progress"
+    },
+    "target_canonical_path": {
+      "title": "Target Canonical Path",
+      "type": "string"
+    },
+    "transaction_id": {
+      "title": "Transaction Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "transaction_id",
+    "plan_id",
+    "plan_digest",
+    "forge_version",
+    "target_canonical_path",
+    "started_at"
+  ],
+  "title": "Transaction",
+  "type": "object"
+}

@@ -1,0 +1,46 @@
+# Approved upstream capability sources.
+# Cloning a source is NOT installing it. Checkout content is untrusted until a reviewer
+# curates specific assets into registry/capabilities/<id>/ with a capability.yaml manifest.
+version: 1
+sources:
+  - id: rea
+    name: REA (Reverse Engineer Anything)
+    url: https://github.com/morluto/rea
+    license: MIT
+    default_branch: main
+    trust: untrusted
+    homepage: https://github.com/morluto/rea
+    notes:
+      - "Node.js npm package (rea-agents): one binary that is both a CLI and a stdio MCP server."
+      - "Only end-user skill: .agents/skills/reverse-engineer-anything (needs the REA MCP/CLI runtime)."
+      - "install.sh does `npm install --global` and `rea setup` writes ~/.claude.json and ~/.claude/skills: never run by Agent Forge."
+      - "Third-party notices: THIRD_PARTY_NOTICES.md, licenses/, DISCLAIMER.md (usage restrictions)."
+    redistribution_notes: "MIT; keep LICENSE notice and DISCLAIMER.md usage rules when republishing skill text."
+
+  - id: ecc
+    name: Everything Claude Code (ECC)
+    url: https://github.com/affaan-m/ECC
+    license: MIT
+    default_branch: main
+    trust: untrusted
+    homepage: https://github.com/affaan-m/ECC
+    notes:
+      - "Claude Code plugin + cross-platform content pack: 311 skills, 71 agents, 97 commands, rules/, hooks/."
+      - "Hooks are inline `node -e` bootstraps that write session state under ~/.claude; never installed by Agent Forge."
+      - "Exceptions to MIT: skills/osint-investigation (CC-BY-SA-4.0); 8 supply-chain skills (Apache-2.0); react-performance adapted from vercel-labs (MIT, attributed)."
+      - "scripts/sync-ecc-to-codex.sh sets git config --global core.hooksPath: never run."
+    redistribution_notes: "MIT for curated assets; check per-skill `license:` frontmatter before curating."
+
+  - id: ui-ux-pro-max
+    name: UI UX Pro Max
+    url: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+    license: MIT
+    default_branch: main
+    trust: untrusted
+    homepage: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+    notes:
+      - "Claude Code plugin (7 skills) + npm CLI installer (uipro) + skill.json manifest for 19 platforms."
+      - "Core skill depends on stdlib-only Python scripts (search.py over CSV design data); markdown guidance works without them."
+      - "Sub-skills design/, design-system/, ui-styling/ call external APIs or subprocess: not curated."
+      - ".claude/skills/ui-styling/LICENSE.txt is Apache-2.0; canvas fonts are SIL OFL."
+    redistribution_notes: "MIT for the core skill; Apache-2.0 for ui-styling; keep per-font OFL notices if ever curated."

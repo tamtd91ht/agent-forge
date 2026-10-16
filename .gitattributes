@@ -1,0 +1,5 @@
+# Keep LF everywhere so registry digests and managed-file hashes are identical across OSes.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.sqlite3 binary

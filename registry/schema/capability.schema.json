@@ -1,0 +1,563 @@
+{
+  "$defs": {
+    "Applicability": {
+      "additionalProperties": false,
+      "description": "Hard applicability conditions. Empty lists mean 'no constraint'.",
+      "properties": {
+        "always": {
+          "default": false,
+          "description": "Applies to every project (still subject to conflicts)",
+          "title": "Always",
+          "type": "boolean"
+        },
+        "any_of_files": {
+          "description": "Glob-free relative paths; applies if at least one exists",
+          "items": {
+            "type": "string"
+          },
+          "title": "Any Of Files",
+          "type": "array"
+        },
+        "frameworks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Frameworks",
+          "type": "array"
+        },
+        "languages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Languages",
+          "type": "array"
+        },
+        "project_types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Project Types",
+          "type": "array"
+        },
+        "tags": {
+          "description": "Matches user-requested tags (--want)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "title": "Applicability",
+      "type": "object"
+    },
+    "CapabilityKind": {
+      "enum": [
+        "skill",
+        "rule",
+        "agent",
+        "instruction",
+        "hook",
+        "mcp",
+        "reference"
+      ],
+      "title": "CapabilityKind",
+      "type": "string"
+    },
+    "CapabilityStatus": {
+      "enum": [
+        "discovered",
+        "under_review",
+        "curated",
+        "deprecated",
+        "rejected"
+      ],
+      "title": "CapabilityStatus",
+      "type": "string"
+    },
+    "Destination": {
+      "additionalProperties": false,
+      "properties": {
+        "dest": {
+          "description": "Path relative to the target project root",
+          "title": "Dest",
+          "type": "string"
+        },
+        "merge": {
+          "$ref": "#/$defs/MergeStrategy",
+          "default": "create_only"
+        },
+        "platform": {
+          "$ref": "#/$defs/Platform"
+        },
+        "section_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Marker id for APPEND_SECTION",
+          "title": "Section Id"
+        },
+        "source": {
+          "description": "Path relative to the capability's assets/ directory (file or dir)",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "platform",
+        "source",
+        "dest"
+      ],
+      "title": "Destination",
+      "type": "object"
+    },
+    "EquivalentSignal": {
+      "additionalProperties": false,
+      "description": "Evidence that a project already has an equivalent capability.",
+      "properties": {
+        "content_patterns": {
+          "description": "Regexes against instruction file content (case-insensitive)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Content Patterns",
+          "type": "array"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/CapabilityKind"
+        },
+        "name_patterns": {
+          "description": "Regexes against skill/agent/rule names",
+          "items": {
+            "type": "string"
+          },
+          "title": "Name Patterns",
+          "type": "array"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platform"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "description"
+      ],
+      "title": "EquivalentSignal",
+      "type": "object"
+    },
+    "InstallStrategy": {
+      "enum": [
+        "file_copy",
+        "section_merge",
+        "native_plugin",
+        "reference_only"
+      ],
+      "title": "InstallStrategy",
+      "type": "string"
+    },
+    "LicenseInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "attribution": {
+          "description": "Attribution line that must be preserved",
+          "title": "Attribution",
+          "type": "string"
+        },
+        "notice_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relative path (in assets/) of a preserved notice",
+          "title": "Notice File"
+        },
+        "redistribution_ok": {
+          "description": "Reviewer confirmed redistribution is permitted",
+          "title": "Redistribution Ok",
+          "type": "boolean"
+        },
+        "spdx": {
+          "description": "SPDX identifier, e.g. MIT",
+          "title": "Spdx",
+          "type": "string"
+        }
+      },
+      "required": [
+        "spdx",
+        "attribution",
+        "redistribution_ok"
+      ],
+      "title": "LicenseInfo",
+      "type": "object"
+    },
+    "MergeStrategy": {
+      "enum": [
+        "create_only",
+        "replace_managed",
+        "append_section"
+      ],
+      "title": "MergeStrategy",
+      "type": "string"
+    },
+    "NetworkRequirement": {
+      "enum": [
+        "none",
+        "optional",
+        "required"
+      ],
+      "title": "NetworkRequirement",
+      "type": "string"
+    },
+    "Platform": {
+      "enum": [
+        "claude_code",
+        "codex"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "Provenance": {
+      "enum": [
+        "upstream",
+        "adapted",
+        "workspace",
+        "generated",
+        "user_modified"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "ReviewInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "reviewed_at": {
+          "description": "ISO-8601 date",
+          "title": "Reviewed At",
+          "type": "string"
+        },
+        "reviewer": {
+          "title": "Reviewer",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviewed_at",
+        "reviewer",
+        "rationale"
+      ],
+      "title": "ReviewInfo",
+      "type": "object"
+    },
+    "RiskLevel": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    },
+    "RuntimeRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "install_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Install Hint"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ],
+      "title": "RuntimeRequirement",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "description": "Upstream paths this capability derives from",
+          "items": {
+            "type": "string"
+          },
+          "title": "Paths",
+          "type": "array"
+        },
+        "repository": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Git remote URL",
+          "title": "Repository"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Full commit SHA verified at curation time",
+          "title": "Revision"
+        },
+        "source_id": {
+          "description": "ID from sources.yaml, or 'workspace'",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    },
+    "ValidationCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "params": {
+          "additionalProperties": true,
+          "title": "Params",
+          "type": "object"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "type": {
+          "description": "file_exists | frontmatter | yaml | json | section_present | max_lines",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "path"
+      ],
+      "title": "ValidationCheck",
+      "type": "object"
+    }
+  },
+  "$id": "https://agent-forge.local/schema/capability.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "applicability": {
+      "$ref": "#/$defs/Applicability"
+    },
+    "benefit_score": {
+      "default": 5,
+      "maximum": 10,
+      "minimum": 0,
+      "title": "Benefit Score",
+      "type": "integer"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "conflicts": {
+      "description": "Capability IDs that must not coexist",
+      "items": {
+        "type": "string"
+      },
+      "title": "Conflicts",
+      "type": "array"
+    },
+    "dependencies": {
+      "description": "Capability IDs required first",
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "destinations": {
+      "items": {
+        "$ref": "#/$defs/Destination"
+      },
+      "title": "Destinations",
+      "type": "array"
+    },
+    "equivalents": {
+      "items": {
+        "$ref": "#/$defs/EquivalentSignal"
+      },
+      "title": "Equivalents",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "install_strategy": {
+      "$ref": "#/$defs/InstallStrategy"
+    },
+    "kind": {
+      "$ref": "#/$defs/CapabilityKind"
+    },
+    "license": {
+      "$ref": "#/$defs/LicenseInfo"
+    },
+    "maintenance_cost": {
+      "default": 2,
+      "maximum": 10,
+      "minimum": 0,
+      "title": "Maintenance Cost",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "network": {
+      "$ref": "#/$defs/NetworkRequirement",
+      "default": "none"
+    },
+    "permissions": {
+      "description": "e.g. 'runs_shell', 'reads_env', 'writes_outside_project'",
+      "items": {
+        "type": "string"
+      },
+      "title": "Permissions",
+      "type": "array"
+    },
+    "platforms": {
+      "items": {
+        "$ref": "#/$defs/Platform"
+      },
+      "title": "Platforms",
+      "type": "array"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "purpose": {
+      "title": "Purpose",
+      "type": "string"
+    },
+    "removal": {
+      "default": "delete_managed_files",
+      "description": "delete_managed_files | remove_section",
+      "title": "Removal",
+      "type": "string"
+    },
+    "review": {
+      "$ref": "#/$defs/ReviewInfo"
+    },
+    "risk": {
+      "$ref": "#/$defs/RiskLevel",
+      "default": "low"
+    },
+    "runtime_requirements": {
+      "items": {
+        "$ref": "#/$defs/RuntimeRequirement"
+      },
+      "title": "Runtime Requirements",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceRef"
+    },
+    "status": {
+      "$ref": "#/$defs/CapabilityStatus"
+    },
+    "validation": {
+      "items": {
+        "$ref": "#/$defs/ValidationCheck"
+      },
+      "title": "Validation",
+      "type": "array"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "version",
+    "kind",
+    "category",
+    "purpose",
+    "status",
+    "provenance",
+    "source",
+    "license",
+    "review",
+    "platforms",
+    "install_strategy"
+  ],
+  "title": "Capability",
+  "type": "object"
+}

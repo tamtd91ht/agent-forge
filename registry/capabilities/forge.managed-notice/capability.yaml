@@ -1,0 +1,40 @@
+schema_version: "1"
+id: forge.managed-notice
+name: Managed-capabilities notice
+description: A short marker-delimited section in CLAUDE.md / AGENTS.md telling the agent that some skills are managed by Agent Forge and where the manifest lives.
+version: 1.0.0
+kind: instruction
+category: meta.agent-forge
+purpose: Makes installed capabilities discoverable to the agent and documents the ownership boundary (managed files may be edited; drift is detected). Also exercises the shared-file merge path, which always requires explicit extra approval.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored, 6 lines, inserted only inside agent-forge markers; the rest of the shared file is preserved byte-for-byte. Small enough to stay well under Codex's 32 KiB AGENTS.md budget.
+applicability:
+  always: true
+  tags: [agent-forge, meta]
+platforms: [claude_code, codex]
+install_strategy: section_merge
+destinations:
+  - platform: claude_code
+    source: claude_code/notice.md
+    dest: CLAUDE.md
+    merge: append_section
+    section_id: agent-forge-managed
+  - platform: codex
+    source: codex/notice.md
+    dest: AGENTS.md
+    merge: append_section
+    section_id: agent-forge-managed
+removal: remove_section
+risk: low
+benefit_score: 3
+maintenance_cost: 0

@@ -1,0 +1,50 @@
+schema_version: "1"
+id: ecc.security-review
+name: Security review checklist
+description: Security checklist and patterns for authentication, input handling, secrets, API endpoints and cloud infrastructure.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Gives the agent a structured review procedure for code that touches auth, user input, secrets, payments or infrastructure, so security concerns are checked explicitly instead of ad hoc.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/security-review/SKILL.md
+    - skills/security-review/cloud-infrastructure-security.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/security-review/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Two markdown files (511 + reference), no scripts, no ECC-specific commands or hooks referenced. Recommended for projects that expose APIs or services; available on request for anything else.
+applicability:
+  project_types: [backend, fullstack, service, infrastructure]
+  tags: [security, review]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/security-review
+    dest: .claude/skills/security-review
+    merge: create_only
+  - platform: codex
+    source: codex/security-review
+    dest: .agents/skills/security-review
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["security"]
+    description: an existing security review skill
+  - kind: agent
+    name_patterns: ["security"]
+    description: an existing security reviewer agent
+risk: low
+benefit_score: 7
+maintenance_cost: 2

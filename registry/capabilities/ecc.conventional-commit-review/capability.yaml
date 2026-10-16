@@ -1,0 +1,48 @@
+schema_version: "1"
+id: ecc.conventional-commit-review
+name: Conventional commit review
+description: Reviews staged changes and drafts a Conventional Commits message with the right type, scope and length.
+version: 1.0.0
+kind: skill
+category: engineering.git
+purpose: Produces consistent, reviewable commit messages from the actual staged diff.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/conventional-commit-review/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa (skill origin marked 'personal' upstream, distributed under the repository's MIT license)"
+  notice_file: claude_code/conventional-commit-review/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 106 lines, markdown only. Installed only on request (tag `git` / `commits`) because many teams already have commit conventions in CLAUDE.md or AGENTS.md.
+applicability:
+  tags: [git, commits]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/conventional-commit-review
+    dest: .claude/skills/conventional-commit-review
+    merge: create_only
+  - platform: codex
+    source: codex/conventional-commit-review
+    dest: .agents/skills/conventional-commit-review
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["commit"]
+    description: an existing commit-message skill
+  - kind: instruction
+    content_patterns: ["conventional commits?"]
+    description: commit conventions already documented in project instructions
+risk: low
+benefit_score: 4
+maintenance_cost: 1

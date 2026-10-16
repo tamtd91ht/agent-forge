@@ -1,0 +1,41 @@
+schema_version: "1"
+id: ecc.agent.planner
+name: Planner subagent
+description: Read-only planning specialist subagent for complex features, refactors and architectural changes.
+version: 1.0.0
+kind: agent
+category: agents.planning
+purpose: Lets the main agent delegate planning to a focused subagent that only reads, greps and globs, producing a step-by-step implementation plan with risks and test strategy.
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - agents/planner.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Frontmatter uses documented fields only (name, description, tools "Read, Grep, Glob", model "opus"). Body is a worked planning example with no ECC commands or hooks. Adapted only by appending an attribution footer (agents are single files, so a notice file cannot sit beside them). Claude Code only; Codex subagents use a different TOML format that is loaded only for trusted projects.
+applicability:
+  always: true
+  tags: [planning, agents]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/planner.md
+    dest: .claude/agents/planner.md
+    merge: create_only
+equivalents:
+  - kind: agent
+    name_patterns: ["plan", "architect"]
+    description: an existing planning / architecture subagent
+risk: low
+benefit_score: 5
+maintenance_cost: 1

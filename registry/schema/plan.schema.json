@@ -1,0 +1,551 @@
+{
+  "$defs": {
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "approved_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved At"
+        },
+        "approved_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved By"
+        },
+        "extra_approvals": {
+          "description": "op_ids explicitly approved for shared-file changes",
+          "items": {
+            "type": "string"
+          },
+          "title": "Extra Approvals",
+          "type": "array"
+        },
+        "plan_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Digest the approval is bound to",
+          "title": "Plan Digest"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "status": {
+          "default": "pending",
+          "description": "pending | approved | revoked",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "title": "Approval",
+      "type": "object"
+    },
+    "FileOperation": {
+      "additionalProperties": false,
+      "properties": {
+        "after_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected hash after apply when computable",
+          "title": "After Sha256"
+        },
+        "before_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected current file hash; None = absent",
+          "title": "Before Sha256"
+        },
+        "capability_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability Id"
+        },
+        "capability_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability Version"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Full new file content or section body",
+          "title": "Content"
+        },
+        "content_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "sha256 of `content`",
+          "title": "Content Sha256"
+        },
+        "kind": {
+          "$ref": "#/$defs/OperationKind"
+        },
+        "op_id": {
+          "title": "Op Id",
+          "type": "string"
+        },
+        "path": {
+          "description": "Relative to target root, POSIX separators",
+          "title": "Path",
+          "type": "string"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platform"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "requires_extra_approval": {
+          "default": false,
+          "title": "Requires Extra Approval",
+          "type": "boolean"
+        },
+        "section_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Id"
+        },
+        "shared_file": {
+          "default": false,
+          "description": "True for CLAUDE.md/AGENTS.md style files",
+          "title": "Shared File",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op_id",
+        "kind",
+        "path"
+      ],
+      "title": "FileOperation",
+      "type": "object"
+    },
+    "OperationKind": {
+      "enum": [
+        "create",
+        "replace",
+        "merge_section",
+        "remove",
+        "remove_section",
+        "manifest"
+      ],
+      "title": "OperationKind",
+      "type": "string"
+    },
+    "PlanStatus": {
+      "enum": [
+        "draft",
+        "approved",
+        "applied",
+        "stale",
+        "failed",
+        "revoked"
+      ],
+      "title": "PlanStatus",
+      "type": "string"
+    },
+    "Platform": {
+      "enum": [
+        "claude_code",
+        "codex"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "RejectedCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "title": "Capability Id",
+          "type": "string"
+        },
+        "category": {
+          "default": "not_applicable",
+          "description": "not_applicable | equivalent_exists | conflict | unsupported_platform | needs_runtime | reference_only | dependency_missing | already_installed | user_excluded",
+          "title": "Category",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability_id",
+        "version",
+        "reasons"
+      ],
+      "title": "RejectedCapability",
+      "type": "object"
+    },
+    "RiskLevel": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    },
+    "SelectedCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "adds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Adds",
+          "type": "array"
+        },
+        "capability_id": {
+          "title": "Capability Id",
+          "type": "string"
+        },
+        "conflicts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Conflicts",
+          "type": "array"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "existing": {
+          "description": "What already exists in the target",
+          "items": {
+            "type": "string"
+          },
+          "title": "Existing",
+          "type": "array"
+        },
+        "optional": {
+          "default": false,
+          "title": "Optional",
+          "type": "boolean"
+        },
+        "platform": {
+          "$ref": "#/$defs/Platform"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "risk": {
+          "$ref": "#/$defs/RiskLevel"
+        },
+        "rollback": {
+          "default": "",
+          "title": "Rollback",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "solves": {
+          "default": "",
+          "title": "Solves",
+          "type": "string"
+        },
+        "validation": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Validation",
+          "type": "array"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability_id",
+        "version",
+        "platform",
+        "score",
+        "risk"
+      ],
+      "title": "SelectedCapability",
+      "type": "object"
+    },
+    "TargetIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_path": {
+          "title": "Canonical Path",
+          "type": "string"
+        },
+        "git_dirty": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Git Dirty"
+        },
+        "git_head": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Git Head"
+        },
+        "git_root": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Git Root"
+        },
+        "profile_fingerprint": {
+          "title": "Profile Fingerprint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "canonical_path",
+        "profile_fingerprint"
+      ],
+      "title": "TargetIdentity",
+      "type": "object"
+    }
+  },
+  "$id": "https://agent-forge.local/schema/plan.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "approval": {
+      "$ref": "#/$defs/Approval"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "dependency_order": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependency Order",
+      "type": "array"
+    },
+    "forge_version": {
+      "title": "Forge Version",
+      "type": "string"
+    },
+    "kind": {
+      "description": "assign | upgrade",
+      "title": "Kind",
+      "type": "string"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "operations": {
+      "items": {
+        "$ref": "#/$defs/FileOperation"
+      },
+      "title": "Operations",
+      "type": "array"
+    },
+    "plan_id": {
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "registry_digest": {
+      "title": "Registry Digest",
+      "type": "string"
+    },
+    "rejected": {
+      "items": {
+        "$ref": "#/$defs/RejectedCapability"
+      },
+      "title": "Rejected",
+      "type": "array"
+    },
+    "risk": {
+      "$ref": "#/$defs/RiskLevel",
+      "default": "low"
+    },
+    "rollback_strategy": {
+      "default": "",
+      "title": "Rollback Strategy",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "selected": {
+      "items": {
+        "$ref": "#/$defs/SelectedCapability"
+      },
+      "title": "Selected",
+      "type": "array"
+    },
+    "status": {
+      "$ref": "#/$defs/PlanStatus",
+      "default": "draft"
+    },
+    "target": {
+      "$ref": "#/$defs/TargetIdentity"
+    },
+    "target_path": {
+      "title": "Target Path",
+      "type": "string"
+    },
+    "transaction_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Transaction Id"
+    },
+    "user_decisions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "User Decisions",
+      "type": "array"
+    },
+    "validation_plan": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Validation Plan",
+      "type": "array"
+    }
+  },
+  "required": [
+    "plan_id",
+    "kind",
+    "created_at",
+    "forge_version",
+    "target",
+    "target_path",
+    "registry_digest"
+  ],
+  "title": "Plan",
+  "type": "object"
+}

@@ -1,0 +1,42 @@
+schema_version: "1"
+id: ecc.agent.code-reviewer
+name: Code reviewer subagent
+description: Code review specialist subagent for quality, security and maintainability, run after writing or modifying code.
+version: 1.0.0
+kind: agent
+category: agents.review
+purpose: Lets the main agent delegate a structured review of a diff to a focused subagent with read + shell access for running checks.
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - agents/code-reviewer.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Documented frontmatter fields only (tools "Read, Grep, Glob, Bash", model "sonnet"). The agent has Bash access, so it is marked with the `runs_shell` permission and is therefore optional unless requested. Adapted only by an attribution footer.
+applicability:
+  always: true
+  tags: [review, agents]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/code-reviewer.md
+    dest: .claude/agents/code-reviewer.md
+    merge: create_only
+equivalents:
+  - kind: agent
+    name_patterns: ["review"]
+    description: an existing review subagent
+permissions: [runs_shell]
+risk: medium
+benefit_score: 6
+maintenance_cost: 1

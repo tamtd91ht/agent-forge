@@ -1,0 +1,11 @@
+# Agent Forge workspace configuration
+version: 1
+registry_dir: registry
+sources_dir: sources
+checkouts_dir: sources/checkouts
+state_dir: state
+scan:
+  max_file_bytes: 1048576
+  max_files: 20000
+  max_depth: 12
+created_at: '2026-10-16T04:52:41+00:00'

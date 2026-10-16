@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-forge"
+version = "0.1.0"
+description = "Local-first, approval-first platform that scans, recommends, installs, validates and rolls back AI-agent capabilities for software projects."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Agent Forge maintainers" }]
+keywords = ["ai-agent", "claude-code", "codex", "developer-tools", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Build Tools",
+]
+dependencies = [
+  "typer>=0.15,<1",
+  "rich>=13.7",
+  "pydantic>=2.9",
+  "pyyaml>=6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "hypothesis>=6.100",
+  "ruff>=0.8",
+  "jsonschema>=4.23",
+]
+
+[project.scripts]
+agent-forge = "agent_forge.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/vihat/agent-forge#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_forge"]
+
+# The canonical curated registry lives at <repo>/registry. It is shipped inside the
+# wheel as seed data so `agent-forge init` can bootstrap a workspace anywhere.
+[tool.hatch.build.targets.wheel.force-include]
+"registry" = "agent_forge/_seed/registry"
+"sources/sources.yaml" = "agent_forge/_seed/sources/sources.yaml"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "registry", "sources/sources.yaml", "docs", "tests", "README.md", "LICENSE", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -ra --strict-markers"
+markers = [
+  "security: filesystem-boundary and untrusted-input tests",
+  "e2e: end-to-end lifecycle tests on disposable fixtures",
+]
+filterwarnings = ["error::DeprecationWarning:agent_forge.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+pycodestyle = { max-line-length = 130 }
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "PTH", "S"]
+ignore = ["S101", "S603", "S607", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B011", "PTH", "SIM", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"

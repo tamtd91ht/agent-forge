@@ -1,0 +1,45 @@
+schema_version: "1"
+id: uiux.full-toolkit
+name: UI UX Pro Max full toolkit
+description: The complete UI UX Pro Max skill set (7 skills, Python search over design-system/palette/typography data, design-system generator), installed by its own CLI.
+version: 2.15.0
+kind: skill
+category: design.ui
+purpose: Full design-intelligence toolkit for frontend work. Agent Forge does not install it because it requires running an npm installer that copies ~3 MB of data and Python scripts into the project; use the upstream CLI after review.
+status: curated
+provenance: upstream
+source:
+  source_id: ui-ux-pro-max
+  repository: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+  revision: 56ea9cf174ed86786187daa9de0e6247cb0747e4
+  paths:
+    - .claude/skills/ui-ux-pro-max/SKILL.md
+    - src/ui-ux-pro-max/scripts/search.py
+    - cli/src/commands/init.ts
+license:
+  spdx: MIT
+  attribution: "UI UX Pro Max, Copyright (c) 2024 Next Level Builder (ui-styling sub-skill: Apache-2.0; bundled fonts: SIL OFL)"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Verified that `uipro init --ai <platform>` writes SKILL.md + data/ + scripts/ into the project skill directory and copies 6 sub-skills; the core scripts are stdlib-only and make no network calls, but sub-skills design/ and ui-styling/ call external APIs or subprocess. Recorded as a native capability so the recommendation engine can point at it without Agent Forge executing the installer.
+applicability:
+  project_types: [frontend, fullstack, mobile-or-desktop]
+  tags: [ui, ux, design-system]
+platforms: [claude_code, codex]
+install_strategy: native_plugin
+runtime_requirements:
+  - name: node
+    description: Node.js 18+ to run the installer
+  - name: ui-ux-pro-max-cli
+    description: "upstream installer; writes .claude/skills/ui-ux-pro-max (or .agents/skills for Codex) with data and Python scripts"
+    install_hint: "npx ui-ux-pro-max-cli init --ai claude   (or --ai codex); review the dry-run first: --dry-run"
+  - name: python3
+    description: "stdlib-only Python used by the skill's search.py at runtime"
+conflicts: [uiux.guidelines]
+permissions: [runs_installer, runs_python_scripts]
+network: optional
+risk: medium
+benefit_score: 7
+maintenance_cost: 4

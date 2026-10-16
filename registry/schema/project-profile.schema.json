@@ -1,0 +1,475 @@
+{
+  "$defs": {
+    "AgentAsset": {
+      "additionalProperties": false,
+      "description": "An existing skill / agent / rule / instruction file found in the target.",
+      "properties": {
+        "frontmatter": {
+          "additionalProperties": true,
+          "title": "Frontmatter",
+          "type": "object"
+        },
+        "headings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Headings",
+          "type": "array"
+        },
+        "kind": {
+          "description": "instruction | skill | agent | rule | hook | mcp | settings | command",
+          "title": "Kind",
+          "type": "string"
+        },
+        "lines": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lines"
+        },
+        "managed_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Capability id if Agent Forge installed it",
+          "title": "Managed By"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platform"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        }
+      },
+      "required": [
+        "platform",
+        "kind",
+        "name",
+        "path"
+      ],
+      "title": "AgentAsset",
+      "type": "object"
+    },
+    "Detection": {
+      "additionalProperties": false,
+      "description": "A detected language/framework/project-type with confidence and evidence.",
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "confidence"
+      ],
+      "title": "Detection",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "path": {
+          "description": "Relative path of the indicator",
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "GitState": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branch"
+        },
+        "dirty": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dirty"
+        },
+        "dirty_count": {
+          "default": 0,
+          "title": "Dirty Count",
+          "type": "integer"
+        },
+        "head": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Head"
+        },
+        "is_repo": {
+          "default": false,
+          "title": "Is Repo",
+          "type": "boolean"
+        },
+        "remote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remote"
+        },
+        "root": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Root"
+        }
+      },
+      "title": "GitState",
+      "type": "object"
+    },
+    "ManagedCapabilityRecord": {
+      "additionalProperties": false,
+      "description": "A capability recorded in the target's `.agent-forge/managed.json`.",
+      "properties": {
+        "capability_id": {
+          "title": "Capability Id",
+          "type": "string"
+        },
+        "drift": {
+          "description": "Files whose current hash differs (set by scan)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Drift",
+          "type": "array"
+        },
+        "files": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "relative path -> sha256 after install",
+          "title": "Files",
+          "type": "object"
+        },
+        "installed_at": {
+          "title": "Installed At",
+          "type": "string"
+        },
+        "sections": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "relative path -> section_id for merged sections",
+          "title": "Sections",
+          "type": "object"
+        },
+        "transaction_id": {
+          "title": "Transaction Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability_id",
+        "version",
+        "transaction_id",
+        "installed_at"
+      ],
+      "title": "ManagedCapabilityRecord",
+      "type": "object"
+    },
+    "Platform": {
+      "enum": [
+        "claude_code",
+        "codex"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "PlatformDetection": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "platform": {
+          "$ref": "#/$defs/Platform"
+        }
+      },
+      "required": [
+        "platform",
+        "confidence"
+      ],
+      "title": "PlatformDetection",
+      "type": "object"
+    },
+    "ScanStats": {
+      "additionalProperties": false,
+      "properties": {
+        "dirs_seen": {
+          "default": 0,
+          "title": "Dirs Seen",
+          "type": "integer"
+        },
+        "excluded_dirs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Dirs",
+          "type": "array"
+        },
+        "files_read": {
+          "default": 0,
+          "title": "Files Read",
+          "type": "integer"
+        },
+        "files_seen": {
+          "default": 0,
+          "title": "Files Seen",
+          "type": "integer"
+        },
+        "limits": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Limits",
+          "type": "object"
+        },
+        "skipped_large": {
+          "default": 0,
+          "title": "Skipped Large",
+          "type": "integer"
+        },
+        "skipped_symlinks": {
+          "default": 0,
+          "title": "Skipped Symlinks",
+          "type": "integer"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "title": "ScanStats",
+      "type": "object"
+    }
+  },
+  "$id": "https://agent-forge.local/schema/project-profile.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/AgentAsset"
+      },
+      "title": "Assets",
+      "type": "array"
+    },
+    "canonical_path": {
+      "description": "Resolved absolute path",
+      "title": "Canonical Path",
+      "type": "string"
+    },
+    "forge_version": {
+      "title": "Forge Version",
+      "type": "string"
+    },
+    "frameworks": {
+      "items": {
+        "$ref": "#/$defs/Detection"
+      },
+      "title": "Frameworks",
+      "type": "array"
+    },
+    "git": {
+      "$ref": "#/$defs/GitState"
+    },
+    "languages": {
+      "items": {
+        "$ref": "#/$defs/Detection"
+      },
+      "title": "Languages",
+      "type": "array"
+    },
+    "managed": {
+      "items": {
+        "$ref": "#/$defs/ManagedCapabilityRecord"
+      },
+      "title": "Managed",
+      "type": "array"
+    },
+    "managed_manifest_valid": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "None = no manifest; False = present but rejected",
+      "title": "Managed Manifest Valid"
+    },
+    "platforms": {
+      "items": {
+        "$ref": "#/$defs/PlatformDetection"
+      },
+      "title": "Platforms",
+      "type": "array"
+    },
+    "project_types": {
+      "items": {
+        "$ref": "#/$defs/Detection"
+      },
+      "title": "Project Types",
+      "type": "array"
+    },
+    "scanned_at": {
+      "title": "Scanned At",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sensitive_files": {
+      "description": "Paths that look like secrets (never read)",
+      "items": {
+        "type": "string"
+      },
+      "title": "Sensitive Files",
+      "type": "array"
+    },
+    "stats": {
+      "$ref": "#/$defs/ScanStats"
+    },
+    "target_path": {
+      "description": "Path as given by the user",
+      "title": "Target Path",
+      "type": "string"
+    },
+    "test_commands": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Test Commands",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "scanned_at",
+    "forge_version",
+    "target_path",
+    "canonical_path"
+  ],
+  "title": "ProjectProfile",
+  "type": "object"
+}

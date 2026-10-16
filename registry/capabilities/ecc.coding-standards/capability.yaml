@@ -1,0 +1,53 @@
+schema_version: "1"
+id: ecc.coding-standards
+name: Coding standards baseline
+description: Cross-project conventions for naming, readability, immutability and code-quality review.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Provides a language-agnostic baseline the agent applies when writing or reviewing code, reducing style drift across sessions.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+    - skills/coding-standards/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa"
+  notice_file: claude_code/coding-standards/LICENSE-ECC.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-16"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 551 lines of markdown; the word "hooks" only appears in React examples. One line defers to "a narrower ECC skill" for framework specifics, which is harmless. No scripts or commands required.
+applicability:
+  always: true
+  tags: [standards, style, review]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/coding-standards
+    dest: .claude/skills/coding-standards
+    merge: create_only
+  - platform: codex
+    source: codex/coding-standards
+    dest: .agents/skills/coding-standards
+    merge: create_only
+conflicts: [ecc.rules.common]
+equivalents:
+  - kind: skill
+    name_patterns: ["coding-standard", "code-style", "style-guide", "conventions"]
+    description: an existing coding standards skill
+  - kind: rule
+    name_patterns: ["coding-style", "code-style", "style"]
+    description: coding-style rules already present
+  - kind: instruction
+    content_patterns: ["coding (standards|style|conventions)", "style guide"]
+    description: coding conventions already documented in project instructions
+risk: low
+benefit_score: 6
+maintenance_cost: 2
