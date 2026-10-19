@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from agent_forge.models.capability import CapabilityStatus, InstallStrategy, MergeStrategy
 from agent_forge.registry.loader import Registry
@@ -40,6 +42,8 @@ def validate_registry(reg: Registry) -> RegistryReport:
         if cap.install_strategy in (InstallStrategy.FILE_COPY, InstallStrategy.SECTION_MERGE):
             if not lc.assets_dir.is_dir():
                 rep.errors.append(f"{cid}: assets directory missing: {lc.assets_dir}")
+            else:
+                _check_markdown_links(cid, lc.assets_dir, rep)
             for dest in cap.destinations:
                 src = lc.assets_dir / dest.source
                 if not src.exists():
@@ -77,6 +81,26 @@ def validate_registry(reg: Registry) -> RegistryReport:
             )
     _check_dependency_cycles(reg, rep)
     return rep
+
+
+_CODE_RE = re.compile(r"^(```|~~~).*?^\1|`[^`\n]*`", re.MULTILINE | re.DOTALL)
+_LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
+
+
+def _check_markdown_links(cid: str, assets_dir: Path, rep: RegistryReport) -> None:
+    """Relative links in curated markdown must point at files shipped alongside them.
+
+    Curating a subset of upstream files easily leaves links to the files that were left out.
+    """
+    for md in sorted(assets_dir.rglob("*.md")):
+        text = _CODE_RE.sub("", md.read_text(encoding="utf-8", errors="replace"))
+        for target in _LINK_RE.findall(text):
+            path = target.split("#", 1)[0]
+            if not path or ":" in path or path.startswith("/"):
+                continue  # anchor, URL / mailto, or absolute
+            if not (md.parent / path).exists():
+                rel = md.relative_to(assets_dir).as_posix()
+                rep.errors.append(f"{cid}: broken link in assets/{rel}: {target}")
 
 
 def _check_dependency_cycles(reg: Registry, rep: RegistryReport) -> None:

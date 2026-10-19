@@ -73,3 +73,22 @@ def test_resolve_dependencies_orders_deps_first(synthetic_registry: Path) -> Non
     reg = load_registry(synthetic_registry)
     order = resolve_dependencies(reg, ["t.needs-always"])
     assert order.index("t.always") < order.index("t.needs-always")
+
+
+def test_broken_relative_markdown_links_are_errors(tmp_path: Path) -> None:
+    reg = tmp_path / "r"
+    body = (
+        "See [ok](other.md), [anchor](#top), [web](https://example.com), "
+        "[sub](other.md#part) and [gone](./missing.md).\n\n"
+        "```markdown\n[example](not-checked.md)\n```\n"
+    )
+    assets = skill_assets("links", body)
+    assets["claude_code/links/other.md"] = "# other\n"
+    assets["codex/links/other.md"] = "# other\n"
+    write_capability(reg, base_manifest("t.links"), assets)
+    rep = validate_registry(load_registry(reg))
+    broken = [e for e in rep.errors if "broken link" in e]
+    assert broken == [
+        "t.links: broken link in assets/claude_code/links/SKILL.md: ./missing.md",
+        "t.links: broken link in assets/codex/links/SKILL.md: ./missing.md",
+    ]
