@@ -1,0 +1,43 @@
+schema_version: "1"
+id: forge.skill.agent-forge-upgrade
+name: Agent Forge upgrade skill
+description: On-demand skill that has the coding agent review a project (code, CLAUDE.md, rules, skills) and then drive `agent-forge` to install or upgrade only the capabilities that really fit, with the user approving every write.
+version: 1.0.0
+kind: skill
+category: meta.agent-forge
+purpose: Closes the gap between Agent Forge's manifest-based matching and a real review of the project. The agent decides what fits and why; Agent Forge stays the only writer (plans, hashes, rollback); the user stays the approver.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-19"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored markdown only; every Agent Forge call it prescribes is read-only or `--dry-run` until the user says yes in the conversation, and it forbids hand-editing agent files outside Agent Forge. Opt-in (tag `agent-forge`) because it is a meta tool, not project guidance; also shipped in the repo's own `.claude/skills/` so it works from the workspace with a project path as argument.
+applicability:
+  tags: [agent-forge, meta, upgrade, review]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/agent-forge-upgrade
+    dest: .claude/skills/agent-forge-upgrade
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["^agent-forge"]
+    description: an existing Agent Forge skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/agent-forge-upgrade/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: bb4a23430c65f9c311dc4cf01939d2ec007aea2aa23c234266d4dc311bfbbe7e
+  pinned_at: "2026-10-19"

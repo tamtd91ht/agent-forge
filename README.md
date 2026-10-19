@@ -109,6 +109,28 @@ is simply left out.
 | `conflict` | Overlaps with something already selected or a file you own | `--exclude` the other one, or move your file |
 | `equivalent_exists` | Your project already has something similar | `--request <id>` |
 
+## Let Claude do the review
+
+Agent Forge matches on manifests and declared rules; it cannot read your code or judge
+whether a catalog item contradicts your own `.claude/rules`. The `agent-forge-upgrade` skill
+hands that review to Claude Code and keeps Agent Forge as the only writer:
+
+```
+/agent-forge-upgrade path/to/my-app
+```
+
+Claude scans with Agent Forge, reads the project's `CLAUDE.md`, rules, skills and tooling,
+proposes ADD / SKIP / UPGRADE / ASK per capability with the file it checked, runs the
+resulting `forge --dry-run`, and applies only after you say yes. It works out of the box when
+Claude Code is opened in the Agent Forge workspace; to use it from any project copy
+`.claude/skills/agent-forge-upgrade/` into `~/.claude/skills/`, or install it into a project
+with `--request forge.skill.agent-forge-upgrade`.
+
+Its sibling `/agent-forge-scout https://github.com/owner/repo` reviews a public repository for
+Agent Forge itself: what is genuinely impressive in it, and whether it could become curated
+content or an engine upgrade in line with the ADRs. Read-only, it never runs the repo's code,
+and it hands you a proposed `sources.yaml` entry or ADR stub instead of writing them.
+
 ## Everyday tasks
 
 | I want to… | Command |

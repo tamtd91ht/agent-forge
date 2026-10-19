@@ -92,3 +92,11 @@ def test_broken_relative_markdown_links_are_errors(tmp_path: Path) -> None:
         "t.links: broken link in assets/claude_code/links/SKILL.md: ./missing.md",
         "t.links: broken link in assets/codex/links/SKILL.md: ./missing.md",
     ]
+
+
+@pytest.mark.parametrize("name", ["agent-forge-upgrade", "agent-forge-scout"])
+def test_repo_copy_of_meta_skill_matches_registry(name: str) -> None:
+    # these skills are shipped twice on purpose (registry asset + the repo's own .claude/skills)
+    asset = REAL_REGISTRY / f"capabilities/forge.skill.{name}/assets/claude_code/{name}/SKILL.md"
+    repo_copy = REAL_REGISTRY.parent / f".claude/skills/{name}/SKILL.md"
+    assert repo_copy.read_text(encoding="utf-8") == asset.read_text(encoding="utf-8")

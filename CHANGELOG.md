@@ -24,6 +24,13 @@
   Claude Code, the three permission flags, how to read "not selected", everyday tasks.
 
 ### Added
+- `forge.skill.agent-forge-upgrade`: a Claude Code skill (`/agent-forge-upgrade <project>`)
+  that reviews the project (CLAUDE.md, rules, skills, tooling) and drives Agent Forge with
+  `--request/--exclude/--want`, dry-run first, apply only on the user's yes. Shipped in the
+  registry (opt-in) and in the repo's own `.claude/skills/`.
+- `forge.skill.agent-forge-scout`: a Claude Code skill (`/agent-forge-scout <github url>`)
+  that reviews a public repository for Agent Forge: what is impressive, which parts could be
+  curated or turned into engine upgrades per the ADRs, licence/safety check, verdict. Read-only.
 - `init --refresh-registry`: update a workspace's registry copy from the packaged seed after
   pulling/reinstalling Agent Forge (own capabilities kept).
 - `validate`: relative links in curated markdown assets must resolve inside `assets/`

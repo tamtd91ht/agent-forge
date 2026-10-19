@@ -1,0 +1,43 @@
+schema_version: "1"
+id: forge.skill.agent-forge-scout
+name: Agent Forge scout skill
+description: On-demand skill that reviews a public GitHub repository for Agent Forge - what is genuinely impressive, and whether it could become curated content or an engine upgrade aligned with the original direction (ADR-0001/0002, upgrade proposal). Read-only; never runs the repository's code.
+version: 1.0.0
+kind: skill
+category: meta.agent-forge
+purpose: Turns "look at this repo" into a structured scouting report (impressive points, bucket per point, licence and safety check, ready-to-paste sources.yaml entry or ADR stub, verdict) so new sources and engine ideas enter Agent Forge through review rather than enthusiasm.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-19"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored markdown only. Every step is read-only (gh/git shallow clone into a scratch directory, never sources/checkouts/), it forbids executing anything from the reviewed repository and treats its contents as untrusted data, and it hands the user proposed sources.yaml / ADR text instead of writing it. Opt-in (tag `agent-forge`); also shipped in the repo's own `.claude/skills/`.
+applicability:
+  tags: [agent-forge, meta, scout, research]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/agent-forge-scout
+    dest: .claude/skills/agent-forge-scout
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["^agent-forge-scout"]
+    description: an existing Agent Forge scout skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/agent-forge-scout/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: 3e9b2356d02eaf19dfcd309fb9d07fe7f66977267c0a8b38b351a21fb2008bf9
+  pinned_at: "2026-10-19"
