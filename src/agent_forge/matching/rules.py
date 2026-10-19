@@ -11,6 +11,8 @@ Order of evaluation per (capability, platform):
   8. declared conflicts                            -> reject (conflict)
   9. dependencies curated and applicable           -> reject (dependency_missing)
  10. risk / permissions                            -> optional unless requested
+ 11. a dependant of an optional dependency        -> optional too, unless requested
+     (pulled-in dependencies go through policy and steps 10-11 like any candidate)
 Only then are survivors scored and ranked.
 """
 
@@ -203,19 +205,25 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
                 dep_cap = reg.get(dep).capability
             except Exception:
                 dep_cap = None
+            # A not-applicable dependency never reached the policy check in _evaluate_one.
+            policy_block = (
+                _policy_block(dep_cap, cand.platform, ctx) if dep_cap is not None else None
+            )
             if (
                 blocked is not None
+                or policy_block is not None
                 or dep_cap is None
                 or not dep_cap.installable
                 or cand.platform not in dep_cap.platforms
                 or dep in ctx.excluded_ids
             ):
                 candidates.remove(cand)
-                why = (
-                    f"requires {dep!r}, which was rejected ({blocked.category})"
-                    if blocked is not None
-                    else f"requires {dep!r}, which is not installable on {cand.platform.value}"
-                )
+                if blocked is not None:
+                    why = f"requires {dep!r}, which was rejected ({blocked.category})"
+                elif policy_block is not None:
+                    why = f"requires {dep!r}, which was rejected ({policy_block})"
+                else:
+                    why = f"requires {dep!r}, which is not installable on {cand.platform.value}"
                 result.rejected.append(
                     Rejection(cand.capability, cand.platform, "dependency_missing", [why])
                 )
@@ -229,8 +237,11 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
             dep_cand.score = score(
                 dep_cap, profile, wanted_tags=set(ctx.wanted_tags), specificity=0
             )
+            _apply_optional(dep_cand, _is_requested(dep_cap, ctx), ctx)
             candidates.append(dep_cand)
             by_id[dep] = dep_cand
+
+    _reconcile_optional_dependencies(candidates, ctx)
 
     # declared conflicts among survivors: keep the higher-scored one, reject the other
     chosen: dict[str, Candidate] = {}
@@ -263,6 +274,72 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
     return result
 
 
+def _is_requested(cap: Capability, ctx: MatchContext) -> bool:
+    return cap.id in ctx.requested_ids or bool(ctx.wanted_tags & set(cap.applicability.tags))
+
+
+def _policy_block(cap: Capability, platform: Platform, ctx: MatchContext) -> str | None:
+    """Rejection category when policy keeps `cap` out of the plan, else None."""
+    if ctx.policy is None:
+        return None
+    decision, _why = ctx.policy.evaluate(cap, platform)
+    if decision == Decision.DENY:
+        return "policy_denied"
+    if decision == Decision.REQUIRE_REQUEST and not _is_requested(cap, ctx):
+        return "policy_requires_request"
+    return None
+
+
+def _apply_optional(cand: Candidate, requested: bool, ctx: MatchContext) -> None:
+    """Risk / permissions / low score make a candidate optional unless it was requested."""
+    cap = cand.capability
+    if requested:
+        return
+    if cap.risk == RiskLevel.HIGH:
+        cand.reasons.append("high risk: listed as optional, install only on request")
+    elif cap.permissions:
+        cand.reasons.append("requires permissions (" + ", ".join(cap.permissions) + "): optional")
+    elif cand.score.total < 3.0:
+        cand.reasons.append(f"low score ({cand.score.total:.1f}): optional")
+    else:
+        return
+    cand.optional = True
+    if ctx.include_optional:
+        cand.optional = False
+        cand.reasons.append("promoted by --include-optional")
+
+
+def _reconcile_optional_dependencies(candidates: list[Candidate], ctx: MatchContext) -> None:
+    """Never recommend a capability whose dependency stays optional (i.e. out of the plan).
+
+    A requested dependant promotes its dependency (transitively); otherwise the dependant
+    becomes optional too. `forced` only grows, so the loop terminates.
+    """
+    by_key = {(c.capability.id, c.platform): c for c in candidates}
+    forced = {c.capability.id for c in candidates if _is_requested(c.capability, ctx)}
+    changed = True
+    while changed:
+        changed = False
+        for cand in candidates:
+            if cand.optional:
+                continue
+            for dep in cand.capability.dependencies:
+                dep_cand = by_key.get((dep, cand.platform))
+                if dep_cand is None or not dep_cand.optional:
+                    continue
+                if cand.capability.id in forced:
+                    dep_cand.optional = False
+                    dep_cand.reasons.append(
+                        f"promoted: dependency of requested {cand.capability.id}"
+                    )
+                    forced.add(dep)
+                else:
+                    cand.optional = True
+                    cand.reasons.append(f"depends on optional {dep}: optional")
+                changed = True
+                break
+
+
 def _evaluate_one(
     cap: Capability,
     platform: Platform,
@@ -273,7 +350,7 @@ def _evaluate_one(
     selected_ids: set[str],
 ) -> Candidate | Rejection:
     adapter = get_adapter(platform)
-    requested = cap.id in ctx.requested_ids or bool(ctx.wanted_tags & set(cap.applicability.tags))
+    requested = _is_requested(cap, ctx)
 
     if cap.status != CapabilityStatus.CURATED:
         return Rejection(
@@ -384,16 +461,5 @@ def _evaluate_one(
 
     cand = Candidate(cap, platform, reasons=reasons, existing=existing)
     cand.score = score(cap, profile, wanted_tags=set(ctx.wanted_tags), specificity=specificity)
-    if cap.risk == RiskLevel.HIGH and not requested:
-        cand.optional = True
-        cand.reasons.append("high risk: listed as optional, install only on request")
-    elif cap.permissions and not requested:
-        cand.optional = True
-        cand.reasons.append("requires permissions (" + ", ".join(cap.permissions) + "): optional")
-    elif cand.score.total < 3.0 and not requested:
-        cand.optional = True
-        cand.reasons.append(f"low score ({cand.score.total:.1f}): optional")
-    if cand.optional and ctx.include_optional:
-        cand.optional = False
-        cand.reasons.append("promoted by --include-optional")
+    _apply_optional(cand, requested, ctx)
     return cand

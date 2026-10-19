@@ -4,8 +4,10 @@ from pathlib import Path
 
 from agent_forge.matching.rules import MatchContext, choose_platforms, evaluate
 from agent_forge.models.capability import Platform
+from agent_forge.policy.engine import Policy, PolicySet
 from agent_forge.registry.loader import load_registry
 from agent_forge.scanner.project_profile import scan_project
+from tests.conftest import base_manifest, skill_assets, write_capability
 
 
 def _ctx(*platforms: Platform, **kw) -> MatchContext:
@@ -111,3 +113,56 @@ def test_every_recommendation_is_explained(synthetic_registry: Path, make_projec
         assert cand.score.explain()
     for rj in result.rejected:
         assert rj.reasons and rj.category
+
+
+def test_pulled_in_dependency_still_honours_policy(synthetic_registry: Path, make_project) -> None:
+    # t.tagged is tag-only, so it is "not_applicable" and would be pulled in as a dependency;
+    # policy must still be evaluated for it.
+    write_capability(
+        synthetic_registry,
+        base_manifest("t.needs-tagged", dependencies=["t.tagged"]),
+        skill_assets("needs-tagged"),
+    )
+    reg = load_registry(synthetic_registry)
+    profile = scan_project(make_project("pd"))
+    ps = PolicySet([("t", Policy(capabilities={"deny": ["t.tagged"]}))])
+    rec, opt, rej = _result_ids(evaluate(reg, profile, _ctx(policy=ps)))
+    assert "t.tagged" not in rec | opt
+    assert rej["t.needs-tagged"] == "dependency_missing"
+
+
+def test_optional_dependency_makes_dependant_optional(
+    synthetic_registry: Path, make_project
+) -> None:
+    write_capability(
+        synthetic_registry,
+        base_manifest("t.shell", permissions=["runs_shell"]),
+        skill_assets("shell"),
+    )
+    write_capability(
+        synthetic_registry,
+        base_manifest("t.tagged-shell", permissions=["runs_shell"], applicability={"tags": ["ts"]}),
+        skill_assets("tagged-shell"),
+    )
+    write_capability(
+        synthetic_registry,
+        base_manifest("t.needs-shell", dependencies=["t.shell"]),
+        skill_assets("needs-shell"),
+    )
+    write_capability(
+        synthetic_registry,
+        base_manifest("t.needs-tagged-shell", dependencies=["t.tagged-shell"]),
+        skill_assets("needs-tagged-shell"),
+    )
+    reg = load_registry(synthetic_registry)
+    profile = scan_project(make_project("od"))
+
+    rec, opt, _rej = _result_ids(evaluate(reg, profile, _ctx()))
+    # never recommend a capability whose dependency is left out of the plan
+    assert {"t.shell", "t.needs-shell", "t.tagged-shell", "t.needs-tagged-shell"} <= opt
+    assert not {"t.needs-shell", "t.needs-tagged-shell"} & rec
+
+    requested = frozenset({"t.needs-shell", "t.needs-tagged-shell"})
+    rec, _opt, _rej = _result_ids(evaluate(reg, profile, _ctx(requested_ids=requested)))
+    # requesting the dependant pulls its dependency in, with the reason recorded
+    assert {"t.shell", "t.needs-shell", "t.tagged-shell", "t.needs-tagged-shell"} <= rec
