@@ -3,7 +3,7 @@
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (20)
+## Curated (22)
 
 | Capability | From | Decision | Why |
 |---|---|---|---|
@@ -26,6 +26,8 @@ recorded revision. "Verbatim" means byte-identical to upstream.
 | `forge.hook.node-prettier-format` | workspace | hook: PostToolUse runs the project's `node_modules/.bin/prettier` on the edited file; no-op if absent | never uses npx |
 | `mcp.context7` | ECC `mcp-configs/mcp-servers.json` (template) | mcp (class `mcp`): `npx -y @upstash/context7-mcp@latest`, always | docs lookup for any project; network, downloads on first use |
 | `mcp.playwright` | ECC `mcp-configs/mcp-servers.json` (template) | mcp: `npx -y @playwright/mcp@latest`, frontend/fullstack only | browser automation; `--browser chrome` flag dropped |
+| `karpathy.principles` | andrej-karpathy-skills `CLAUDE.md` | adapted, `section_merge` into `CLAUDE.md` / `AGENTS.md`, both, always; conflicts with `karpathy.guidelines` | always-on beats a skill that may not trigger; ~45 lines, wording of the principles unchanged |
+| `karpathy.guidelines` | andrej-karpathy-skills `skills/karpathy-guidelines/SKILL.md` | verbatim, both, tag-only (`--want guidelines-skill`) | for projects that keep instruction files minimal; an explicit request outranks the section |
 
 ## Excluded on purpose
 
@@ -43,6 +45,7 @@ recorded revision. "Verbatim" means byte-identical to upstream.
 | ECC `agents/security-reviewer.md` | deferred: overlaps `ecc.security-review`; add with a dependency in v0.2 |
 | UI UX Pro Max `design/`, `ui-styling/`, `design-system/`, `brand/`, `slides/`, `banner-design/` | call Gemini/Pexels/external APIs, `subprocess`, Node scripts; `ui-styling` is Apache-2.0 with OFL fonts |
 | UI UX Pro Max `stack/` | a sample project with `.mcp.json` launching Playwright/chrome-devtools via `npx -y` |
+| andrej-karpathy-skills `EXAMPLES.md`, `.cursor/rules/`, `.claude-plugin/` | examples are illustrative (522 lines, not instructions); Cursor is not a supported platform; the plugin manifest is replaced by Agent Forge packaging |
 | REA `rea-changelog-update`, `rea-ci-tests-audit`, `rea-tool-design` | only meaningful inside the REA repo |
 
 ## Re-curation workflow

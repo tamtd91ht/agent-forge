@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added (source: andrej-karpathy-skills)
+- New source `karpathy` (multica-ai/andrej-karpathy-skills @ 2c606141).
+- `karpathy.principles`: always-on section (think before coding, simplicity first,
+  surgical changes, goal-driven execution) in `CLAUDE.md` / `AGENTS.md`; skipped when the
+  project instructions already contain them.
+- `karpathy.guidelines`: the same principles as an on-demand skill, `--want guidelines-skill`;
+  conflicts with the section, explicit request wins.
+
 ### Added (governance, from ADR-0002)
 - Policy engine: layered `default.yaml` → workspace `policy.yaml` → project
   `.agent-forge/policy.yaml`, strictest wins; verdicts allow / require_request / deny

@@ -1,0 +1,55 @@
+schema_version: "1"
+id: karpathy.principles
+name: Coding behavior principles (Karpathy)
+description: Always-on section in CLAUDE.md / AGENTS.md with four principles against common LLM coding mistakes — think before coding, simplicity first, surgical changes, goal-driven execution.
+version: 1.0.0
+kind: instruction
+category: engineering.behavior
+purpose: Counters silent assumptions, overengineering, drive-by edits and unverified "done" in every session, not only when a skill happens to trigger. Kept short (~45 lines) so it is cheap in context and well under Codex's 32 KiB AGENTS.md budget.
+status: curated
+provenance: adapted
+source:
+  source_id: karpathy
+  repository: https://github.com/multica-ai/andrej-karpathy-skills
+  revision: 2c606141936f1eeef17fa3043a72095b4765b9c2
+  paths:
+    - CLAUDE.md
+license:
+  spdx: MIT
+  attribution: "andrej-karpathy-skills, Copyright (c) forrestchang"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-19"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream CLAUDE.md is 65 lines of plain markdown with no commands, links to run, or tool assumptions. Adapted to live inside a shared file - title and "merge with project instructions" preamble replaced by a precedence line, headings demoted one level, a few bullets merged, attribution line added. Wording of the principles is unchanged. Upstream ships no LICENSE file; MIT is declared in README.md and SKILL.md frontmatter.
+applicability:
+  always: true
+  tags: [behavior, guidelines, karpathy]
+platforms: [claude_code, codex]
+install_strategy: section_merge
+destinations:
+  - platform: claude_code
+    source: claude_code/principles.md
+    dest: CLAUDE.md
+    merge: append_section
+    section_id: karpathy-principles
+  - platform: codex
+    source: codex/principles.md
+    dest: AGENTS.md
+    merge: append_section
+    section_id: karpathy-principles
+removal: remove_section
+conflicts: [karpathy.guidelines]
+equivalents:
+  - kind: skill
+    name_patterns: ["karpathy"]
+    description: the Karpathy guidelines skill/plugin is already installed
+  - kind: instruction
+    content_patterns: ["think before coding", "surgical changes", "goal-driven execution"]
+    description: the Karpathy principles are already in the project instructions
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 16f5c1fa831d8fde1c5460caf21f6a4169acdeba6340c3e51cc99e96900b574e
+  pinned_at: "2026-10-19"

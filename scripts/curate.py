@@ -80,6 +80,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+KARPATHY_NOTICE = """This directory contains content from andrej-karpathy-skills
+https://github.com/multica-ai/andrej-karpathy-skills — MIT License, Copyright (c) forrestchang.
+The upstream repository declares MIT in its README and SKILL.md frontmatter but ships no
+LICENSE file; the standard MIT text is reproduced below.
+Installed and tracked by Agent Forge; see .agent-forge/managed.json in your project.
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 ECC_AGENT_FOOTER = (
     "\n\n---\n"
     "Source: Everything Claude Code (ECC) agents/{name}.md — MIT License, "
@@ -174,6 +201,23 @@ ITEMS: list[Item] = [
         ],
         notices=[
             (f"{plat}/ui-ux-guidelines/LICENSE-UI-UX-PRO-MAX.txt", UIUX_NOTICE)
+            for plat in ("claude_code", "codex")
+        ],
+    ),
+    # Karpathy guidelines: verbatim skill. The always-on CLAUDE.md/AGENTS.md section
+    # (karpathy.principles) is adapted by hand from upstream CLAUDE.md, not copied here.
+    Item(
+        "karpathy.guidelines",
+        "karpathy",
+        [
+            (
+                "skills/karpathy-guidelines/SKILL.md",
+                f"{plat}/karpathy-guidelines/SKILL.md",
+            )
+            for plat in ("claude_code", "codex")
+        ],
+        notices=[
+            (f"{plat}/karpathy-guidelines/LICENSE-KARPATHY.txt", KARPATHY_NOTICE)
             for plat in ("claude_code", "codex")
         ],
     ),

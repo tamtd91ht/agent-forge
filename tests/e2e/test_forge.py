@@ -103,3 +103,55 @@ def test_forge_requires_tty_or_yes(real_workspace, make_project) -> None:
     root = make_project("notty", kind="claude", files=BACKEND_FILES)
     run("forge", str(root), "--workspace", ws, expect=6)
     assert not (root / ".claude" / "skills" / "security-review").exists()
+
+
+def test_forge_adds_karpathy_principles_section(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("karpathy", kind="claude", files=BACKEND_FILES)
+    report = run_json("forge", str(root), "--workspace", ws, "--yes", "--shared-files", "--json")
+    add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
+    assert "karpathy.principles" in add["selected"]
+    # the skill variant is tag-only: never installed alongside the always-on section
+    assert "karpathy.guidelines" not in add["selected"]
+    claude_md = (root / "CLAUDE.md").read_text(encoding="utf-8")
+    assert claude_md.startswith("# Project\n\nUser instructions.\n")
+    assert "agent-forge:begin id=karpathy-principles" in claude_md
+    assert "### 3. Surgical changes" in claude_md
+    assert not (root / ".claude" / "skills" / "karpathy-guidelines").exists()
+
+
+def test_forge_skips_karpathy_when_project_already_has_it(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    files = dict(BACKEND_FILES)
+    files["CLAUDE.md"] = "# Project\n\n## 1. Think Before Coding\n\nAsk first.\n"
+    root = make_project("karpathy present", kind="claude", files=files)
+    report = run_json(
+        "forge", str(root), "--workspace", ws, "--dry-run", "--shared-files", "--json"
+    )
+    add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
+    assert "karpathy.principles" not in add["selected"]
+    assert add["rejected"]["karpathy.principles"] == "equivalent_exists"
+
+
+def test_forge_karpathy_skill_on_request(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("karpathy skill", kind="claude", files=BACKEND_FILES)
+    report = run_json(
+        "forge",
+        str(root),
+        "--workspace",
+        ws,
+        "--yes",
+        "--shared-files",
+        "--want",
+        "guidelines-skill",
+        "--json",
+    )
+    add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
+    # an explicit request outranks the always-on section it conflicts with
+    assert "karpathy.guidelines" in add["selected"]
+    assert add["rejected"]["karpathy.principles"] == "conflict"
+    assert "karpathy-principles" not in (root / "CLAUDE.md").read_text(encoding="utf-8")
+    skill = root / ".claude" / "skills" / "karpathy-guidelines"
+    assert (skill / "SKILL.md").is_file()
+    assert (skill / "LICENSE-KARPATHY.txt").is_file()

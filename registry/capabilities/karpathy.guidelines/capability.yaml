@@ -1,0 +1,56 @@
+schema_version: "1"
+id: karpathy.guidelines
+name: Karpathy coding guidelines skill
+description: On-demand skill with four principles against common LLM coding mistakes — think before coding, simplicity first, surgical changes, goal-driven execution.
+version: 1.0.0
+kind: skill
+category: engineering.behavior
+purpose: Same content as karpathy.principles but loaded only when the agent decides it is relevant, for projects that keep CLAUDE.md / AGENTS.md minimal or do not approve shared-file sections. Installed on request only.
+status: curated
+provenance: upstream
+source:
+  source_id: karpathy
+  repository: https://github.com/multica-ai/andrej-karpathy-skills
+  revision: 2c606141936f1eeef17fa3043a72095b4765b9c2
+  paths:
+    - skills/karpathy-guidelines/SKILL.md
+license:
+  spdx: MIT
+  attribution: "andrej-karpathy-skills, Copyright (c) forrestchang"
+  notice_file: claude_code/karpathy-guidelines/LICENSE-KARPATHY.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-19"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 67 lines of markdown, verbatim. Frontmatter is name/description/license only, name equals the directory, so it is valid for Codex too. No scripts, hooks or tool assumptions. Upstream ships no LICENSE file; MIT is declared in README.md and in this file's frontmatter.
+applicability:
+  tags: [karpathy, guidelines-skill]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/karpathy-guidelines
+    dest: .claude/skills/karpathy-guidelines
+    merge: create_only
+  - platform: codex
+    source: codex/karpathy-guidelines
+    dest: .agents/skills/karpathy-guidelines
+    merge: create_only
+conflicts: [karpathy.principles]
+equivalents:
+  - kind: skill
+    name_patterns: ["karpathy"]
+    description: an existing Karpathy guidelines skill
+  - kind: instruction
+    content_patterns: ["think before coding", "surgical changes", "goal-driven execution"]
+    description: the Karpathy principles are already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/karpathy-guidelines/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: eb421682e5cf270cc2aeab40e9ef9e3279a4fa351fa30755018375a2253618e3
+  pinned_at: "2026-10-19"

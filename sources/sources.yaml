@@ -44,3 +44,16 @@ sources:
       - "Sub-skills design/, design-system/, ui-styling/ call external APIs or subprocess: not curated."
       - ".claude/skills/ui-styling/LICENSE.txt is Apache-2.0; canvas fonts are SIL OFL."
     redistribution_notes: "MIT for the core skill; Apache-2.0 for ui-styling; keep per-font OFL notices if ever curated."
+
+  - id: karpathy
+    name: Andrej Karpathy-inspired coding guidelines
+    url: https://github.com/multica-ai/andrej-karpathy-skills
+    license: MIT
+    default_branch: main
+    trust: untrusted
+    homepage: https://github.com/multica-ai/andrej-karpathy-skills
+    notes:
+      - "Four behavioral principles (think before coding, simplicity first, surgical changes, goal-driven execution) shipped three ways: CLAUDE.md, a Claude Code plugin skill, a Cursor rule."
+      - "Pure markdown: no scripts, hooks, MCP servers or network use."
+      - "Repository was previously forrestchang/andrej-karpathy-skills; README install snippets still point there."
+    redistribution_notes: "No LICENSE file in the repository; MIT is declared in README.md and in the SKILL.md `license:` frontmatter. Keep attribution to the author (forrestchang)."
