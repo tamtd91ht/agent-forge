@@ -17,6 +17,7 @@ state/
 sources/checkouts/
 *.local.yaml
 agent-forge.local.yaml
+.claude/settings.local.json
 
 # --- Secrets / env ---
 .env

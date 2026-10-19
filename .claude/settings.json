@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python -m pytest:*)",
+      "Bash(.venv/Scripts/ruff check:*)",
+      "Bash(.venv/Scripts/ruff format:*)",
+      "Bash(.venv/Scripts/agent-forge validate:*)",
+      "Bash(.venv/Scripts/python scripts/export_schemas.py:*)",
+      "PowerShell(.venv/Scripts/python -m pytest:*)",
+      "PowerShell(.venv/Scripts/ruff check:*)",
+      "PowerShell(.venv/Scripts/ruff format:*)",
+      "PowerShell(.venv/Scripts/agent-forge validate:*)",
+      "PowerShell(.venv/Scripts/python scripts/export_schemas.py:*)"
+    ],
+    "ask": [
+      "Bash(.venv/Scripts/agent-forge apply:*)",
+      "Bash(.venv/Scripts/agent-forge rollback:*)",
+      "Bash(agent-forge apply:*)",
+      "Bash(agent-forge rollback:*)",
+      "PowerShell(.venv/Scripts/agent-forge apply:*)",
+      "PowerShell(.venv/Scripts/agent-forge rollback:*)",
+      "PowerShell(agent-forge apply:*)",
+      "PowerShell(agent-forge rollback:*)"
+    ],
+    "deny": [
+      "Edit(sources/checkouts/**)",
+      "Write(sources/checkouts/**)"
+    ]
+  }
+}
