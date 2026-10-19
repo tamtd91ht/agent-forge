@@ -138,3 +138,26 @@ def test_mcp_name_conflict_is_a_plan_error(workspace, make_project) -> None:
     )
     with pytest.raises(PlanError, match="already defines MCP server"):
         _plan(workspace, root)
+
+
+def test_dependant_of_unapproved_capability_is_left_out(workspace, make_project) -> None:
+    from tests.conftest import base_manifest, skill_assets, write_capability
+
+    # t.notice needs the shared_file class; t.needs-notice must not be installed without it
+    write_capability(
+        workspace.registry_dir,
+        base_manifest("t.needs-notice", dependencies=["t.notice"]),
+        skill_assets("needs-notice"),
+    )
+    root = make_project("dep-approval", kind="claude")
+    _reg, plan = _plan(workspace, root, allowed=frozenset({"standard"}))
+    rejected = {r.capability_id: r for r in plan.rejected}
+    assert rejected["t.notice"].category == "needs_approval"
+    assert rejected["t.needs-notice"].category == "needs_approval"
+    assert "t.notice" in rejected["t.needs-notice"].reasons[0]
+    assert "--shared-files" in rejected["t.needs-notice"].reasons[1]
+    assert "t.needs-notice" not in {s.capability_id for s in plan.selected}
+    assert not any("needs-notice" in o.path for o in plan.operations)
+
+    _reg, plan = _plan(workspace, root)  # class granted: both come back
+    assert {"t.notice", "t.needs-notice"} <= {s.capability_id for s in plan.selected}

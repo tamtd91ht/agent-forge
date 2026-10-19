@@ -349,35 +349,29 @@ def build_assign_plan(
     order = resolve_dependencies(reg, [c.capability.id for c in chosen])
     by_key = {(c.capability.id, c.platform): c for c in chosen}
     rejected_for_approval: list[RejectedCapability] = []
+    # capabilities left out for a missing approval class -> the classes they needed;
+    # `order` is dependencies-first, so dependants of a dropped entry are dropped too
+    dropped: dict[str, list[str]] = {}
     for cid in order:
         for platform in ctx.platforms:
             cand = by_key.get((cid, platform))
             if cand is None:
                 continue
             lc = reg.get(cid)
+            blocked_deps = [d for d in lc.capability.dependencies if d in dropped]
+            if blocked_deps:
+                needed = sorted({k for d in blocked_deps for k in dropped[d]})
+                rejected_for_approval.append(
+                    _needs_approval(cid, lc.capability.version, needed, via=blocked_deps)
+                )
+                dropped[cid] = needed
+                continue
             cap_ops, record = _ops_for_candidate(lc, platform, reader, plan_id, counter)
             needed = sorted({o.approval_class for o in cap_ops} - ctx.allowed_classes)
             if needed:
                 counter[0] -= len(cap_ops)
-                rejected_for_approval.append(
-                    RejectedCapability(
-                        capability_id=cid,
-                        version=lc.capability.version,
-                        reasons=[
-                            "needs explicit approval class(es) not granted: " + ", ".join(needed),
-                            "re-run with "
-                            + " ".join(
-                                {
-                                    "shared_file": "--shared-files",
-                                    "hook": "--hooks",
-                                    "mcp": "--mcp",
-                                }.get(k, k)
-                                for k in needed
-                            ),
-                        ],
-                        category="needs_approval",
-                    )
-                )
+                rejected_for_approval.append(_needs_approval(cid, lc.capability.version, needed))
+                dropped[cid] = needed
                 continue
             ops.extend(cap_ops)
             existing_rec = next((r for r in records if r.capability_id == cid), None)
@@ -464,6 +458,23 @@ def build_assign_plan(
         approval=Approval(required=True),
     )
     return plan, match
+
+
+_APPROVAL_FLAGS = {"shared_file": "--shared-files", "hook": "--hooks", "mcp": "--mcp"}
+
+
+def _needs_approval(
+    cid: str, version: str, needed: list[str], *, via: list[str] | None = None
+) -> RejectedCapability:
+    what = "needs explicit approval class(es) not granted: " + ", ".join(needed)
+    if via:
+        what = f"requires {', '.join(via)}, which {what}"
+    return RejectedCapability(
+        capability_id=cid,
+        version=version,
+        reasons=[what, "re-run with " + " ".join(_APPROVAL_FLAGS.get(k, k) for k in needed)],
+        category="needs_approval",
+    )
 
 
 def _validation_plan(selected: list[SelectedCapability], profile: ProjectProfile) -> list[str]:
