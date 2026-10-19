@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+### Fixed
+- Matching: a dependency pulled in because it was "not applicable" skipped policy, so a
+  policy-denied capability could enter a plan as a dependency. It is now policy-checked.
+- Matching: a recommended capability could depend on one left optional (risk/permissions),
+  installing it without its dependency. The dependant is now optional too, unless it was
+  requested, in which case the dependency is promoted (transitively) with the reason shown.
+- Planner: a capability whose dependency was left out for a missing approval class
+  (`--shared-files` / `--hooks` / `--mcp`) was still planned without it; it is now reported as
+  `needs_approval` too, naming the dependency and the flag.
+- `ecc.rules.common` 1.1.0 (adapted): no longer tells the agent to use ECC subagents this
+  registry does not install, links to the excluded `git-workflow.md` / `agents.md`, or a
+  mandatory gh search / Context7 / Exa research step.
+
+### Changed
+- Plan tables fit an 80-column terminal: `adds` groups files per folder, `why` leaves the
+  score breakdown to `--json`; `forge` hides already-installed rows and folds not-applicable
+  ones into one line; `forge --dry-run` says to re-run without the flag; `upgrade` prints the
+  next command.
+- README rewritten as a user guide: workspace vs project, preview → install → open in
+  Claude Code, the three permission flags, how to read "not selected", everyday tasks.
+
+### Added
+- `init --refresh-registry`: update a workspace's registry copy from the packaged seed after
+  pulling/reinstalling Agent Forge (own capabilities kept).
+- `validate`: relative links in curated markdown assets must resolve inside `assets/`
+  (code blocks ignored).
+
 ### Added (source: andrej-karpathy-skills)
 - New source `karpathy` (multica-ai/andrej-karpathy-skills @ 2c606141).
 - `karpathy.principles`: always-on section (think before coding, simplicity first,
