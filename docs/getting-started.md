@@ -124,5 +124,8 @@ agent-forge rollback tx-… --partial  # rolls back untouched files, keeps your 
 ## Keep installed capabilities current
 
 ```bash
-agent-forge upgrade "/path/to/my app"   # plan only; then diff / approve / apply as above
+git pull                                       # in the Agent Forge checkout
+agent-forge init --refresh-registry            # only if your workspace is not that checkout
+agent-forge forge "/path/to/my app"            # upgrades managed capabilities, then adds new fits
+agent-forge upgrade "/path/to/my app"          # or: plan only; then diff / approve / apply as above
 ```

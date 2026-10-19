@@ -159,3 +159,26 @@ def test_unknown_plan_and_bad_target_exit_codes(real_workspace, tmp_path: Path) 
     run("diff", "plan-does-not-exist", "--workspace", ws, expect=6)
     run("scan", str(tmp_path / "missing"), "--workspace", ws, expect=5)
     run("scan", str(tmp_path), "--workspace", str(tmp_path / "no-ws"), expect=3)
+
+
+def test_init_refresh_registry_recopies_seed_and_keeps_own_capabilities(tmp_path: Path) -> None:
+    from tests.conftest import base_manifest, skill_assets, write_capability
+
+    ws = tmp_path / "ws"
+    run("init", "--workspace", str(ws))
+    tdd = ws / "registry" / "capabilities" / "ecc.tdd-workflow" / "assets" / "claude_code"
+    skill = tdd / "tdd-workflow" / "SKILL.md"
+    fresh = skill.read_text(encoding="utf-8")
+    skill.write_text("stale copy\n", encoding="utf-8")
+    stray = tdd / "tdd-workflow" / "removed-upstream.md"
+    stray.write_text("x\n", encoding="utf-8")
+    write_capability(ws / "registry", base_manifest("mine.local"), skill_assets("local"))
+
+    run("init", "--workspace", str(ws))  # plain init never touches an existing registry
+    assert skill.read_text(encoding="utf-8") == "stale copy\n"
+
+    out = run("init", "--workspace", str(ws), "--refresh-registry").stdout
+    assert "refreshed" in out
+    assert skill.read_text(encoding="utf-8") == fresh
+    assert not stray.exists()
+    assert (ws / "registry" / "capabilities" / "mine.local" / "capability.yaml").is_file()

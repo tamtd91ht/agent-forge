@@ -5,7 +5,7 @@ non-ASCII characters are supported everywhere.
 
 | Command | Modifies target? | Purpose |
 |---|---|---|
-| `init [--workspace P]` | no | Create or verify a workspace; seeds registry and `sources.yaml` when empty. Safe to re-run. |
+| `init [--workspace P] [--refresh-registry]` | no | Create or verify a workspace; seeds registry and `sources.yaml` when empty. Safe to re-run. `--refresh-registry` re-copies the packaged registry into an existing workspace (seed capabilities replaced, your own kept); no-op when the workspace registry is the packaged seed itself. |
 | `sources list [--fetch]` | no | Registered sources, checkout HEAD, recorded revision, drift. `--fetch` contacts the remote. |
 | `sources clone [ID]` | no | Clone approved sources into `sources/checkouts/`. No scripts executed. |
 | `sources sync [ID] [--update]` | no | Fetch upstream, report changed files; `--update` moves the checkout (refuses if dirty or pinned). |

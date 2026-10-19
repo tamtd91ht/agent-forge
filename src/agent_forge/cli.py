@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 import shutil
 import sys
 from collections.abc import Callable
@@ -150,6 +151,14 @@ def init(
             "--workspace", "-w", help="Directory to initialize (default: current directory)."
         ),
     ] = None,
+    refresh_registry: Annotated[
+        bool,
+        typer.Option(
+            "--refresh-registry",
+            help="Re-copy the packaged registry into this workspace (after updating Agent Forge). "
+            "Capabilities you added yourself are kept.",
+        ),
+    ] = False,
 ) -> None:
     """Initialize (or verify) an Agent Forge workspace. Safe to re-run; never overwrites your files."""
 
@@ -157,6 +166,7 @@ def init(
         root = (workspace or Path.cwd()).expanduser().resolve()
         created: list[str] = []
         verified: list[str] = []
+        refreshed: list[str] = []
         root.mkdir(parents=True, exist_ok=True)
         marker = root / WORKSPACE_MARKER
         if marker.exists():
@@ -184,7 +194,12 @@ def init(
                 created.append(str(d))
         ws.ensure_state_dirs()
         verified.append(str(ws.state_dir))
-        _seed(ws, created, verified)
+        _seed(ws, created, verified, refreshed if refresh_registry else None)
+        if refresh_registry and not refreshed:
+            console.print(
+                "[yellow]nothing to refresh:[/] this workspace's registry is the packaged seed itself; "
+                "update it with `git pull` (or reinstall Agent Forge)"
+            )
         gi = root / ".gitignore"
         if not gi.exists():
             gi.write_text(
@@ -202,6 +217,8 @@ def init(
         table.add_column("path")
         for p in created:
             table.add_row("[green]created[/]", p)
+        for p in refreshed:
+            table.add_row("[green]refreshed[/]", p)
         for p in verified:
             table.add_row("[cyan]exists[/]", p)
         console.print(table)
@@ -217,8 +234,18 @@ def init(
     _run(body)
 
 
-def _seed(ws: WorkspaceConfig, created: list[str], verified: list[str]) -> None:
-    """Populate an empty workspace from the packaged seed (registry + sources.yaml)."""
+def _seed(
+    ws: WorkspaceConfig,
+    created: list[str],
+    verified: list[str],
+    refreshed: list[str] | None = None,
+) -> None:
+    """Populate an empty workspace from the packaged seed (registry + sources.yaml).
+
+    With `refreshed` given, an existing registry copy is updated instead of left alone: every
+    seed capability replaces its workspace copy (stale files go away), schema and policies are
+    re-copied, and capabilities that exist only in the workspace are kept.
+    """
     seed_root: Path | None = None
     try:
         pkg_seed = resources.files("agent_forge") / "_seed"
@@ -237,14 +264,24 @@ def _seed(ws: WorkspaceConfig, created: list[str], verified: list[str]) -> None:
         ws.sources_manifest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(seed_root / "sources" / "sources.yaml", ws.sources_manifest)
         created.append(str(ws.sources_manifest))
-    if any(ws.capabilities_dir.iterdir()) if ws.capabilities_dir.exists() else False:
+    populated = ws.capabilities_dir.exists() and any(ws.capabilities_dir.iterdir())
+    if populated and refreshed is None:
         return
-    if seed_root and (seed_root / "registry").resolve() != ws.registry_dir.resolve():
-        src = seed_root / "registry"
-        for sub in ("capabilities", "schema", "policies", "bundles"):
-            s = src / sub
-            if s.is_dir():
-                shutil.copytree(s, ws.registry_dir / sub, dirs_exist_ok=True)
+    if not seed_root or (seed_root / "registry").resolve() == ws.registry_dir.resolve():
+        return
+    src = seed_root / "registry"
+    if populated:
+        for cap_dir in (src / "capabilities").iterdir():
+            stale = ws.capabilities_dir / cap_dir.name
+            if cap_dir.is_dir() and stale.is_dir():
+                shutil.rmtree(stale)
+    for sub in ("capabilities", "schema", "policies", "bundles"):
+        s = src / sub
+        if s.is_dir():
+            shutil.copytree(s, ws.registry_dir / sub, dirs_exist_ok=True)
+    if populated:
+        refreshed.append(f"{ws.registry_dir} (from {src})")  # type: ignore[union-attr]
+    else:
         created.append(f"{ws.registry_dir} (seeded from {src})")
 
 
@@ -754,14 +791,36 @@ def upgrade(
             _print_json(plan.model_dump(mode="json"))
             return
         _print_plan_summary(plan)
+        console.print(f"[dim]plan saved: {p}[/]")
         if not plan.operations:
             console.print("[green]nothing to upgrade[/]")
-        console.print(f"[dim]plan saved: {p}[/]")
+            return
+        console.print(
+            f"next: [bold]agent-forge diff {plan.plan_id}[/]  then  [bold]agent-forge approve {plan.plan_id}[/]"
+        )
 
     _run(body)
 
 
-def _print_plan_summary(plan) -> None:
+_SCORE_PART = re.compile(r": [+-]\d+\.\d$")  # lines produced by ScoreBreakdown.explain()
+
+
+def _summarize_adds(adds: list[str]) -> list[str]:
+    """Collapse 'create .claude/rules/x/a.md', 'create .claude/rules/x/b.md' into one line."""
+    groups: dict[tuple[str, str], list[str]] = {}
+    for entry in adds:
+        verb, _, path = entry.partition(" ")
+        groups.setdefault((verb, path.rpartition("/")[0]), []).append(path)
+    out: list[str] = []
+    for (verb, folder), paths in groups.items():
+        if len(paths) == 1:
+            out.append(f"{verb} {paths[0]}")
+        else:
+            out.append(f"{verb} {folder}/ ({len(paths)} files)")
+    return out
+
+
+def _print_plan_summary(plan, *, hide: tuple[str, ...] = ()) -> None:
     console.print(
         Panel.fit(
             f"[bold]{plan.plan_id}[/]  kind={plan.kind}  risk={plan.risk.value}  "
@@ -777,7 +836,8 @@ def _print_plan_summary(plan) -> None:
         for col in ("capability", "ver", "platform", "score", "risk", "why", "adds"):
             t.add_column(col, overflow="fold")
         for s in plan.selected:
-            why = "\n".join(s.reasons[:4])
+            reasons = [r for r in s.reasons if not _SCORE_PART.search(r)]  # score: --json
+            why = "\n".join(reasons[:3])
             if s.existing:
                 why += "\n[yellow]existing: " + "; ".join(s.existing) + "[/]"
             t.add_row(
@@ -787,14 +847,15 @@ def _print_plan_summary(plan) -> None:
                 f"{s.score:.1f}",
                 s.risk.value,
                 why,
-                "\n".join(s.adds),
+                "\n".join(_summarize_adds(s.adds)),
             )
         console.print(t)
-    if plan.rejected:
-        t = Table(title=f"not selected ({len(plan.rejected)})")
+    rejected = [r for r in plan.rejected if r.category not in hide]
+    if rejected:
+        t = Table(title=f"not selected ({len(rejected)})")
         for col in ("capability", "category", "reason"):
             t.add_column(col, overflow="fold")
-        for r in plan.rejected:
+        for r in rejected:
             t.add_row(r.capability_id, r.category, "\n".join(r.reasons[:3]))
         console.print(t)
     if plan.user_decisions:
@@ -1222,7 +1283,15 @@ def forge(
             }
             if not as_json:
                 out.rule(label)
-                _print_plan_summary(plan)
+                # already-managed entries were handled by the upgrade step just above;
+                # not-applicable ones are a one-line footer rather than a row each
+                _print_plan_summary(plan, hide=("already_installed", "not_applicable"))
+                na = [r.capability_id for r in plan.rejected if r.category == "not_applicable"]
+                if na:
+                    out.print(
+                        f"[dim]not applicable to this project ({len(na)}): {', '.join(na)}"
+                        "  (add one with --request <id> or --want <tag>)[/]"
+                    )
             if not plan.operations:
                 step["status"] = "nothing_to_do"
                 if not as_json:
@@ -1239,19 +1308,9 @@ def forge(
             if dry_run:
                 step["status"] = "planned"
                 if not as_json:
-                    flags = " ".join(
-                        sorted(
-                            {
-                                APPROVAL_FLAGS[o.approval_class]
-                                for o in plan.operations_needing_extra_approval()
-                            }
-                        )
-                    )
                     out.print(
-                        f"[yellow]dry run:[/] plan saved as {plan.plan_id}; "
-                        f"continue with `agent-forge approve {plan.plan_id}"
-                        + (f" {flags}" if flags else "")
-                        + f"` then `agent-forge apply {plan.plan_id}`"
+                        f"[yellow]dry run:[/] nothing written. Re-run without --dry-run to apply "
+                        f"(full diff: `agent-forge diff {plan.plan_id}`)"
                     )
                 return step
             classes: dict[str, int] = {}
