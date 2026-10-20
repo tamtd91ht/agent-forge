@@ -23,6 +23,7 @@ class LoadedCapability:
     assets_dir: Path
     content_digest: str
     assets_digest: str = ""
+    registry: str = "core"  # name of the registry layer this entry came from
 
     @property
     def id(self) -> str:
@@ -34,15 +35,23 @@ class Registry:
     root: Path
     items: dict[str, LoadedCapability] = field(default_factory=dict)
     problems: list[str] = field(default_factory=list)
+    # (name, directory) of every layer that was merged, highest priority first
+    layers: list[tuple[str, Path]] = field(default_factory=list)
+    # ids defined in more than one layer: (id, winning layer, shadowed layer)
+    shadowed: list[tuple[str, str, str]] = field(default_factory=list)
 
     @property
     def digest(self) -> str:
         """Digest over every manifest, asset and shipped policy, stable across machines."""
         h = hashlib.sha256()
         for cid in sorted(self.items):
+            lc = self.items[cid]
             h.update(cid.encode("utf-8"))
             h.update(b"=")
-            h.update(self.items[cid].content_digest.encode("ascii"))
+            h.update(lc.content_digest.encode("ascii"))
+            if lc.registry != "core":  # a team override is a different registry state
+                h.update(b"@")
+                h.update(lc.registry.encode("utf-8"))
             h.update(b"\n")
         policies = self.root / "policies"
         if policies.is_dir():
@@ -123,3 +132,28 @@ def load_registry(registry_dir: Path, *, strict: bool = True) -> Registry:
             continue
         reg.items[lc.id] = lc
     return reg
+
+
+def load_registries(layers: list[tuple[str, Path]], *, strict: bool = True) -> Registry:
+    """Merge several registries, highest priority first; the last layer is the core.
+
+    A capability id present in two layers resolves to the first one and is recorded in
+    `shadowed` so `validate`/`doctor` can show it. The core's `policies/` are the only
+    shipped policies: extra registries contribute capabilities, not policy.
+    """
+    if not layers:
+        raise RegistryError("no registry configured")
+    _, core_dir = layers[-1]
+    merged = Registry(root=core_dir, layers=list(layers))
+    origin: dict[str, str] = {}
+    for name, directory in layers:
+        reg = load_registry(directory, strict=strict)
+        merged.problems.extend(f"[{name}] {p}" for p in reg.problems)
+        for cid, lc in reg.items.items():
+            lc.registry = name
+            if cid in merged.items:
+                merged.shadowed.append((cid, origin[cid], name))
+                continue
+            merged.items[cid] = lc
+            origin[cid] = name
+    return merged

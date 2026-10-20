@@ -51,6 +51,20 @@ Five-minute quickstarts: [Node / TypeScript](docs/quickstart/node.md) ·
 The agent asks before adding anything that edits `CLAUDE.md` / `AGENTS.md`, adds hooks to
 `.claude/settings.json`, or adds MCP servers to `.mcp.json`.
 
+## Install without the installer (uvx / pipx)
+
+Teams that do not want a Python environment of their own can run a release through
+[uv](https://docs.astral.sh/uv/) or pipx; both create an isolated environment:
+
+```bash
+uvx --from "git+https://github.com/tamtd91ht/agent-forge@v0.2.0" agent-forge --version
+pipx install "git+https://github.com/tamtd91ht/agent-forge@v0.2.0"
+```
+
+Then `agent-forge init --workspace ~/.agent-forge` once, and `agent-forge setup` in a
+project root adds `/agent-forge-upgrade`. The installer remains the recommended path
+because it also wires the launcher the skill expects.
+
 ## Update
 
 Run the install command again in the project root, then `/agent-forge-upgrade`.
@@ -70,6 +84,8 @@ once on their machine.
 | Read about one capability | `AF catalog show ecc.security-review` |
 | Preview without the agent | `AF forge --dry-run .` |
 | See what I changed in installed files | `AF drift .` |
+| Bring a fresh clone to the committed state | `AF sync .` |
+| Fail CI when installed files drifted | `AF check .` ([GitHub Action](docs/team-workflow.md#the-flow)) |
 | Undo an install | `AF status .` (copy the `tx-…` id), then `AF rollback tx-…` |
 | Remove one capability | `AF remove . <id>`, then `AF approve <plan-id>` and `AF apply <plan-id>` |
 | Limit what may ever be installed | create `.agent-forge/policy.yaml` ([example](docs/getting-started.md)) |
@@ -118,6 +134,8 @@ More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
   [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) ·
   [ADR-0004](docs/adr/0004-install-into-project.md) ·
   [ADR-0005](docs/adr/0005-production-hardening.md)
+- Teams: [team workflow](docs/team-workflow.md) · [pilots](docs/pilots/README.md) ·
+  [team policy template](examples/policy/team-default.yaml)
 - [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
 Content comes from Everything Claude Code, UI UX Pro Max, REA, andrej-karpathy-skills and

@@ -92,9 +92,9 @@ def _ws(workspace: Path | None) -> WorkspaceConfig:
 
 
 def _registry(ws: WorkspaceConfig):
-    from agent_forge.registry.loader import load_registry
+    from agent_forge.registry.loader import load_registries
 
-    return load_registry(ws.registry_dir)
+    return load_registries(ws.registry_layers)
 
 
 def _store(ws: WorkspaceConfig):
@@ -488,6 +488,7 @@ def catalog_show(
                     **c.model_dump(mode="json"),
                     "directory": str(lc.directory),
                     "content_digest": lc.content_digest,
+                    "registry": lc.registry,
                 }
             )
             return
@@ -1078,13 +1079,43 @@ def approve(
         str | None, typer.Option("--by", help="Approver name recorded in the plan.")
     ] = None,
     revoke: Annotated[bool, typer.Option("--revoke", help="Revoke a previous approval.")] = False,
+    approval_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--approval-file",
+            help="Approve non-interactively from a committed approval file (ids, versions, "
+            "classes); refuses with exit 14 when the plan goes beyond it.",
+        ),
+    ] = None,
+    export_approval: Annotated[
+        Path | None,
+        typer.Option(
+            "--export-approval",
+            help="After approving, write an approval file covering exactly this plan "
+            "(commit it as .agent-forge/approval.yaml for CI).",
+        ),
+    ] = None,
 ) -> None:
     """Approve a plan. The approval is bound to the plan's content digest; any change invalidates it."""
 
     def body() -> None:
+        from agent_forge.planner.approval_file import (
+            approval_from_plan,
+            load_approval_file,
+            require_plan_covered,
+        )
+
         ws = _ws(workspace)
         store = _store(ws)
         plan = store.load_plan(plan_id)
+        granted_shared, granted_hooks, granted_mcp, approver = shared_files, hooks, mcp, by
+        if approval_file is not None:
+            af = load_approval_file(approval_file)
+            require_plan_covered(plan, af, str(approval_file))
+            granted_shared = af.granted("shared_file")
+            granted_hooks = af.granted("hook")
+            granted_mcp = af.granted("mcp")
+            approver = by or f"approval-file:{af.approved_by}"
         if revoke:
             plan.approval.status = "revoked"
             plan.approval.plan_digest = None
@@ -1097,13 +1128,33 @@ def approve(
             return
         reg = _registry(ws)
         extra = _approve_plan(
-            store, reg, plan, shared_files=shared_files, by=by, hooks=hooks, mcp=mcp
+            store,
+            reg,
+            plan,
+            shared_files=granted_shared,
+            by=approver,
+            hooks=granted_hooks,
+            mcp=granted_mcp,
         )
         console.print(
             f"[green]approved[/] {plan_id} (digest {plan.approval.plan_digest[:16]}, {len(plan.operations)} operations"
             + (f", {len(extra)} shared-file" if extra else "")
             + ")"
         )
+        if export_approval is not None:
+            classes = [
+                k
+                for k, on in (
+                    ("shared_file", granted_shared),
+                    ("hook", granted_hooks),
+                    ("mcp", granted_mcp),
+                )
+                if on
+            ]
+            doc = approval_from_plan(plan, by=approver or "unknown", classes=classes, note=None)
+            export_approval.parent.mkdir(parents=True, exist_ok=True)
+            export_approval.write_text(dump_yaml(doc), encoding="utf-8")
+            console.print(f"approval file written: [bold]{export_approval}[/] (commit it)")
         console.print(f"next: [bold]agent-forge apply {plan_id}[/]")
 
     _run(body)
@@ -1229,6 +1280,14 @@ def forge(
     show_diff: Annotated[
         bool, typer.Option("--show-diff", help="Print full unified diffs before confirming.")
     ] = False,
+    approval_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--approval-file",
+            help="CI mode: non-interactive, approval classes and capabilities come from this "
+            "committed file; a plan that goes beyond it is refused (exit 14) and nothing is written.",
+        ),
+    ] = None,
     as_json: JsonOpt = False,
 ) -> None:
     """One-shot upgrade: scan the project, upgrade what Agent Forge already manages, add the
@@ -1243,6 +1302,7 @@ def forge(
         from agent_forge.apply.engine import apply_plan
         from agent_forge.matching.rules import choose_platforms
         from agent_forge.planner import build_assign_plan, build_upgrade_plan, render_plan_diff
+        from agent_forge.planner.approval_file import load_approval_file, require_plan_covered
         from agent_forge.scanner.project_profile import scan_project
         from agent_forge.validation.engine import validate_target
 
@@ -1251,6 +1311,16 @@ def forge(
         store = _store(ws)
         out = err_console if as_json else console
         report: dict[str, Any] = {"target": str(path), "steps": []}
+        af = load_approval_file(approval_file) if approval_file is not None else None
+        auto_yes = yes or af is not None  # an approval file replaces the interactive yes
+        grant_shared, grant_hooks, grant_mcp = shared_files, hooks, mcp
+        if af is not None:
+            grant_shared, grant_hooks, grant_mcp = (
+                af.granted("shared_file"),
+                af.granted("hook"),
+                af.granted("mcp"),
+            )
+            report["approval_file"] = str(approval_file)
 
         # 1. scan
         profile = scan_project(path, limits=ws.scan_limits)
@@ -1272,13 +1342,13 @@ def forge(
         # Approval classes granted up front decide what is even planned. Interactive runs
         # ask for the ungranted classes once, then re-plan with the answers.
         granted = {"standard"}
-        if shared_files:
+        if grant_shared:
             granted.add("shared_file")
-        if hooks:
+        if grant_hooks:
             granted.add("hook")
-        if mcp:
+        if grant_mcp:
             granted.add("mcp")
-        if not yes and not dry_run and sys.stdin.isatty():
+        if not auto_yes and not dry_run and sys.stdin.isatty():
             for klass, flag, what in (
                 ("shared_file", "--shared-files", "managed sections in CLAUDE.md / AGENTS.md"),
                 ("hook", "--hooks", "hook entries in .claude/settings.json (they run commands)"),
@@ -1340,7 +1410,7 @@ def forge(
             classes: dict[str, int] = {}
             for o in plan.operations_needing_extra_approval():
                 classes[o.approval_class] = classes.get(o.approval_class, 0) + 1
-            if not yes:
+            if not auto_yes:
                 if not sys.stdin.isatty():
                     raise PlanError(
                         "interactive confirmation required (no TTY)",
@@ -1355,6 +1425,8 @@ def forge(
                     step["status"] = "declined"
                     out.print(f"[yellow]declined[/]; plan {plan.plan_id} kept as draft")
                     return step
+            if af is not None:
+                require_plan_covered(plan, af, str(approval_file))
             _approve_plan(
                 store,
                 reg,
@@ -1362,7 +1434,7 @@ def forge(
                 shared_files="shared_file" in granted,
                 hooks="hook" in granted,
                 mcp="mcp" in granted,
-                by="agent-forge forge",
+                by=f"approval-file:{af.approved_by}" if af is not None else "agent-forge forge",
             )
             tx = apply_plan(ws, store, reg, plan, confirm=None)
             _audit(
@@ -1729,6 +1801,14 @@ def doctor(workspace: WorkspaceOpt = None, as_json: JsonOpt = False) -> int:
                 "registry",
                 rr.ok,
                 f"{len(reg.items)} capabilities, {len(rr.errors)} error(s), {len(rr.warnings)} warning(s)",
+            )
+            add("registry layers", True, ", ".join(f"{n} ({d})" for n, d in reg.layers))
+            add(
+                "shadowed capabilities",
+                not reg.shadowed,
+                "; ".join(f"{cid}: {win} overrides {lose}" for cid, win, lose in reg.shadowed)
+                or "none",
+                level="warning",
             )
             pinned = sum(1 for lc in reg.items.values() if lc.capability.integrity)
             add(
@@ -2135,6 +2215,267 @@ def rollback(
         )
         for n in rb.notes:
             console.print(f"[yellow]{n}[/]")
+
+    _run(body)
+
+
+# ---- team commands: check / sync / stats ---------------------------------------------------
+
+
+@app.command()
+def check(
+    path: Annotated[Path, typer.Argument(help="Target project directory.")],
+    workspace: WorkspaceOpt = None,
+    as_json: JsonOpt = False,
+) -> int:
+    """CI gate (read-only): one exit code for drift, revoked or missing capabilities, an
+    invalid managed.json, unfinished transactions and config syntax. 0 = clean, 12 = problems."""
+
+    def body() -> int:
+        from agent_forge.planner.maintenance import drift_report
+        from agent_forge.scanner.project_profile import scan_project
+        from agent_forge.validation.engine import validate_target
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        store = _store(ws)
+        profile = scan_project(path, limits=ws.scan_limits)
+        failures: list[str] = []
+        warnings: list[str] = []
+        if profile.managed_manifest_valid is False:
+            failures.append(".agent-forge/managed.json is present but invalid")
+        drift = drift_report(profile)
+        for item in drift.drifted:
+            failures.append(f"drift: {item.capability_id} {item.path} ({item.state})")
+        rep = validate_target(ws, reg, store, profile)
+        seen = set(failures)
+        for f in rep.findings:
+            if f.scope == "managed" and (
+                "modified locally" in f.message or "no longer present" in f.message
+            ):
+                continue  # already reported as drift above
+            line = f"{f.scope}: {f.message}"
+            if f.level == "error" and line not in seen:
+                failures.append(line)
+            elif f.level == "warning":
+                warnings.append(line)
+        outdated = [
+            f"{m.capability_id}: installed {m.version}, registry {reg.items[m.capability_id].capability.version}"
+            for m in profile.managed
+            if m.capability_id in reg.items
+            and reg.items[m.capability_id].capability.version != m.version
+        ]
+        ok = not failures
+        result = {
+            "target": profile.canonical_path,
+            "ok": ok,
+            "managed": [m.capability_id for m in profile.managed],
+            "failures": failures,
+            "warnings": warnings,
+            "outdated": outdated,
+            "drifted": len(drift.drifted),
+        }
+        if as_json:
+            _print_json(result)
+        else:
+            for f in failures:
+                console.print(f"[red]fail   [/] {f}")
+            for w in warnings:
+                console.print(f"[yellow]warning[/] {w}")
+            for o in outdated:
+                console.print(f"[dim]outdated[/] {o}")
+            console.print(
+                f"{len(profile.managed)} managed capabilit{'y' if len(profile.managed) == 1 else 'ies'}, "
+                f"{len(failures)} failure(s), {len(warnings)} warning(s): "
+                + ("[green]OK[/]" if ok else "[red]FAILED[/]")
+            )
+            if not ok:
+                console.print(
+                    "fix: [bold]agent-forge sync PATH[/] restores managed files; "
+                    "[bold]repair --strategy unmanage[/] keeps local edits"
+                )
+        return 0 if ok else ValidationFailed.exit_code
+
+    _run(body)
+    return 0
+
+
+@app.command()
+def sync(
+    path: Annotated[
+        Path | None, typer.Argument(help="Project directory (default: current).")
+    ] = None,
+    workspace: WorkspaceOpt = None,
+    yes: Annotated[
+        bool, typer.Option("--yes", "-y", help="Restore without asking (CI / fresh clone).")
+    ] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Report what would be restored; write nothing.")
+    ] = False,
+    as_json: JsonOpt = False,
+) -> int:
+    """Bring a freshly cloned project in line with its committed .agent-forge/managed.json:
+    restore managed files that are missing or modified, at the versions the repo pinned.
+    Nothing new is chosen; that is `forge` / `/agent-forge-upgrade`."""
+
+    def body() -> int:
+        from agent_forge.apply.engine import apply_plan
+        from agent_forge.planner.maintenance import build_repair_plan, drift_report
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        store = _store(ws)
+        target = (path or Path.cwd()).resolve()
+        profile = scan_project(target, limits=ws.scan_limits)
+        out = err_console if as_json else console
+        result: dict[str, Any] = {"target": profile.canonical_path, "status": "in_sync"}
+        if profile.managed_manifest_valid is False:
+            raise PlanError(
+                ".agent-forge/managed.json is invalid; nothing restored",
+                hint="Restore it from git, or `agent-forge status` to inspect.",
+            )
+        if profile.managed_manifest_valid is None:
+            result["status"] = "nothing_managed"
+            if as_json:
+                _print_json(result)
+            else:
+                out.print("no .agent-forge/managed.json: nothing to sync (use `forge` to install)")
+            return 0
+        missing_versions = [
+            f"{m.capability_id} {m.version}"
+            for m in profile.managed
+            if m.capability_id not in reg.items
+            or reg.items[m.capability_id].capability.version != m.version
+        ]
+        drift = drift_report(profile)
+        result["drifted"] = [
+            {"capability": i.capability_id, "path": i.path, "state": i.state} for i in drift.drifted
+        ]
+        if not drift.drifted:
+            if as_json:
+                _print_json(result)
+            else:
+                out.print(
+                    f"[green]in sync[/]: {len(profile.managed)} managed capabilit"
+                    f"{'y' if len(profile.managed) == 1 else 'ies'}, no drift"
+                )
+            return 0
+        blocked = sorted(
+            {i.capability_id for i in drift.drifted} & {m.split()[0] for m in missing_versions}
+        )
+        if blocked:
+            raise PlanError(
+                "cannot restore "
+                + ", ".join(blocked)
+                + ": the pinned version is not in this workspace's registry",
+                hint="Re-run the installer (or `agent-forge init --refresh-registry`) so the "
+                "registry contains the versions the project pinned, or `upgrade` the project.",
+            )
+        plan = build_repair_plan(reg, profile, "restore", None)
+        store.save_plan(plan)
+        _audit(
+            store,
+            "PlanCreated",
+            plan_id=plan.plan_id,
+            kind=plan.kind,
+            target=plan.target.canonical_path,
+            registry_digest=plan.registry_digest,
+            operations=len(plan.operations),
+        )
+        result["plan_id"] = plan.plan_id
+        if not as_json:
+            _print_plan_summary(plan)
+        if dry_run:
+            result["status"] = "planned"
+            if as_json:
+                _print_json(result)
+            else:
+                out.print("[yellow]dry run:[/] nothing written")
+            return 0
+        if not yes:
+            if not sys.stdin.isatty():
+                raise PlanError(
+                    "interactive confirmation required (no TTY)", hint="Re-run with --yes."
+                )
+            if not typer.confirm(
+                f"Restore {len(plan.operations)} managed file(s) to the committed state?",
+                default=False,
+            ):
+                result["status"] = "declined"
+                out.print(f"[yellow]declined[/]; plan {plan.plan_id} kept as draft")
+                return 0
+        # The content being restored is exactly what managed.json already records (reviewed
+        # and committed with the project), so every approval class is granted here.
+        _approve_plan(
+            store, reg, plan, shared_files=True, hooks=True, mcp=True, by="agent-forge sync"
+        )
+        tx = apply_plan(ws, store, reg, plan, confirm=None)
+        _audit(
+            store,
+            "TransactionCompleted",
+            transaction_id=tx.transaction_id,
+            plan_id=plan.plan_id,
+            target=tx.target_canonical_path,
+            status=tx.status.value,
+            capabilities=sorted(tx.capabilities),
+        )
+        result["status"] = "restored"
+        result["transaction_id"] = tx.transaction_id
+        if as_json:
+            _print_json(result)
+        else:
+            out.print(
+                f"[green]restored[/] {len([o for o in tx.operations if o.applied])} file(s); "
+                f"transaction {tx.transaction_id}"
+            )
+        return 0
+
+    _run(body)
+    return 0
+
+
+@app.command()
+def stats(
+    workspace: WorkspaceOpt = None,
+    since: Annotated[
+        int | None, typer.Option("--since", help="Only the last N days.", min=1)
+    ] = None,
+    as_json: JsonOpt = False,
+) -> None:
+    """Local usage statistics from the audit log: installs, rollbacks and projects per
+    capability. Read-only; nothing is sent anywhere."""
+
+    def body() -> None:
+        from agent_forge.storage.audit import AuditLog
+        from agent_forge.storage.stats import usage_stats
+
+        ws = _ws(workspace)
+        data = usage_stats(AuditLog(ws.audit_path), since_days=since)
+        if as_json:
+            _print_json(data)
+            return
+        console.print(
+            f"{data['records']} audit record(s)"
+            + (f" in the last {since} day(s)" if since else "")
+            + f"; {data['projects']} project(s); {data['transactions_failed']} failed transaction(s)"
+        )
+        if data["by_capability"]:
+            t = Table(title="capabilities")
+            for col in ("capability", "installs", "rollbacks"):
+                t.add_column(col)
+            for row in data["by_capability"]:
+                t.add_row(row["capability"], str(row["installs"]), str(row["rollbacks"]))
+            console.print(t)
+        if data["by_project"]:
+            t = Table(title="projects")
+            t.add_column("target", overflow="fold")
+            t.add_column("transactions")
+            for row in data["by_project"]:
+                t.add_row(row["target"], str(row["transactions"]))
+            console.print(t)
+        if data["events"]:
+            console.print("events: " + ", ".join(f"{k} {v}" for k, v in data["events"].items()))
 
     _run(body)
 

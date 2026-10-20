@@ -52,6 +52,20 @@ Adapters record the date their conventions were last verified (`AdapterInfo.veri
 newer tool versions that change file conventions need an adapter update, which the
 conformance suite gates.
 
+## Distribution
+
+| Channel | Command | Notes |
+|---|---|---|
+| Installer (recommended) | `install.ps1` / `install.sh` in a project root | latest release, venv in `~/.agent-forge`, launcher, `setup` |
+| uvx | `uvx --from "git+https://github.com/tamtd91ht/agent-forge@vX.Y.Z" agent-forge …` | no Python management by the team; run `init --workspace` once |
+| pipx | `pipx install "git+https://github.com/tamtd91ht/agent-forge@vX.Y.Z"` | same |
+| CI | `.github/actions/check` | installs a release into the runner, runs `check` (and `forge --approval-file`) |
+| Wheel / sdist | attached to every GitHub Release with `SHA256SUMS` and Sigstore bundles | `pip install agent_forge-X.Y.Z-py3-none-any.whl` |
+
+A standalone binary (PyInstaller) is not shipped yet: the Rich/Typer/Pydantic stack builds
+cleanly, but the launcher and workspace layout the entry skill relies on would need a second
+code path, so it waits for pilot feedback.
+
 ## Upgrade, downgrade, uninstall
 
 - **Upgrade:** re-run the installer (or `pip install -U` + `agent-forge init --refresh-registry`

@@ -100,6 +100,17 @@ capabilities:
 
 `agent-forge policy "/path/to/my app"` shows the merged layers and every verdict.
 
+## In a team
+
+```bash
+agent-forge sync  "/path/to/my app"                           # fresh clone: restore managed files to the committed state
+agent-forge check "/path/to/my app"                           # CI gate: exit 0 clean, 12 drift/problems
+agent-forge approve <plan> --export-approval .agent-forge/approval.yaml   # record the reviewed set for CI
+agent-forge forge "/path/to/my app" --approval-file .agent-forge/approval.yaml  # CI: apply only what the file covers
+```
+
+Roles, the approval flow and the team registry are in [team-workflow.md](team-workflow.md).
+
 ## Maintain what is installed
 
 ```bash

@@ -16,7 +16,10 @@ _spec = importlib.util.spec_from_file_location(
 report = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(report)  # type: ignore[union-attr]
 
-EXAMPLES = sorted(p.name for p in (REPO_ROOT / "examples").iterdir() if p.is_dir())
+# example *projects*; examples/policy/ holds policy templates, not a project
+EXAMPLES = sorted(
+    p.name for p in (REPO_ROOT / "examples").iterdir() if p.is_dir() and (p / "project").is_dir()
+)
 
 
 def test_every_example_has_reviewed_expectations() -> None:

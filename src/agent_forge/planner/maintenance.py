@@ -20,7 +20,7 @@ from pathlib import Path
 from agent_forge import __version__
 from agent_forge.adapters import platform_owning
 from agent_forge.apply.jsonmerge import contains_fragment, remove_fragment
-from agent_forge.apply.sections import find_section, remove_section
+from agent_forge.apply.sections import find_section, remove_section, upsert_section
 from agent_forge.errors import ApplyError, PlanError
 from agent_forge.models.capability import MergeStrategy, Platform
 from agent_forge.models.plan import (
@@ -350,7 +350,36 @@ def build_repair_plan(
                         cap_ops.append(op)
                     continue
                 if dest.merge == MergeStrategy.APPEND_SECTION:
-                    continue  # sections are re-added by `upgrade`/`assign`; not a repair concern
+                    assert dest.section_id
+                    if dest.dest not in rec.sections or not any(
+                        i.path == dest.dest and i.kind == "section" for i in items
+                    ):
+                        continue
+                    body = _asset_files(lc, dest)[0][1]
+                    current = reader.read(dest.dest)
+                    projected = upsert_section(current, dest.section_id, cid, cap.version, body)
+                    counter[0] += 1
+                    cap_ops.append(
+                        FileOperation(
+                            op_id=f"op{counter[0]:03d}",
+                            kind=OperationKind.MERGE_SECTION,
+                            path=dest.dest,
+                            capability_id=cid,
+                            capability_version=cap.version,
+                            platform=platform,
+                            section_id=dest.section_id,
+                            content=body,
+                            content_sha256=sha256_text(body),
+                            before_sha256=sha256_text(current) if current is not None else None,
+                            after_sha256=sha256_text(projected),
+                            shared_file=True,
+                            requires_extra_approval=True,
+                            approval_class="shared_file",
+                            reason=f"restore managed section '{dest.section_id}' (section_missing)",
+                        )
+                    )
+                    reader.cache[dest.dest] = projected
+                    continue
                 for rel, content in _asset_files(lc, dest):
                     item = next((i for i in items if i.path == rel and i.kind == "file"), None)
                     if item is None or rel not in rec.files:
@@ -375,7 +404,7 @@ def build_repair_plan(
                     reader.cache[rel] = content
                     rec.files[rel] = sha256_text(content)
         if not cap_ops:
-            notes.append(f"{cid}: drift only in sections; use `upgrade`")
+            notes.append(f"{cid}: nothing restorable (use `upgrade`)")
             continue
         ops.extend(cap_ops)
         rec.transaction_id = transaction_id_for(plan_id)

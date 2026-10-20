@@ -64,6 +64,12 @@ def validate_workspace(
         rep.add("error", "registry", e)
     for w in rr.warnings:
         rep.add("warning", "registry", w)
+    for cid, winner, loser in reg.shadowed:
+        rep.add(
+            "warning",
+            "registry",
+            f"{cid}: defined in registry '{loser}' and '{winner}'; '{winner}' wins (higher priority)",
+        )
     if provenance:
         try:
             mgr = SourceManager(ws)

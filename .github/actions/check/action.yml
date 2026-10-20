@@ -1,0 +1,52 @@
+name: agent-forge check
+description: >-
+  CI gate for a project that uses Agent Forge: fails the job when a managed file drifted
+  from .agent-forge/managed.json, a managed capability is missing or revoked, the manifest
+  is invalid or a transaction was left unfinished. Read-only; writes nothing to the project.
+  Optionally applies a committed approval file (`forge --approval-file`) first.
+
+inputs:
+  path:
+    description: Project directory to check (relative to the workspace).
+    default: "."
+  version:
+    description: Agent Forge release tag to use (vX.Y.Z); "latest" resolves the newest GitHub Release.
+    default: latest
+  approval-file:
+    description: >-
+      Optional committed approval file (e.g. .agent-forge/approval.yaml). When set, the
+      action runs `forge --approval-file` before `check`, so a project is kept at the
+      reviewed set non-interactively; a plan outside the file fails with exit 14.
+    default: ""
+  python-version:
+    description: Python version for the runner.
+    default: "3.12"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install Agent Forge ${{ inputs.version }}
+      shell: bash
+      env:
+        AF_VERSION: ${{ inputs.version }}
+      run: |
+        set -eu
+        repo="tamtd91ht/agent-forge"
+        ref="$AF_VERSION"
+        if [ "$ref" = "latest" ]; then
+          ref="$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | python -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
+        fi
+        python -m pip install --quiet --disable-pip-version-check "https://github.com/$repo/archive/$ref.zip"
+        agent-forge --version
+        agent-forge init --workspace "$RUNNER_TEMP/agent-forge-ws" > /dev/null
+        echo "AGENT_FORGE_HOME=$RUNNER_TEMP/agent-forge-ws" >> "$GITHUB_ENV"
+    - name: Apply the committed approval file
+      if: inputs.approval-file != ''
+      shell: bash
+      run: agent-forge forge "${{ inputs.path }}" --approval-file "${{ inputs.approval-file }}" --json > "$RUNNER_TEMP/forge.json"
+    - name: agent-forge check
+      shell: bash
+      run: agent-forge check "${{ inputs.path }}"

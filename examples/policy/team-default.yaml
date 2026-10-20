@@ -1,0 +1,37 @@
+# Team default policy for Agent Forge (strictest-wins layer).
+#
+# Where to put it:
+#   <workspace>/policy.yaml              applies to every project this workspace touches
+#   <project>/.agent-forge/policy.yaml   applies to one repository (commit it)
+# A lower layer can only tighten what a higher layer allows; `agent-forge policy PATH`
+# shows the merged result and the verdict per capability. See docs/policy.md.
+version: 1
+name: team-default
+
+# Nothing above medium risk is ever planned; medium needs an explicit --request / --want.
+max_risk: medium
+require_request_from_risk: medium
+
+capabilities:
+  # Native-runtime reverse engineering tools stay opt-in per project.
+  require_request: ["rea.*", "uiux.full-toolkit"]
+  deny: []
+  allow_only: []
+  deny_tags: []
+
+grants:
+  process_execute: require_request   # hooks and MCP servers only when asked for
+  network_access: require_request    # MCP servers that talk to the network
+  secrets_read: deny
+
+classes:
+  shared_file: allow   # managed sections in CLAUDE.md / AGENTS.md (still `--shared-files`)
+  hook: allow          # still needs `approve --hooks`; set deny to forbid hooks team-wide
+  mcp: deny            # MCP servers are added per project after a security review
+
+platforms: []          # empty = every supported platform
+require_signoff: false # set true once the catalog entries your team uses are signed off
+
+# Always-loaded context budget per capability (characters of skill/agent descriptions,
+# unscoped rules and CLAUDE.md sections). Above it a capability needs an explicit request.
+max_context_chars: 4000

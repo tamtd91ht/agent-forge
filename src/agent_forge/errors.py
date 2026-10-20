@@ -86,3 +86,9 @@ class SourceError(AgentForgeError):
     """Source manifest / git checkout problems."""
 
     exit_code = 13
+
+
+class ApprovalFileMismatch(ApprovalError):
+    """The plan goes beyond what a committed approval file covers (CI gate)."""
+
+    exit_code = 14

@@ -77,3 +77,18 @@ def test_exit_codes(real_workspace, make_project, tmp_path: Path) -> None:
 
     assert code("validate", str(target), "--workspace", ws) == 12
     assert code("sources", "sync", "ecc", "--workspace", ws) == 13
+
+    plan3 = json.loads(
+        runner.invoke(
+            app,
+            ["assign", str(make_project("codes-af", kind="claude")), "--workspace", ws, "--json"],
+        ).stdout
+    )
+    approval = tmp_path / "approval.yaml"
+    approval.write_text(
+        "version: 1\napproved_by: ci\napproved_at: '2026-10-20'\nclasses: []\ncapabilities: {}\n",
+        encoding="utf-8",
+    )
+    assert (
+        code("approve", plan3["plan_id"], "--workspace", ws, "--approval-file", str(approval)) == 14
+    )

@@ -35,6 +35,16 @@ class WorkspaceConfig:
     checkouts_dir: Path
     state_dir: Path
     raw: dict[str, Any] = field(default_factory=dict)
+    # Additional registries in priority order (first wins on a duplicate id); the core
+    # `registry_dir` is always the last, lowest-priority layer. Configured as
+    #   registries:
+    #     - { name: team, path: /srv/agent-forge-team-registry }
+    extra_registries: tuple[tuple[str, Path], ...] = ()
+
+    @property
+    def registry_layers(self) -> list[tuple[str, Path]]:
+        """(name, directory) for every registry, highest priority first; core is last."""
+        return [*self.extra_registries, ("core", self.registry_dir)]
 
     @property
     def marker(self) -> Path:
@@ -168,7 +178,32 @@ def load_workspace(root: Path) -> WorkspaceConfig:
         checkouts_dir=_resolve_dir(root, merged["checkouts_dir"], "checkouts_dir"),
         state_dir=_resolve_dir(root, merged["state_dir"], "state_dir"),
         raw=merged,
+        extra_registries=_extra_registries(root, merged.get("registries")),
     )
+
+
+def _extra_registries(root: Path, value: Any) -> tuple[tuple[str, Path], ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise WorkspaceError("agent-forge.yaml: 'registries' must be a list")
+    out: list[tuple[str, Path]] = []
+    seen: set[str] = set()
+    for i, entry in enumerate(value):
+        if isinstance(entry, str):
+            entry = {"name": f"registry{i + 1}", "path": entry}
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise WorkspaceError(
+                f"agent-forge.yaml: registries[{i}] must be a path or {{name, path}}"
+            )
+        name = str(entry.get("name") or f"registry{i + 1}")
+        if name == "core" or name in seen:
+            raise WorkspaceError(
+                f"agent-forge.yaml: registry name {name!r} is reserved or repeated"
+            )
+        seen.add(name)
+        out.append((name, _resolve_dir(root, entry["path"], f"registries[{i}].path")))
+    return tuple(out)
 
 
 def require_workspace(explicit: Path | None = None) -> WorkspaceConfig:

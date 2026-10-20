@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Team workflow (6-month plan, phase 1)
+- `agent-forge check PATH`: read-only CI gate with one exit code (0 / 12) for drift, missing
+  or revoked capabilities, invalid `managed.json`, unfinished transactions and config syntax;
+  `.github/actions/check` runs it (and optionally `forge --approval-file`) in any repository.
+- `agent-forge sync [PATH]`: a fresh clone restores managed files *and* managed sections that
+  are missing or modified, at the versions `managed.json` pinned, through a journaled
+  transaction; refuses when the workspace registry lacks a pinned version. `repair --strategy
+  restore` now restores missing managed sections too.
+- Approval files: `approve --approval-file F` / `forge --approval-file F` approve
+  non-interactively from a committed YAML/JSON file (ids, versions, classes, optional registry
+  digest); a plan outside it is refused with the new exit code 14 and nothing is written.
+  `approve --export-approval F` writes the file for a plan.
+- Several registries: `registries:` in `agent-forge.yaml` layers a team registry over the core
+  one (first wins on a duplicate id; `validate` and `doctor` report shadowing; `catalog show`
+  names the registry). The registry digest distinguishes overrides.
+- `agent-forge stats [--since DAYS]`: installs, rollbacks and projects per capability from the
+  local audit log; nothing is sent anywhere.
+- `examples/policy/team-default.yaml`, `docs/team-workflow.md`, `docs/pilots/` (baseline and
+  feedback templates).
+
 ## 0.2.0 — 2026-10-20
 
 First tagged release. Everything below was developed after the untagged 0.1.0 build; the
