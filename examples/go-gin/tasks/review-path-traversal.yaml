@@ -1,0 +1,21 @@
+id: review-path-traversal
+category: review
+prompt: Review files.go before release. It serves files from the ./public directory by name. Fix any security
+  problem you find without changing the function signature and add a test that would have caught it.
+setup:
+  files:
+    files.go: "package main\n\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\n// ReadPublic returns the\
+      \ content of ./public/<name>.\nfunc ReadPublic(name string) ([]byte, error) {\n\treturn os.ReadFile(filepath.Join(\"\
+      public\", name))\n}\n"
+acceptance:
+  files:
+    files_acceptance_test.go: "package main\n\nimport (\n\t\"os\"\n\t\"path/filepath\"\n\t\"testing\"\n\
+      )\n\nfunc TestReadPublicRefusesTraversal(t *testing.T) {\n\t_ = os.MkdirAll(\"public\", 0o755)\n\
+      \t_ = os.WriteFile(filepath.Join(\"public\", \"ok.txt\"), []byte(\"ok\"), 0o644)\n\t_ = os.WriteFile(\"\
+      secret.txt\", []byte(\"secret\"), 0o644)\n\tif b, err := ReadPublic(\"ok.txt\"); err != nil || string(b)\
+      \ != \"ok\" {\n\t\tt.Fatalf(\"ok.txt: %v %q\", err, b)\n\t}\n\tif b, err := ReadPublic(\"../secret.txt\"\
+      ); err == nil && string(b) == \"secret\" {\n\t\tt.Fatal(\"path traversal read secret.txt\")\n\t\
+      }\n}\n"
+  command: go test ./... -run TestReadPublicRefusesTraversal
+regression_command: go vet ./... && go test ./...
+budget_seconds: 600

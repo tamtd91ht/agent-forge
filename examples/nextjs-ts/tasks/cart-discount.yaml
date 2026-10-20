@@ -1,0 +1,16 @@
+id: cart-discount
+category: feature
+prompt: 'In lib/cart.ts add applyDiscount(total: number, code: string): number. Codes: ''SAVE10'' = 10%
+  off, ''SAVE25'' = 25% off, anything else = no discount. Never return a negative number and round to
+  2 decimals. Add a vitest test.'
+acceptance:
+  files:
+    lib/cart.acceptance.test.ts: "import { describe, expect, it } from 'vitest';\nimport { applyDiscount,\
+      \ total } from './cart';\n\ndescribe('applyDiscount', () => {\n  it('applies known codes', () =>\
+      \ {\n    expect(applyDiscount(100, 'SAVE10')).toBe(90);\n    expect(applyDiscount(10, 'SAVE25')).toBe(7.5);\n\
+      \  });\n  it('ignores unknown codes and rounds', () => {\n    expect(applyDiscount(19.99, 'NOPE')).toBe(19.99);\n\
+      \    expect(applyDiscount(0.1 + 0.2, 'SAVE10')).toBe(0.27);\n  });\n  it('keeps total working',\
+      \ () => {\n    expect(total([1, 2])).toBe(3);\n  });\n});\n"
+  command: npx vitest run lib/cart.acceptance.test.ts
+regression_command: npx tsc --noEmit -p . && npx vitest run
+budget_seconds: 600

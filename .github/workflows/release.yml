@@ -31,7 +31,7 @@ jobs:
       - name: Install from the lock file and test
         run: |
           uv sync --locked --all-extras
-          uv run ruff check src tests scripts
+          uv run ruff check src tests scripts tools
           uv run python -m pytest -q
           uv run agent-forge validate --no-provenance
           uv run python scripts/export_schemas.py --check

@@ -171,8 +171,8 @@ Evidence for the production gates of [product-vision.md §11](product-vision.md#
 | | upgrade/downgrade documented | met | `docs/operations.md` |
 | | unsupported versions fail clearly | met | unknown `schema_version` refused; tool versions detected and bounded (`tests/unit/test_tool_versions.py`, exit 15); weekly docs watch |
 | E Value | representative fixture set | met | `examples/` (6 projects) |
-| | matching precision / missed measured | met | `scripts/matching_report.py`, CI |
-| | baseline-vs-candidate evaluation | not met | designed in `docs/evaluation.md`; deliberately not in the core yet |
+| | matching precision / missed measured | met | `scripts/matching_report.py` (examples exact; `--corpus` + thresholds for anonymised real repos), CI |
+| | baseline-vs-candidate evaluation | partial | harness `tools/agent-forge-eval` + 30 reviewed tasks + `review.evidence` field; no measurement run yet (needs a maintainer with the tool and a budget) |
 | | evidence vs AI explanation separated | met | plans carry evidence and reasons from rules; the agent's review is a separate conversation output |
 | | limitations documented | met | `docs/security.md` (known gaps, runtime boundary), `docs/evaluation.md` |
 | F Release | versioning, changelog, release process | met | single version source, `CHANGELOG.md`, `release.yml` (tag check, build, SHA256SUMS, SBOM, Sigstore), `docs/operations.md#release-process` |
@@ -181,13 +181,13 @@ Evidence for the production gates of [product-vision.md §11](product-vision.md#
 | | security contact, triage | met | `SECURITY.md` |
 | | install, troubleshooting, recovery guides | met | `README.md`, `docs/troubleshooting.md`, `docs/operations.md` |
 
-Not production-ready for: capability **value** claims (Gate E evaluation not met). The
+Not production-ready for: capability **value** claims (Gate E: harness ready, no measurement yet). The
 6-month plan that follows these gates is tracked in [roadmap-2026h2.md](roadmap-2026h2.md).
 
 ### Deferred, with reasons
 
-- **Evaluation engine (Phase 4):** methodology in [`evaluation.md`](evaluation.md); running
-  real LLM sessions stays opt-in and out of the core (ADR-0002).
+- **Evaluation runs:** the harness lives in `tools/agent-forge-eval` (opt-in, out of the
+  core, ADR-0002); measurements are a maintainer task with a budget, see `evaluation.md`.
 - **Dependency version constraints:** deferred until a second released version of any
   capability exists (ADR-0002). Tool-version ranges per adapter exist since ADR-0006.
 - **Keyed (HMAC) seals / signed releases:** the workspace is the trust anchor (A1); signing

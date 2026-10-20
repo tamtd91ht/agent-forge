@@ -1,0 +1,12 @@
+id: web-price-format
+category: feature
+prompt: 'In apps/web add lib/format.ts exporting formatPrice(cents: number, currency = ''USD''): string
+  using Intl.NumberFormat(''en-US''), e.g. formatPrice(1999) === ''$19.99''. Add a vitest test (add vitest
+  as a devDependency if missing).'
+acceptance:
+  files:
+    apps/web/lib/format.acceptance.test.ts: "import { expect, it } from 'vitest';\nimport { formatPrice\
+      \ } from './format';\n\nit('formats cents', () => {\n  expect(formatPrice(1999)).toBe('$19.99');\n\
+      \  expect(formatPrice(0)).toBe('$0.00');\n});\n"
+  command: cd apps/web && npx vitest run lib/format.acceptance.test.ts
+budget_seconds: 600

@@ -194,6 +194,34 @@ class AcknowledgedFinding(StrictModel):
     reason: str
 
 
+class EvaluationEvidence(StrictModel):
+    """One baseline-vs-candidate evaluation (tools/agent-forge-eval), summarised by a human.
+
+    Numbers are copied from the harness report; `report` points at the committed report so
+    anyone can check them. A capability without evidence is an opinion, and `catalog show`
+    says so.
+    """
+
+    date: str = Field(description="ISO-8601 date of the run")
+    fixture: str = Field(description="examples/<fixture> the task set came from")
+    tool: str = Field(description="coding tool and version, e.g. 'claude 2.1.304'")
+    runs: Annotated[int, Field(ge=1)] = Field(description="runs per task and arm")
+    tasks: Annotated[int, Field(ge=1)] = Field(description="number of tasks")
+    baseline_pass_rate: Annotated[float, Field(ge=0, le=1)]
+    candidate_pass_rate: Annotated[float, Field(ge=0, le=1)]
+    candidate_ci95: tuple[float, float] = Field(description="Wilson 95% interval, candidate arm")
+    verdict: Literal["improved", "no_evidence", "worse"]
+    report: str = Field(description="Repository path of the report (docs/evaluation/results/...)")
+    decided_by: str = Field(description="Human who read the report and recorded this entry")
+
+    @model_validator(mode="after")
+    def _ci_ordered(self) -> EvaluationEvidence:
+        lo, hi = self.candidate_ci95
+        if not 0 <= lo <= hi <= 1:
+            raise ValueError("candidate_ci95 must be [low, high] within 0..1")
+        return self
+
+
 class ReviewInfo(StrictModel):
     reviewed_at: str = Field(description="ISO-8601 date")
     reviewer: str
@@ -207,6 +235,10 @@ class ReviewInfo(StrictModel):
         default=None, description="Human who signed off the curation (None = pending)"
     )
     signed_off_at: str | None = None
+    evidence: list[EvaluationEvidence] = Field(
+        default_factory=list,
+        description="Evaluation results (baseline vs candidate); empty = value not measured",
+    )
 
 
 class RuntimeRequirement(StrictModel):

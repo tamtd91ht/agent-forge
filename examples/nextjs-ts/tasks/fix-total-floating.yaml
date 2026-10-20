@@ -1,0 +1,12 @@
+id: fix-total-floating
+category: bugfix
+prompt: Users see cart totals like 0.30000000000000004. Fix total() in lib/cart.ts so results are rounded
+  to cents (2 decimals) and add a regression test. Keep the signature.
+acceptance:
+  files:
+    lib/total.acceptance.test.ts: "import { expect, it } from 'vitest';\nimport { total } from './cart';\n\
+      \nit('rounds to cents', () => {\n  expect(total([0.1, 0.2])).toBe(0.3);\n  expect(total([1.005,\
+      \ 0])).toBe(1.01);\n  expect(total([])).toBe(0);\n});\n"
+  command: npx vitest run lib/total.acceptance.test.ts
+regression_command: npx tsc --noEmit -p . && npx vitest run
+budget_seconds: 600

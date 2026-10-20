@@ -1,0 +1,19 @@
+id: fix-money-rounding
+category: bugfix
+prompt: com.example.Money.withTax has a rounding bug (totals off by a cent). Fix it to round half up to
+  cents using BigDecimal, keep the signature, and add a regression test.
+setup:
+  files:
+    src/main/java/com/example/Money.java: "package com.example;\n\npublic final class Money {\n    private\
+      \ Money() {}\n\n    /** cents including tax, rounded half up. */\n    public static long withTax(long\
+      \ cents, int taxPercent) {\n        return (long) (cents + cents * taxPercent / 100.0);\n    }\n\
+      }\n"
+acceptance:
+  files:
+    src/test/java/com/example/MoneyAcceptanceTest.java: "package com.example;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\n\
+      \nimport org.junit.jupiter.api.Test;\n\nclass MoneyAcceptanceTest {\n    @Test\n    void roundsHalfUp()\
+      \ {\n        assertEquals(2, Money.withTax(1, 50));\n        assertEquals(356, Money.withTax(333,\
+      \ 7));\n        assertEquals(6, Money.withTax(5, 10));\n    }\n}\n"
+  command: mvn -q -Dtest=MoneyAcceptanceTest test
+regression_command: mvn -q test
+budget_seconds: 900

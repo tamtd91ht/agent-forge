@@ -1,0 +1,19 @@
+id: orders-validation
+category: feature
+prompt: 'Add POST /orders accepting JSON {"sku": string, "quantity": int}: sku non-blank, quantity 1..100,
+  otherwise 400 with {"error": "..."}; on success 201 with the body plus an incrementing "id". Make the
+  app testable (public partial class Program) and add tests in Api.Tests.'
+acceptance:
+  files:
+    Api.Tests/OrdersAcceptanceTests.cs: "using System.Net;\nusing System.Net.Http.Json;\nusing Microsoft.AspNetCore.Mvc.Testing;\n\
+      using Xunit;\n\npublic class OrdersAcceptanceTests : IClassFixture<WebApplicationFactory<Program>>\n\
+      {\n    private readonly HttpClient _c;\n    public OrdersAcceptanceTests(WebApplicationFactory<Program>\
+      \ f) => _c = f.CreateClient();\n\n    [Fact]\n    public async Task Creates_and_validates()\n  \
+      \  {\n        var ok = await _c.PostAsJsonAsync(\"/orders\", new { sku = \"A1\", quantity = 2 });\n\
+      \        Assert.Equal(HttpStatusCode.Created, ok.StatusCode);\n        var bad = await _c.PostAsJsonAsync(\"\
+      /orders\", new { sku = \"\", quantity = 2 });\n        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);\n\
+      \        var zero = await _c.PostAsJsonAsync(\"/orders\", new { sku = \"A1\", quantity = 0 });\n\
+      \        Assert.Equal(HttpStatusCode.BadRequest, zero.StatusCode);\n    }\n}\n"
+  command: dotnet test Api.Tests --filter OrdersAcceptanceTests
+regression_command: dotnet build && dotnet test
+budget_seconds: 900

@@ -1,0 +1,21 @@
+id: post-items-validation
+category: feature
+prompt: 'Add POST /items accepting JSON {"name": str}. Names must be 1-40 characters after stripping whitespace;
+  otherwise respond 422. On success respond 201 with {"name": <stored name>} and make GET /items include
+  it. Keep the in-memory store simple. Add tests.'
+setup:
+  files:
+    app/main.py: "from fastapi import FastAPI\n\napp = FastAPI()\nITEMS: list[str] = ['apple', 'pear']\n\
+      \n\n@app.get('/health')\ndef health() -> dict[str, bool]:\n    return {'ok': True}\n\n\n@app.get('/items')\n\
+      def items() -> list[str]:\n    return ITEMS\n"
+acceptance:
+  files:
+    tests/test_post_items_acceptance.py: "from fastapi.testclient import TestClient\n\nfrom app.main import\
+      \ app\n\nc = TestClient(app)\n\n\ndef test_post_then_get() -> None:\n    r = c.post('/items', json={'name':\
+      \ '  kiwi '})\n    assert r.status_code == 201 and r.json() == {'name': 'kiwi'}\n    assert 'kiwi'\
+      \ in c.get('/items').json()\n\n\ndef test_rejects_empty_and_long() -> None:\n    assert c.post('/items',\
+      \ json={'name': '   '}).status_code == 422\n    assert c.post('/items', json={'name': 'x' * 41}).status_code\
+      \ == 422\n"
+  command: python -m pytest -q tests/test_post_items_acceptance.py
+regression_command: python -m pytest -q
+budget_seconds: 600

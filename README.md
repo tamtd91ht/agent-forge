@@ -134,6 +134,8 @@ More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
   [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) ·
   [ADR-0004](docs/adr/0004-install-into-project.md) ·
   [ADR-0005](docs/adr/0005-production-hardening.md)
+- Value: [evaluation](docs/evaluation.md) · [agent-forge-eval](tools/agent-forge-eval/README.md) ·
+  [results](docs/evaluation/README.md)
 - Teams: [team workflow](docs/team-workflow.md) · [pilots](docs/pilots/README.md) ·
   [team policy template](examples/policy/team-default.yaml)
 - [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md)
@@ -148,7 +150,7 @@ git clone https://github.com/tamtd91ht/agent-forge.git
 cd agent-forge
 python -m venv .venv
 .venv/Scripts/pip install -e ".[dev]"          # macOS/Linux: .venv/bin/pip
-.venv/Scripts/ruff check src tests scripts && .venv/Scripts/python -m pytest -q
+.venv/Scripts/ruff check src tests scripts tools && .venv/Scripts/python -m pytest -q
 .venv/Scripts/agent-forge validate
 ```
 

@@ -190,6 +190,100 @@
       "title": "EquivalentSignal",
       "type": "object"
     },
+    "EvaluationEvidence": {
+      "additionalProperties": false,
+      "description": "One baseline-vs-candidate evaluation (tools/agent-forge-eval), summarised by a human.\n\nNumbers are copied from the harness report; `report` points at the committed report so\nanyone can check them. A capability without evidence is an opinion, and `catalog show`\nsays so.",
+      "properties": {
+        "baseline_pass_rate": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Baseline Pass Rate",
+          "type": "number"
+        },
+        "candidate_ci95": {
+          "description": "Wilson 95% interval, candidate arm",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Candidate Ci95",
+          "type": "array"
+        },
+        "candidate_pass_rate": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Candidate Pass Rate",
+          "type": "number"
+        },
+        "date": {
+          "description": "ISO-8601 date of the run",
+          "title": "Date",
+          "type": "string"
+        },
+        "decided_by": {
+          "description": "Human who read the report and recorded this entry",
+          "title": "Decided By",
+          "type": "string"
+        },
+        "fixture": {
+          "description": "examples/<fixture> the task set came from",
+          "title": "Fixture",
+          "type": "string"
+        },
+        "report": {
+          "description": "Repository path of the report (docs/evaluation/results/...)",
+          "title": "Report",
+          "type": "string"
+        },
+        "runs": {
+          "description": "runs per task and arm",
+          "minimum": 1,
+          "title": "Runs",
+          "type": "integer"
+        },
+        "tasks": {
+          "description": "number of tasks",
+          "minimum": 1,
+          "title": "Tasks",
+          "type": "integer"
+        },
+        "tool": {
+          "description": "coding tool and version, e.g. 'claude 2.1.304'",
+          "title": "Tool",
+          "type": "string"
+        },
+        "verdict": {
+          "enum": [
+            "improved",
+            "no_evidence",
+            "worse"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "fixture",
+        "tool",
+        "runs",
+        "tasks",
+        "baseline_pass_rate",
+        "candidate_pass_rate",
+        "candidate_ci95",
+        "verdict",
+        "report",
+        "decided_by"
+      ],
+      "title": "EvaluationEvidence",
+      "type": "object"
+    },
     "Grants": {
       "additionalProperties": false,
       "description": "What the installed content can do once the agent uses it. Input to the policy engine.\n\nDefaults are derived from `kind` when a manifest does not spell them out: hooks execute\nprocesses, MCP servers execute processes and (usually) access the network.",
@@ -350,6 +444,14 @@
             "$ref": "#/$defs/AcknowledgedFinding"
           },
           "title": "Acknowledged Findings",
+          "type": "array"
+        },
+        "evidence": {
+          "description": "Evaluation results (baseline vs candidate); empty = value not measured",
+          "items": {
+            "$ref": "#/$defs/EvaluationEvidence"
+          },
+          "title": "Evidence",
           "type": "array"
         },
         "notes": {

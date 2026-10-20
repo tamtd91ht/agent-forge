@@ -1,0 +1,19 @@
+id: fix-tax-rounding
+category: bugfix
+prompt: 'Api/Money.cs has a rounding bug: WithTax returns totals off by a cent. Fix it to round half away
+  from zero to whole cents (decimal math), keep the signature, and add a regression test in Api.Tests
+  (create the xUnit project if it does not exist, referencing Api).'
+setup:
+  files:
+    Api/Money.cs: "namespace Api;\n\npublic static class Money\n{\n    /// <summary>cents including tax,\
+      \ rounded half up.</summary>\n    public static long WithTax(long cents, int taxPercent) => (long)(cents\
+      \ + cents * taxPercent / 100.0);\n}\n"
+acceptance:
+  files:
+    Api.Tests/MoneyAcceptanceTests.cs: "using Api;\nusing Xunit;\n\npublic class MoneyAcceptanceTests\n\
+      {\n    [Theory]\n    [InlineData(1, 50, 2)]\n    [InlineData(333, 7, 356)]\n    [InlineData(5, 10,\
+      \ 6)]\n    public void Rounds_half_up(long cents, int tax, long expected) => Assert.Equal(expected,\
+      \ Money.WithTax(cents, tax));\n}\n"
+  command: dotnet test Api.Tests --filter MoneyAcceptanceTests
+regression_command: dotnet build && dotnet test
+budget_seconds: 900

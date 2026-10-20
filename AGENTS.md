@@ -28,7 +28,7 @@ before changing engine code.
 ## Commands
 
 ```bash
-.venv/Scripts/ruff check src tests scripts && .venv/Scripts/ruff format src tests scripts
+.venv/Scripts/ruff check src tests scripts tools && .venv/Scripts/ruff format src tests scripts tools
 .venv/Scripts/python -m pytest -q
 agent-forge validate
 ```

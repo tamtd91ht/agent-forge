@@ -1,0 +1,12 @@
+id: docs-monorepo-readme
+category: docs
+prompt: 'Update README.md at the repository root so a new developer can find each part of the monorepo:
+  apps/web (Next.js), services/api (FastAPI) and services/worker (Go), with the command to run each one''s
+  tests. Keep the existing content that is still true.'
+acceptance:
+  files:
+    tests/test_readme_acceptance.py: "from pathlib import Path\n\n\ndef test_readme_maps_the_monorepo()\
+      \ -> None:\n    md = Path('README.md').read_text(encoding='utf-8')\n    for s in ('apps/web', 'services/api',\
+      \ 'services/worker', 'go test', 'pytest'):\n        assert s in md, s\n"
+  command: python -m pytest -q tests/test_readme_acceptance.py
+budget_seconds: 600

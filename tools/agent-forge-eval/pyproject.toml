@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-forge-eval"
+version = "0.1.0"
+description = "Opt-in, local evaluation harness: does a curated capability make a coding agent better on a fixture? Baseline vs candidate, real tool sessions, objective acceptance tests."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["pyyaml>=6.0.2"]
+
+[project.scripts]
+agent-forge-eval = "agent_forge_eval.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_forge_eval"]

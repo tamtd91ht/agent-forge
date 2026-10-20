@@ -1,0 +1,12 @@
+id: add-items-endpoint
+category: feature
+prompt: Add GET /items to the FastAPI app in app/main.py. It returns a JSON list of item names; start
+  with an in-memory list containing 'apple' and 'pear'. Add a test for it under tests/.
+acceptance:
+  files:
+    tests/test_items_acceptance.py: "from fastapi.testclient import TestClient\n\nfrom app.main import\
+      \ app\n\n\ndef test_items_lists_names() -> None:\n    r = TestClient(app).get('/items')\n    assert\
+      \ r.status_code == 200\n    assert r.json() == ['apple', 'pear']\n"
+  command: python -m pytest -q tests/test_items_acceptance.py
+regression_command: python -m pytest -q
+budget_seconds: 600

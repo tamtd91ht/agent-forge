@@ -93,6 +93,12 @@ class Policy(BaseModel):
         ge=0,
         description="capabilities adding more always-loaded context than this need a request",
     )
+    max_total_context_chars: int | None = Field(
+        default=None,
+        ge=0,
+        description="budget for the always-loaded context a whole plan adds; exceeding it is "
+        "reported as a decision the approver must take (the plan is not blocked)",
+    )
 
 
 @dataclass
@@ -125,6 +131,16 @@ class PolicySet:
                 worst = verdict
             reasons.extend(f"[{name}] {w}" for w in why)
         return Decision(worst), reasons
+
+    @property
+    def total_context_budget(self) -> int | None:
+        """Strictest `max_total_context_chars` across layers (None = no budget)."""
+        values = [
+            p.max_total_context_chars
+            for _, p in self.layers
+            if p.max_total_context_chars is not None
+        ]
+        return min(values) if values else None
 
     def class_allowed(self, klass: str) -> bool:
         return all(

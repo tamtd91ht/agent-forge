@@ -1,0 +1,23 @@
+id: refactor-config-env
+category: refactor
+prompt: 'app/config.py reads settings straight from os.environ in several places. Refactor it into a single
+  Settings class (plain dataclass is fine) built once by load_settings(env: Mapping[str, str] | None =
+  None), keeping the same defaults and the same validation (PORT must be an int in 1..65535, raise ValueError
+  otherwise). Keep the public names get_port() and get_db_url() working. Add tests.'
+setup:
+  files:
+    app/config.py: "import os\n\n\ndef get_port() -> int:\n    raw = os.environ.get('PORT', '8000')\n\
+      \    port = int(raw)\n    if port < 1 or port > 65535:\n        raise ValueError('PORT out of range')\n\
+      \    return port\n\n\ndef get_db_url() -> str:\n    return os.environ.get('DB_URL', 'sqlite:///billing.db')\n"
+acceptance:
+  files:
+    tests/test_config_acceptance.py: "import pytest\n\nfrom app import config\n\n\ndef test_load_settings_from_mapping()\
+      \ -> None:\n    s = config.load_settings({'PORT': '9001', 'DB_URL': 'postgres://x'})\n    assert\
+      \ s.port == 9001 and s.db_url == 'postgres://x'\n\n\ndef test_defaults_and_validation() -> None:\n\
+      \    s = config.load_settings({})\n    assert s.port == 8000 and s.db_url == 'sqlite:///billing.db'\n\
+      \    with pytest.raises(ValueError):\n        config.load_settings({'PORT': '70000'})\n\n\ndef test_public_names_still_work(monkeypatch)\
+      \ -> None:\n    monkeypatch.setenv('PORT', '8080')\n    assert config.get_port() == 8080\n    assert\
+      \ isinstance(config.get_db_url(), str)\n"
+  command: python -m pytest -q tests/test_config_acceptance.py
+regression_command: python -m pytest -q
+budget_seconds: 600

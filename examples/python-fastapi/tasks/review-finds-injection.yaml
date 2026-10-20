@@ -1,0 +1,20 @@
+id: review-finds-injection
+category: review
+prompt: Review app/search.py for security problems before it ships. Fix what you find without changing
+  the function's name or return type, and add a test that would have caught the problem.
+setup:
+  files:
+    app/search.py: "import sqlite3\n\n\ndef find_customers(conn: sqlite3.Connection, name: str) -> list[tuple]:\n\
+      \    cur = conn.execute(\"SELECT id, name FROM customers WHERE name = '\" + name + \"'\")\n    return\
+      \ cur.fetchall()\n"
+acceptance:
+  files:
+    tests/test_search_acceptance.py: "import sqlite3\n\nfrom app.search import find_customers\n\n\ndef\
+      \ _db() -> sqlite3.Connection:\n    c = sqlite3.connect(':memory:')\n    c.execute('CREATE TABLE\
+      \ customers (id INTEGER PRIMARY KEY, name TEXT)')\n    c.executemany('INSERT INTO customers (name)\
+      \ VALUES (?)', [('ann',), ('bob',)])\n    return c\n\n\ndef test_injection_does_not_leak_rows()\
+      \ -> None:\n    rows = find_customers(_db(), \"x' OR '1'='1\")\n    assert rows == []\n\n\ndef test_exact_match_still_works()\
+      \ -> None:\n    assert [r[1] for r in find_customers(_db(), 'ann')] == ['ann']\n"
+  command: python -m pytest -q tests/test_search_acceptance.py
+regression_command: python -m pytest -q
+budget_seconds: 600

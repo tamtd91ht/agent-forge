@@ -1,0 +1,18 @@
+id: refactor-shared-config
+category: refactor
+prompt: The api service reads its port from the environment in several places (services/api/api/settings.py).
+  Refactor to one load_settings(env) function returning a dataclass with port (int, default 8000, must
+  be 1..65535) and keep get_port() working. Add tests under services/api/tests/.
+setup:
+  files:
+    services/api/api/settings.py: "import os\n\n\ndef get_port() -> int:\n    return int(os.environ.get('PORT',\
+      \ '8000'))\n\n\ndef get_port_again() -> int:\n    return int(os.environ.get('PORT', '8000'))\n"
+acceptance:
+  files:
+    services/api/tests/test_settings_acceptance.py: "import pytest\n\nfrom api import settings\n\n\ndef\
+      \ test_load_settings() -> None:\n    assert settings.load_settings({'PORT': '9000'}).port == 9000\n\
+      \    assert settings.load_settings({}).port == 8000\n    with pytest.raises(ValueError):\n     \
+      \   settings.load_settings({'PORT': '0'})\n\n\ndef test_get_port(monkeypatch) -> None:\n    monkeypatch.setenv('PORT',\
+      \ '8081')\n    assert settings.get_port() == 8081\n"
+  command: cd services/api && python -m pytest -q tests/test_settings_acceptance.py
+budget_seconds: 600

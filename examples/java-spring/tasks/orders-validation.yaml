@@ -1,0 +1,23 @@
+id: orders-validation
+category: feature
+prompt: 'Add POST /orders accepting JSON {"sku": string, "quantity": int}. sku must be non-blank and quantity
+  1..100; otherwise respond 400 with {"error": "..."}. On success respond 201 with the same body plus
+  "id" (incrementing long). Add tests.'
+acceptance:
+  files:
+    src/test/java/com/example/OrdersAcceptanceTest.java: "package com.example;\n\nimport static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;\n\
+      import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;\n\nimport org.junit.jupiter.api.Test;\n\
+      import org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;\n\
+      import org.springframework.boot.test.context.SpringBootTest;\nimport org.springframework.http.MediaType;\n\
+      import org.springframework.test.web.servlet.MockMvc;\n\n@SpringBootTest\n@AutoConfigureMockMvc\n\
+      class OrdersAcceptanceTest {\n    @Autowired MockMvc mvc;\n\n    @Test\n    void createsAndValidates()\
+      \ throws Exception {\n        mvc.perform(post(\"/orders\").contentType(MediaType.APPLICATION_JSON).content(\"\
+      {\\\"sku\\\":\\\"A1\\\",\\\"quantity\\\":2}\"))\n            .andExpect(status().isCreated()).andExpect(jsonPath(\"\
+      $.id\").exists());\n        mvc.perform(post(\"/orders\").contentType(MediaType.APPLICATION_JSON).content(\"\
+      {\\\"sku\\\":\\\"\\\",\\\"quantity\\\":2}\"))\n            .andExpect(status().isBadRequest());\n\
+      \        mvc.perform(post(\"/orders\").contentType(MediaType.APPLICATION_JSON).content(\"{\\\"sku\\\
+      \":\\\"A1\\\",\\\"quantity\\\":0}\"))\n            .andExpect(status().isBadRequest());\n    }\n\
+      }\n"
+  command: mvn -q -Dtest=OrdersAcceptanceTest test
+regression_command: mvn -q test
+budget_seconds: 900

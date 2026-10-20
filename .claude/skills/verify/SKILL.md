@@ -9,7 +9,7 @@ Run each step from the repo root and stop at the first failure: fix it, then res
 Report the actual command output for anything that failed or was skipped.
 
 1. **Lint and format**
-   `.venv/Scripts/ruff check src tests scripts` then `.venv/Scripts/ruff format --check src tests scripts`.
+   `.venv/Scripts/ruff check src tests scripts tools` then `.venv/Scripts/ruff format --check src tests scripts tools`.
    If only formatting fails, run `ruff format` on the files *you* changed — not the whole tree.
 
 2. **Tests** — `.venv/Scripts/python -m pytest -q`.

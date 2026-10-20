@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Value (6-month plan, phase 3)
+- `tools/agent-forge-eval`: opt-in local evaluation harness (ADR-0002). Baseline vs candidate
+  (installed by the real engine) on a fixture's task set with `claude -p` / `codex exec`,
+  hidden acceptance tests decide, Wilson 95% intervals, verdict improved / no_evidence /
+  worse, JSON + Markdown reports under `docs/evaluation/results/`. `--tool scripted` exists
+  for harness tests only and is labelled as not a measurement.
+- Task sets: five reviewed tasks per example fixture (feature, bugfix, refactor, review,
+  docs) in `examples/<name>/tasks/*.yaml`, 30 in total.
+- `review.evidence` on capability manifests (date, fixture, tool, runs, tasks, pass rates,
+  candidate CI, verdict, report path, who decided); `catalog show` prints the evidence table
+  or says the value was not measured. Schema exported.
+- Policy `max_total_context_chars`: a plan whose always-loaded context total exceeds the
+  budget carries a note and a decision line for the approver.
+- `scripts/matching_report.py --corpus DIR --min-precision --min-recall`: reviewed external
+  projects (anonymised) and micro-averaged thresholds for CI; aggregate printed.
+- No capability has been measured yet; `docs/evaluation.md` records the plan for the five
+  core skills and the budget it needs.
+
 ### Platforms (6-month plan, phase 2; ADR-0006)
 - Adapters for **Cursor** (`.cursor/rules/**/*.mdc`, `.cursor/mcp.json`), **GitHub Copilot**
   (`.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`,

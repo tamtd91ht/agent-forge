@@ -1,0 +1,21 @@
+id: worker-retry-bug
+category: bugfix
+prompt: 'services/worker/retry.go has a bug: Retry runs the function one time too many and ignores a nil
+  error on the first try. Fix it so Retry(n, f) calls f at most n times and stops at the first nil error,
+  returning that nil; after n failures it returns the last error. Add a regression test.'
+setup:
+  files:
+    services/worker/retry.go: "package main\n\n// Retry calls f up to n times until it returns nil.\n\
+      func Retry(n int, f func() error) error {\n\tvar err error\n\tfor i := 0; i <= n; i++ {\n\t\terr\
+      \ = f()\n\t}\n\treturn err\n}\n"
+acceptance:
+  files:
+    services/worker/retry_acceptance_test.go: "package main\n\nimport (\n\t\"errors\"\n\t\"testing\"\n\
+      )\n\nfunc TestRetry(t *testing.T) {\n\tcalls := 0\n\terr := Retry(3, func() error { calls++; if\
+      \ calls < 2 { return errors.New(\"x\") }; return nil })\n\tif err != nil || calls != 2 {\n\t\tt.Fatalf(\"\
+      err=%v calls=%d\", err, calls)\n\t}\n\tcalls = 0\n\terr = Retry(3, func() error { calls++; return\
+      \ errors.New(\"always\") })\n\tif err == nil || calls != 3 {\n\t\tt.Fatalf(\"err=%v calls=%d\",\
+      \ err, calls)\n\t}\n}\n"
+  command: cd services/worker && go test ./... -run TestRetry
+regression_command: cd services/worker && go vet ./... && go test ./...
+budget_seconds: 600

@@ -14,7 +14,7 @@ python -m venv .venv
 ## Before every pull request
 
 ```bash
-.venv/Scripts/ruff check src tests scripts && .venv/Scripts/ruff format --check src tests scripts
+.venv/Scripts/ruff check src tests scripts tools && .venv/Scripts/ruff format --check src tests scripts tools
 .venv/Scripts/python -m pytest -q
 .venv/Scripts/agent-forge validate
 python scripts/export_schemas.py --check

@@ -1,0 +1,19 @@
+id: add-error-handling
+category: feature
+prompt: 'Add a handler GET /orders/:id that parses id as a positive integer. On a bad id respond 400 with
+  JSON {"error": "invalid id"}; on id 404 (literally the number 404) respond 404 with {"error": "not found"};
+  otherwise 200 with {"id": <n>}. Register it in newRouter() (create newRouter() if it does not exist)
+  and add tests.'
+acceptance:
+  files:
+    orders_acceptance_test.go: "package main\n\nimport (\n\t\"net/http\"\n\t\"net/http/httptest\"\n\t\"\
+      strings\"\n\t\"testing\"\n)\n\nfunc get(path string) *httptest.ResponseRecorder {\n\tw := httptest.NewRecorder()\n\
+      \treq, _ := http.NewRequest(http.MethodGet, path, nil)\n\tnewRouter().ServeHTTP(w, req)\n\treturn\
+      \ w\n}\n\nfunc TestOrdersErrors(t *testing.T) {\n\tif w := get(\"/orders/abc\"); w.Code != 400 ||\
+      \ !strings.Contains(w.Body.String(), \"invalid id\") {\n\t\tt.Fatalf(\"bad id: %d %s\", w.Code,\
+      \ w.Body.String())\n\t}\n\tif w := get(\"/orders/404\"); w.Code != 404 {\n\t\tt.Fatalf(\"missing:\
+      \ %d\", w.Code)\n\t}\n\tif w := get(\"/orders/7\"); w.Code != 200 || !strings.Contains(w.Body.String(),\
+      \ `\"id\":7`) {\n\t\tt.Fatalf(\"ok: %d %s\", w.Code, w.Body.String())\n\t}\n}\n"
+  command: go test ./... -run TestOrdersErrors
+regression_command: go vet ./... && go test ./...
+budget_seconds: 600

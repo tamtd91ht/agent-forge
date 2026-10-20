@@ -1,0 +1,14 @@
+id: refactor-service
+category: refactor
+prompt: Introduce Api.OrderService (public class, method long Place(string sku, int quantity) assigning
+  incrementing ids) registered in DI, and make any order-creating endpoint use it. Add a unit test for
+  the service in Api.Tests that does not start the web host.
+acceptance:
+  files:
+    Api.Tests/OrderServiceAcceptanceTests.cs: "using Api;\nusing Xunit;\n\npublic class OrderServiceAcceptanceTests\n\
+      {\n    [Fact]\n    public void Assigns_incrementing_ids()\n    {\n        var s = new OrderService();\n\
+      \        var a = s.Place(\"A\", 1);\n        var b = s.Place(\"B\", 2);\n        Assert.Equal(a\
+      \ + 1, b);\n    }\n}\n"
+  command: dotnet test Api.Tests --filter OrderServiceAcceptanceTests
+regression_command: dotnet build && dotnet test
+budget_seconds: 900

@@ -498,6 +498,38 @@ def catalog_show(
                 title=c.kind.value,
             )
         )
+        if c.review.evidence:
+            ev = Table(title="evaluation evidence (baseline vs candidate)")
+            for col in (
+                "date",
+                "fixture",
+                "tool",
+                "runs x tasks",
+                "baseline",
+                "candidate",
+                "95% CI",
+                "verdict",
+                "report",
+            ):
+                ev.add_column(col, overflow="fold")
+            for e in c.review.evidence:
+                color = {"improved": "green", "worse": "red"}.get(e.verdict, "yellow")
+                ev.add_row(
+                    e.date,
+                    e.fixture,
+                    e.tool,
+                    f"{e.runs} x {e.tasks}",
+                    f"{e.baseline_pass_rate:.2f}",
+                    f"{e.candidate_pass_rate:.2f}",
+                    f"{e.candidate_ci95[0]:.2f}-{e.candidate_ci95[1]:.2f}",
+                    f"[{color}]{e.verdict}[/]",
+                    e.report,
+                )
+            console.print(ev)
+        else:
+            console.print(
+                "[dim]evaluation evidence: none (value not measured; see docs/evaluation.md)[/]"
+            )
         rows = [
             ("status", _status_markup(c.status)),
             ("provenance", c.provenance.value),

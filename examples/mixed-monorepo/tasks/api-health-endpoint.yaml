@@ -1,0 +1,11 @@
+id: api-health-endpoint
+category: feature
+prompt: 'In services/api (FastAPI) add GET /health returning {"ok": true} and a pytest test under services/api/tests/.
+  Run only that service''s tests.'
+acceptance:
+  files:
+    services/api/tests/test_health_acceptance.py: "from fastapi.testclient import TestClient\n\nfrom api.main\
+      \ import app\n\n\ndef test_health() -> None:\n    assert TestClient(app).get('/health').json() ==\
+      \ {'ok': True}\n"
+  command: cd services/api && python -m pytest -q tests/test_health_acceptance.py
+budget_seconds: 600

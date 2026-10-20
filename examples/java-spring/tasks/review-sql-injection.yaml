@@ -1,0 +1,27 @@
+id: review-sql-injection
+category: review
+prompt: Review com.example.CustomerRepo before release and fix any security problem without changing the
+  method signature. Add a test that would have caught it (an in-memory H2 or a plain JDBC mock is fine;
+  if no database driver is available, test the SQL string construction through a package-private helper
+  you add).
+setup:
+  files:
+    src/main/java/com/example/CustomerRepo.java: "package com.example;\n\nimport java.sql.Connection;\n\
+      import java.sql.ResultSet;\nimport java.sql.SQLException;\nimport java.sql.Statement;\nimport java.util.ArrayList;\n\
+      import java.util.List;\n\npublic class CustomerRepo {\n    public List<String> findByName(Connection\
+      \ conn, String name) throws SQLException {\n        List<String> out = new ArrayList<>();\n    \
+      \    try (Statement st = conn.createStatement();\n             ResultSet rs = st.executeQuery(\"\
+      SELECT name FROM customers WHERE name = '\" + name + \"'\")) {\n            while (rs.next()) out.add(rs.getString(1));\n\
+      \        }\n        return out;\n    }\n}\n"
+acceptance:
+  files:
+    src/test/java/com/example/CustomerRepoAcceptanceTest.java: "package com.example;\n\nimport static\
+      \ org.junit.jupiter.api.Assertions.assertFalse;\n\nimport java.nio.file.Files;\nimport java.nio.file.Path;\n\
+      import org.junit.jupiter.api.Test;\n\nclass CustomerRepoAcceptanceTest {\n    @Test\n    void noStringConcatenatedSql()\
+      \ throws Exception {\n        String src = Files.readString(Path.of(\"src/main/java/com/example/CustomerRepo.java\"\
+      ));\n        assertFalse(src.contains(\"+ name +\"), \"SQL is still built by concatenation\");\n\
+      \        assertFalse(src.contains(\"createStatement()\"), \"use a PreparedStatement\");\n    }\n\
+      }\n"
+  command: mvn -q -Dtest=CustomerRepoAcceptanceTest test
+regression_command: mvn -q test
+budget_seconds: 900

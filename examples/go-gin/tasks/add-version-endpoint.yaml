@@ -1,0 +1,14 @@
+id: add-version-endpoint
+category: feature
+prompt: 'Add GET /version to the Gin router returning JSON {"version": "1.0.0"}. Extract router construction
+  into a function newRouter() *gin.Engine used by main() so handlers are testable. Add a test.'
+acceptance:
+  files:
+    version_acceptance_test.go: "package main\n\nimport (\n\t\"net/http\"\n\t\"net/http/httptest\"\n\t\
+      \"strings\"\n\t\"testing\"\n)\n\nfunc TestVersionEndpoint(t *testing.T) {\n\tw := httptest.NewRecorder()\n\
+      \treq, _ := http.NewRequest(http.MethodGet, \"/version\", nil)\n\tnewRouter().ServeHTTP(w, req)\n\
+      \tif w.Code != 200 || !strings.Contains(w.Body.String(), `\"version\":\"1.0.0\"`) {\n\t\tt.Fatalf(\"\
+      got %d %s\", w.Code, w.Body.String())\n\t}\n}\n"
+  command: go test ./... -run TestVersionEndpoint
+regression_command: go vet ./... && go test ./...
+budget_seconds: 600

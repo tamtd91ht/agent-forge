@@ -36,6 +36,7 @@ only `curated` capabilities whose pinned digest still matches.
 | `platforms` | non-empty: other platforms are denied |
 | `require_signoff` | deny entries without a human `review.signed_off_by` |
 | `max_context_chars` | above this always-loaded context, a capability needs a request (ADR-0003) |
+| `max_total_context_chars` | budget for a whole plan's always-loaded context; exceeding it adds a note and a decision line for the approver (not blocking) |
 
 Unknown keys are rejected. An **invalid project policy fails closed**: planning stops with a
 clear error instead of silently ignoring the file, because ignoring it would drop exactly

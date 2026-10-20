@@ -448,6 +448,10 @@ def build_assign_plan(
         notes.append(
             "target has uncommitted changes; commit or stash before applying for an easy git-level review"
         )
+    decisions = list(match.user_decisions)
+    if budget_note := context_budget_note(selected, ctx):
+        notes.append(budget_note)
+        decisions.append(budget_note)
     plan = Plan(
         plan_id=plan_id,
         kind="assign",
@@ -467,7 +471,7 @@ def build_assign_plan(
             "Each operation records before/after hashes and a backup; `agent-forge rollback <tx>` "
             "restores files that still match their post-apply hash and refuses the rest."
         ),
-        user_decisions=match.user_decisions,
+        user_decisions=decisions,
         notes=notes,
         approval=Approval(required=True),
     )
@@ -475,6 +479,21 @@ def build_assign_plan(
 
 
 _APPROVAL_FLAGS = {"shared_file": "--shared-files", "hook": "--hooks", "mcp": "--mcp"}
+
+
+def context_budget_note(selected: list[SelectedCapability], ctx: MatchContext) -> str | None:
+    """A sentence for plan.notes / user_decisions when the plan's always-loaded context total
+    exceeds the policy's `max_total_context_chars` (ADR-0003 budget, phase 3 of the plan)."""
+    budget = ctx.policy.total_context_budget if ctx.policy is not None else None
+    if budget is None:
+        return None
+    total = sum(s.context_chars for s in selected)
+    if total <= budget:
+        return None
+    return (
+        f"always-loaded context total {total} chars (~{total // 4} tokens) exceeds the policy "
+        f"budget max_total_context_chars={budget}; drop or --exclude a capability, or raise the budget"
+    )
 
 
 def _needs_approval(

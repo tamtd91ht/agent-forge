@@ -74,27 +74,58 @@ def compare(expected: dict, actual: dict) -> dict:
     }
 
 
-def run(registry_dir: Path = ROOT / "registry") -> dict[str, dict]:
+def run(registry_dir: Path = ROOT / "registry", corpus: Path | None = None) -> dict[str, dict]:
+    """`corpus` is an extra directory of reviewed projects laid out like examples/ (an
+    anonymised set of real repositories kept outside this repository)."""
     out: dict[str, dict] = {}
-    for example in sorted(p for p in EXAMPLES.iterdir() if (p / "expected.json").is_file()):
-        expected = json.loads((example / "expected.json").read_text(encoding="utf-8"))
-        actual = observe(example, registry_dir)
-        out[example.name] = {"actual": actual, **compare(expected, actual)}
+    roots = [EXAMPLES] + ([corpus] if corpus else [])
+    for root in roots:
+        for example in sorted(p for p in root.iterdir() if (p / "expected.json").is_file()):
+            expected = json.loads((example / "expected.json").read_text(encoding="utf-8"))
+            actual = observe(example, registry_dir)
+            key = example.name if root == EXAMPLES else f"corpus/{example.name}"
+            out[key] = {"actual": actual, **compare(expected, actual)}
     return out
+
+
+def aggregate(results: dict[str, dict]) -> dict[str, float]:
+    """Micro-averaged precision / recall over every project (the CI threshold input),
+    recomputed from the raw sets so it does not depend on per-project rounding."""
+    hits = got = exp = 0
+    for r in results.values():
+        rec = set(r["actual"]["recommended"])
+        missed, unexpected = set(r["missed"]), set(r["unexpected"])
+        expected = (rec - unexpected) | missed
+        hits += len(rec & expected)
+        got += len(rec)
+        exp += len(expected)
+    return {
+        "precision": round(hits / got, 3) if got else 1.0,
+        "recall": round(hits / exp, 3) if exp else 1.0,
+        "projects": len(results),
+    }
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--write-actual", action="store_true")
+    ap.add_argument("--corpus", type=Path, help="extra reviewed projects (examples/ layout)")
+    ap.add_argument(
+        "--min-precision", type=float, default=1.0, help="fail below this (micro-averaged)"
+    )
+    ap.add_argument(
+        "--min-recall", type=float, default=1.0, help="fail below this (micro-averaged)"
+    )
     args = ap.parse_args()
     if args.write_actual:
         for example in sorted(p for p in EXAMPLES.iterdir() if (p / "project").is_dir()):
             print(example.name, json.dumps(observe(example, ROOT / "registry"), indent=2))
         return 0
-    results = run()
+    results = run(corpus=args.corpus)
+    totals = aggregate(results)
     if args.json:
-        print(json.dumps(results, indent=2))
+        print(json.dumps({"projects": results, "aggregate": totals}, indent=2))
     else:
         for name, r in results.items():
             print(
@@ -104,14 +135,21 @@ def main() -> int:
                 + (f"  profile missing {r['profile_missing']}" if r["profile_missing"] else "")
                 + (f"  optional differs {r['optional_diff']}" if r["optional_diff"] else "")
             )
-    ok = all(
+    exact = all(
         r["precision"] == 1
         and r["recall"] == 1
         and not r["profile_missing"]
         and not r["optional_diff"]
-        for r in results.values()
+        for name, r in results.items()
+        if not name.startswith("corpus/")
     )
-    return 0 if ok else 1
+    thresholds = totals["precision"] >= args.min_precision and totals["recall"] >= args.min_recall
+    if not args.json:
+        print(
+            f"aggregate over {totals['projects']} project(s): precision {totals['precision']:.2f} "
+            f"recall {totals['recall']:.2f} (min {args.min_precision:.2f} / {args.min_recall:.2f})"
+        )
+    return 0 if exact and thresholds else 1
 
 
 if __name__ == "__main__":

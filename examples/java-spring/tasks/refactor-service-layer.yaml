@@ -1,0 +1,15 @@
+id: refactor-service-layer
+category: refactor
+prompt: 'Introduce a service layer: an OrderService bean (com.example.OrderService) with a method long
+  place(String sku, int quantity) that assigns incrementing ids, and make any order-creating controller
+  delegate to it. Add a unit test for the service that does not start Spring.'
+acceptance:
+  files:
+    src/test/java/com/example/OrderServiceAcceptanceTest.java: "package com.example;\n\nimport static\
+      \ org.junit.jupiter.api.Assertions.assertEquals;\n\nimport org.junit.jupiter.api.Test;\n\nclass\
+      \ OrderServiceAcceptanceTest {\n    @Test\n    void assignsIncrementingIds() {\n        OrderService\
+      \ s = new OrderService();\n        long a = s.place(\"A\", 1);\n        long b = s.place(\"B\",\
+      \ 2);\n        assertEquals(a + 1, b);\n    }\n}\n"
+  command: mvn -q -Dtest=OrderServiceAcceptanceTest test
+regression_command: mvn -q test
+budget_seconds: 900

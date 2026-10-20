@@ -1,0 +1,14 @@
+id: docs-readme-usage
+category: docs
+prompt: 'Write README.md for this storefront: what it is, how to install dependencies, run the dev server,
+  run tests and lint (use the scripts in package.json), and a short section documenting lib/cart.ts exports
+  with one example each. Keep it under 80 lines.'
+acceptance:
+  files:
+    readme.acceptance.test.ts: "import { readFileSync } from 'node:fs';\nimport { expect, it } from 'vitest';\n\
+      \nit('README documents the scripts and cart module', () => {\n  const md = readFileSync('README.md',\
+      \ 'utf8');\n  for (const s of ['npm install', 'npm run dev', 'npm test', 'npm run lint', 'lib/cart',\
+      \ 'total(']) {\n    expect(md).toContain(s);\n  }\n  expect(md.split('\\n').length).toBeLessThan(90);\n\
+      });\n"
+  command: npx vitest run readme.acceptance.test.ts
+budget_seconds: 600

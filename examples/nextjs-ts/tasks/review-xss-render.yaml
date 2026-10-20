@@ -1,0 +1,16 @@
+id: review-xss-render
+category: review
+prompt: Review lib/render.ts before it ships. It builds HTML for a product description. Fix any security
+  issue without changing the function name and add a vitest test that would have caught it.
+setup:
+  files:
+    lib/render.ts: "export const renderDescription = (name: string, html: string): string =>\n  `<h2>${name}</h2><div>${html}</div>`;\n"
+acceptance:
+  files:
+    lib/render.acceptance.test.ts: "import { expect, it } from 'vitest';\nimport { renderDescription }\
+      \ from './render';\n\nit('escapes script tags', () => {\n  const out = renderDescription('<b>x</b>',\
+      \ '<script>alert(1)</script>');\n  expect(out).not.toContain('<script>');\n  expect(out).toContain('&lt;script&gt;');\n\
+      });\n"
+  command: npx vitest run lib/render.acceptance.test.ts
+regression_command: npx tsc --noEmit -p . && npx vitest run
+budget_seconds: 600

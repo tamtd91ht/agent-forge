@@ -30,8 +30,8 @@ jobs:
         run: uv sync --locked --all-extras
       - name: Lint
         run: |
-          uv run ruff check src tests scripts
-          uv run ruff format --check src tests scripts
+          uv run ruff check src tests scripts tools
+          uv run ruff format --check src tests scripts tools
       - name: Tests
         run: uv run python -m pytest -q
       - name: Registry

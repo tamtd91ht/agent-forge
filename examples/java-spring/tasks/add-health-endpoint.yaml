@@ -1,0 +1,16 @@
+id: add-health-endpoint
+category: feature
+prompt: 'Add a REST controller with GET /health returning JSON {"ok": true} (a Map is fine) and a @WebMvcTest
+  or @SpringBootTest test for it.'
+acceptance:
+  files:
+    src/test/java/com/example/HealthAcceptanceTest.java: "package com.example;\n\nimport static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;\n\
+      import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;\n\nimport org.junit.jupiter.api.Test;\n\
+      import org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;\n\
+      import org.springframework.boot.test.context.SpringBootTest;\nimport org.springframework.test.web.servlet.MockMvc;\n\
+      \n@SpringBootTest\n@AutoConfigureMockMvc\nclass HealthAcceptanceTest {\n    @Autowired MockMvc mvc;\n\
+      \n    @Test\n    void health() throws Exception {\n        mvc.perform(get(\"/health\")).andExpect(status().isOk()).andExpect(jsonPath(\"\
+      $.ok\").value(true));\n    }\n}\n"
+  command: mvn -q -Dtest=HealthAcceptanceTest test
+regression_command: mvn -q test
+budget_seconds: 900

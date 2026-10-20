@@ -1,0 +1,21 @@
+id: fix-slug-bug
+category: bugfix
+prompt: 'slug.go has a bug reported by users: Slugify produces leading/trailing dashes and collapses nothing
+  for some inputs. Fix it so that any run of non-alphanumeric characters becomes a single ''-'', the result
+  is lower case and has no leading or trailing ''-''. Add a regression test.'
+setup:
+  files:
+    slug.go: "package main\n\nimport \"strings\"\n\n// Slugify turns a title into a URL slug.\nfunc Slugify(s\
+      \ string) string {\n\tvar b strings.Builder\n\tfor _, r := range strings.ToLower(s) {\n\t\tif (r\
+      \ >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {\n\t\t\tb.WriteRune(r)\n\t\t} else {\n\t\t\tb.WriteRune('-')\n\
+      \t\t}\n\t}\n\treturn b.String()\n}\n"
+acceptance:
+  files:
+    slug_acceptance_test.go: "package main\n\nimport \"testing\"\n\nfunc TestSlugify(t *testing.T) {\n\
+      \tcases := map[string]string{\n\t\t\"Hello, World!\": \"hello-world\",\n\t\t\"  --Go  1.22--  \"\
+      : \"go-1-22\",\n\t\t\"already-fine\": \"already-fine\",\n\t}\n\tfor in, want := range cases {\n\t\
+      \tif got := Slugify(in); got != want {\n\t\t\tt.Errorf(\"Slugify(%q) = %q, want %q\", in, got, want)\n\
+      \t\t}\n\t}\n}\n"
+  command: go test ./... -run TestSlugify
+regression_command: go vet ./... && go test ./...
+budget_seconds: 600

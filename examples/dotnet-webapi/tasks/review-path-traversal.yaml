@@ -1,0 +1,21 @@
+id: review-path-traversal
+category: review
+prompt: Review Api/Files.cs before release. It reads files from the wwwroot/public folder by name. Fix
+  any security problem without changing the method signature and add a test in Api.Tests that would have
+  caught it.
+setup:
+  files:
+    Api/Files.cs: "namespace Api;\n\npublic static class Files\n{\n    public static string ReadPublic(string\
+      \ root, string name) => File.ReadAllText(Path.Combine(root, name));\n}\n"
+acceptance:
+  files:
+    Api.Tests/FilesAcceptanceTests.cs: "using Api;\nusing Xunit;\n\npublic class FilesAcceptanceTests\n\
+      {\n    [Fact]\n    public void Refuses_traversal()\n    {\n        var tmp = Directory.CreateTempSubdirectory();\n\
+      \        var root = Path.Combine(tmp.FullName, \"public\");\n        Directory.CreateDirectory(root);\n\
+      \        File.WriteAllText(Path.Combine(root, \"ok.txt\"), \"ok\");\n        File.WriteAllText(Path.Combine(tmp.FullName,\
+      \ \"secret.txt\"), \"secret\");\n        Assert.Equal(\"ok\", Files.ReadPublic(root, \"ok.txt\"\
+      ));\n        string? leaked = null;\n        try { leaked = Files.ReadPublic(root, \"../secret.txt\"\
+      ); } catch { }\n        Assert.NotEqual(\"secret\", leaked);\n    }\n}\n"
+  command: dotnet test Api.Tests --filter FilesAcceptanceTests
+regression_command: dotnet build && dotnet test
+budget_seconds: 900

@@ -1,0 +1,16 @@
+id: add-version-endpoint
+category: feature
+prompt: 'Add GET /version returning JSON {"version": "1.0.0"} to the minimal API in Api/Program.cs. Make
+  the app testable with WebApplicationFactory (add `public partial class Program {}` if needed) and add
+  an xUnit test project Api.Tests that covers it.'
+acceptance:
+  files:
+    Api.Tests/VersionAcceptanceTests.cs: "using System.Net.Http.Json;\nusing Microsoft.AspNetCore.Mvc.Testing;\n\
+      using Xunit;\n\npublic class VersionAcceptanceTests : IClassFixture<WebApplicationFactory<Program>>\n\
+      {\n    private readonly HttpClient _client;\n    public VersionAcceptanceTests(WebApplicationFactory<Program>\
+      \ f) => _client = f.CreateClient();\n\n    [Fact]\n    public async Task Version_is_reported()\n\
+      \    {\n        var doc = await _client.GetFromJsonAsync<Dictionary<string, string>>(\"/version\"\
+      );\n        Assert.Equal(\"1.0.0\", doc![\"version\"]);\n    }\n}\n"
+  command: dotnet test Api.Tests --filter VersionAcceptanceTests
+regression_command: dotnet build && dotnet test
+budget_seconds: 900

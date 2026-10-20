@@ -1,0 +1,12 @@
+id: refactor-cart-module
+category: refactor
+prompt: Refactor lib/cart.ts into a small Cart class (add(price), remove(index), total()) exported alongside
+  the existing total() helper, which must keep working. Items are numbers. Add tests.
+acceptance:
+  files:
+    lib/class.acceptance.test.ts: "import { expect, it } from 'vitest';\nimport { Cart, total } from './cart';\n\
+      \nit('Cart tracks items', () => {\n  const c = new Cart();\n  c.add(2);\n  c.add(3);\n  c.remove(0);\n\
+      \  expect(c.total()).toBe(3);\n  expect(total([2, 3])).toBe(5);\n});\n"
+  command: npx vitest run lib/class.acceptance.test.ts
+regression_command: npx tsc --noEmit -p . && npx vitest run
+budget_seconds: 600
