@@ -29,3 +29,8 @@ classes:
 
 platforms: []                  # empty = all supported platforms
 require_signoff: false         # set true once every curated entry has a human sign-off
+
+# Always-loaded context budget per capability, in characters (skill/agent descriptions,
+# unscoped rules, CLAUDE.md/AGENTS.md sections). Above it a capability needs a request.
+# null = no budget. The plan table's `ctx` column shows each capability's value.
+max_context_chars: null

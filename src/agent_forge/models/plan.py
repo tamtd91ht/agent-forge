@@ -79,6 +79,9 @@ class SelectedCapability(BaseModel):
     validation: list[str] = Field(default_factory=list)
     rollback: str = ""
     optional: bool = False
+    context_chars: int = Field(
+        default=0, description="Always-loaded context this capability adds (registry.context_load)"
+    )
 
 
 class RejectedCapability(BaseModel):

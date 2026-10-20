@@ -36,6 +36,7 @@ from agent_forge.models.capability import (
 )
 from agent_forge.models.project import ProjectProfile
 from agent_forge.policy.engine import Decision, PolicySet
+from agent_forge.registry.context_load import context_chars
 from agent_forge.registry.loader import Registry
 
 
@@ -207,7 +208,7 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
                 dep_cap = None
             # A not-applicable dependency never reached the policy check in _evaluate_one.
             policy_block = (
-                _policy_block(dep_cap, cand.platform, ctx) if dep_cap is not None else None
+                _policy_block(reg, dep_cap, cand.platform, ctx) if dep_cap is not None else None
             )
             if (
                 blocked is not None
@@ -278,11 +279,13 @@ def _is_requested(cap: Capability, ctx: MatchContext) -> bool:
     return cap.id in ctx.requested_ids or bool(ctx.wanted_tags & set(cap.applicability.tags))
 
 
-def _policy_block(cap: Capability, platform: Platform, ctx: MatchContext) -> str | None:
+def _policy_block(
+    reg: Registry, cap: Capability, platform: Platform, ctx: MatchContext
+) -> str | None:
     """Rejection category when policy keeps `cap` out of the plan, else None."""
     if ctx.policy is None:
         return None
-    decision, _why = ctx.policy.evaluate(cap, platform)
+    decision, _why = ctx.policy.evaluate(cap, platform, context_chars(reg.get(cap.id), platform))
     if decision == Decision.DENY:
         return "policy_denied"
     if decision == Decision.REQUIRE_REQUEST and not _is_requested(cap, ctx):
@@ -400,7 +403,7 @@ def _evaluate_one(
     # Policy runs after applicability only so that irrelevant capabilities read as
     # "not applicable" rather than "policy"; a denial is still enforced before planning.
     if ctx.policy is not None:
-        decision, why = ctx.policy.evaluate(cap, platform)
+        decision, why = ctx.policy.evaluate(cap, platform, context_chars(reg.get(cap.id), platform))
         if decision == Decision.DENY:
             return Rejection(cap, platform, "policy_denied", ["denied by policy", *why])
         if decision == Decision.REQUIRE_REQUEST and not requested:

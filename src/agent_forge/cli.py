@@ -833,7 +833,7 @@ def _print_plan_summary(plan, *, hide: tuple[str, ...] = ()) -> None:
         console.print(f"[dim]note:[/] {n}")
     if plan.selected:
         t = Table(title=f"selected ({len(plan.selected)})")
-        for col in ("capability", "ver", "platform", "score", "risk", "why", "adds"):
+        for col in ("capability", "ver", "platform", "score", "risk", "ctx", "why", "adds"):
             t.add_column(col, overflow="fold")
         for s in plan.selected:
             reasons = [r for r in s.reasons if not _SCORE_PART.search(r)]  # score: --json
@@ -846,10 +846,16 @@ def _print_plan_summary(plan, *, hide: tuple[str, ...] = ()) -> None:
                 s.platform.value,
                 f"{s.score:.1f}",
                 s.risk.value,
+                str(s.context_chars),
                 why,
                 "\n".join(_summarize_adds(s.adds)),
             )
         console.print(t)
+        ctx_total = sum(s.context_chars for s in plan.selected)
+        console.print(
+            f"always-loaded context added: {ctx_total} chars (~{ctx_total // 4} tokens) "
+            "[dim](ctx: skill/agent descriptions, unscoped rules, CLAUDE.md/AGENTS.md sections)[/]"
+        )
     rejected = [r for r in plan.rejected if r.category not in hide]
     if rejected:
         t = Table(title=f"not selected ({len(rejected)})")
@@ -1660,6 +1666,7 @@ def policy(
 
     def body() -> None:
         from agent_forge.policy.engine import describe
+        from agent_forge.registry.context_load import context_chars
 
         ws = _ws(workspace)
         reg = _registry(ws)
@@ -1667,7 +1674,7 @@ def policy(
         verdicts = {}
         for cap in reg.capabilities():
             for plat in cap.platforms:
-                d, why = ps.evaluate(cap, plat)
+                d, why = ps.evaluate(cap, plat, context_chars(reg.get(cap.id), plat))
                 verdicts.setdefault(cap.id, {})[plat.value] = {"decision": d.value, "reasons": why}
         if as_json:
             _print_json({"layers": describe(ps), "verdicts": verdicts})

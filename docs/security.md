@@ -64,7 +64,7 @@ can never loosen anything). Each capability gets one verdict before scoring:
 | `require_request` | planned only with `--request <id>` / `--want <tag>` |
 | `deny` | rejected as `policy_denied`; dependants of a denied capability are rejected too |
 
-Rules available: `max_risk`, `require_request_from_risk`, `capabilities.{deny,require_request,allow_only,deny_tags}` (id globs), `grants.{process_execute,network_access,secrets_read}`, `classes.{shared_file,hook,mcp}` (switch a class off), `platforms`, `require_signoff`.
+Rules available: `max_risk`, `require_request_from_risk`, `capabilities.{deny,require_request,allow_only,deny_tags}` (id globs), `grants.{process_execute,network_access,secrets_read}`, `classes.{shared_file,hook,mcp}` (switch a class off), `platforms`, `require_signoff`, `max_context_chars` (always-loaded context budget per capability, see ADR-0003).
 Policy never *grants* anything: approval classes are still enforced by `approve`/`apply`.
 
 Every curated entry pins `integrity.assets_sha256`; `validate` fails if installed content

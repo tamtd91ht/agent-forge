@@ -8,6 +8,7 @@ from pathlib import Path
 
 from agent_forge.models.capability import CapabilityStatus, InstallStrategy, MergeStrategy
 from agent_forge.registry.loader import Registry
+from agent_forge.util import parse_frontmatter
 
 
 @dataclass
@@ -80,6 +81,7 @@ def validate_registry(reg: Registry) -> RegistryReport:
                 f"{cid}: upstream-derived curated capability must record source.revision"
             )
     _check_dependency_cycles(reg, rep)
+    _check_skill_calls(reg, rep)
     return rep
 
 
@@ -101,6 +103,64 @@ def _check_markdown_links(cid: str, assets_dir: Path, rep: RegistryReport) -> No
             if not (md.parent / path).exists():
                 rel = md.relative_to(assets_dir).as_posix()
                 rep.errors.append(f"{cid}: broken link in assets/{rel}: {target}")
+
+
+_FENCE_RE = re.compile(r"^(```|~~~).*?^\1", re.MULTILINE | re.DOTALL)
+# `Call the Skill tool with "grilling"` / `Call the Skill tool twice, for "a" and "b"`.
+_SKILL_CALL_RE = re.compile(
+    r"Skill tool(?:\s+\w+)?,?\s+(?:with|for)\s+"
+    r"((?:[\"`][\w.-]+[\"`](?:,?\s+(?:and|or)\s+|,\s*)?)+)"
+)
+_QUOTED_RE = re.compile(r"[\"`]([\w.-]+)[\"`]")
+
+
+def _shipped_skills(assets_dir: Path) -> dict[str, bool]:
+    """Skill names shipped in `assets_dir` -> whether the skill is user-invoked only."""
+    out: dict[str, bool] = {}
+    if not assets_dir.is_dir():
+        return out
+    for md in assets_dir.rglob("SKILL.md"):
+        fm, _ = parse_frontmatter(md.read_text(encoding="utf-8", errors="replace"))
+        name = str(fm.get("name") or md.parent.name)
+        out[name] = fm.get("disable-model-invocation") is True
+    return out
+
+
+def _check_skill_calls(reg: Registry, rep: RegistryReport) -> None:
+    """A skill that tells the agent to call another skill must ship with it.
+
+    The called skill has to come from the same capability or one of its (transitive)
+    dependencies, and it must be model-invoked: a user-invoked skill cannot be reached
+    through the Skill tool, only by the human typing its name.
+    """
+    shipped = {cid: _shipped_skills(lc.assets_dir) for cid, lc in reg.items.items()}
+    for cid, lc in sorted(reg.items.items()):
+        if not shipped[cid]:
+            continue
+        provided: dict[str, bool] = {}
+        stack, seen = [cid], set()
+        while stack:
+            cur = stack.pop()
+            if cur in seen or cur not in reg.items:
+                continue
+            seen.add(cur)
+            provided.update(shipped[cur])
+            stack.extend(reg.items[cur].capability.dependencies)
+        for md in sorted(lc.assets_dir.rglob("SKILL.md")):
+            text = _FENCE_RE.sub("", md.read_text(encoding="utf-8", errors="replace"))
+            rel = md.relative_to(lc.assets_dir).as_posix()
+            for group in _SKILL_CALL_RE.findall(text):
+                for name in _QUOTED_RE.findall(group):
+                    if name not in provided:
+                        rep.errors.append(
+                            f"{cid}: assets/{rel} calls skill {name!r}, which neither this "
+                            "capability nor its dependencies ship"
+                        )
+                    elif provided[name]:
+                        rep.errors.append(
+                            f"{cid}: assets/{rel} calls skill {name!r}, which is user-invoked "
+                            "(disable-model-invocation) and cannot be called by another skill"
+                        )
 
 
 def _check_dependency_cycles(reg: Registry, rep: RegistryReport) -> None:

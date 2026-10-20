@@ -94,6 +94,45 @@ def test_broken_relative_markdown_links_are_errors(tmp_path: Path) -> None:
     ]
 
 
+def test_skill_tool_calls_must_be_shipped_and_model_invoked(tmp_path: Path) -> None:
+    reg = tmp_path / "r"
+    write_capability(reg, base_manifest("t.base"), skill_assets("base"))
+    manual = skill_assets("manual")
+    manual = {
+        k: v.replace("---\n\n", "disable-model-invocation: true\n---\n\n")
+        for k, v in manual.items()
+    }
+    write_capability(reg, base_manifest("t.manual"), manual)
+    body = (
+        'Call the Skill tool twice, for "base" and "manual".\n'
+        "Then call the Skill tool with `ghost` to finish.\n\n"
+        '```markdown\nCall the Skill tool with "not-checked".\n```\n'
+    )
+    write_capability(
+        reg,
+        base_manifest("t.caller", dependencies=["t.base", "t.manual"]),
+        skill_assets("caller", body),
+    )
+    rep = validate_registry(load_registry(reg))
+    calls = sorted(e for e in rep.errors if "calls skill" in e and "/codex/" not in e)
+    assert calls == [
+        "t.caller: assets/claude_code/caller/SKILL.md calls skill 'ghost', which neither this "
+        "capability nor its dependencies ship",
+        "t.caller: assets/claude_code/caller/SKILL.md calls skill 'manual', which is "
+        "user-invoked (disable-model-invocation) and cannot be called by another skill",
+    ]
+
+
+def test_skill_tool_call_to_undeclared_dependency_is_an_error(tmp_path: Path) -> None:
+    reg = tmp_path / "r"
+    write_capability(reg, base_manifest("t.base"), skill_assets("base"))
+    write_capability(
+        reg, base_manifest("t.caller"), skill_assets("caller", 'Call the Skill tool with "base".')
+    )
+    rep = validate_registry(load_registry(reg))
+    assert any("calls skill 'base'" in e for e in rep.errors)
+
+
 @pytest.mark.parametrize("name", ["agent-forge-upgrade", "agent-forge-scout"])
 def test_repo_copy_of_meta_skill_matches_registry(name: str) -> None:
     # these skills are shipped twice on purpose (registry asset + the repo's own .claude/skills)

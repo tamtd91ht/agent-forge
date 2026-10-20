@@ -39,6 +39,7 @@ from agent_forge.models.plan import (
     TargetIdentity,
 )
 from agent_forge.models.project import ManagedCapabilityRecord, ProjectProfile
+from agent_forge.registry.context_load import context_chars
 from agent_forge.registry.loader import LoadedCapability, Registry
 from agent_forge.registry.validator import resolve_dependencies
 from agent_forge.scanner.agent_detection import MANAGED_MANIFEST
@@ -319,6 +320,7 @@ def _selected_entry(
         validation=validation,
         rollback=rollback,
         optional=cand.optional,
+        context_chars=context_chars(lc, cand.platform),
     )
 
 
@@ -643,6 +645,7 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
                 conflicts=list(cap.conflicts),
                 validation=["hash verification", "platform format rules"],
                 rollback="restore previous version from transaction backups",
+                context_chars=context_chars(reg.get(cap.id), platforms[0]),
             )
         )
     if ops:

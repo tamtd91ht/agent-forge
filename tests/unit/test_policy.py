@@ -129,3 +129,21 @@ def test_matching_honours_policy(synthetic_registry: Path, make_project) -> None
         ),
     )
     assert "t.python-only" in {c.capability.id for c in res2.recommended}
+
+
+def test_context_budget_requires_request_above_limit() -> None:
+    ps = PolicySet([("t", Policy(max_context_chars=500))])
+    assert ps.evaluate(_cap(), Platform.CLAUDE_CODE, 500)[0] == Decision.ALLOW
+    d, why = ps.evaluate(_cap(), Platform.CLAUDE_CODE, 501)
+    assert d == Decision.REQUIRE_REQUEST and "501 always-loaded context chars" in why[0]
+    # without a measured value the budget does not apply
+    assert ps.evaluate(_cap(), Platform.CLAUDE_CODE)[0] == Decision.ALLOW
+
+
+def test_matching_applies_context_budget(synthetic_registry: Path, make_project) -> None:
+    reg = load_registry(synthetic_registry)
+    profile = scan_project(make_project("mp"))
+    ps = PolicySet([("t", Policy(max_context_chars=0))])
+    res = evaluate(reg, profile, MatchContext(platforms=(Platform.CLAUDE_CODE,), policy=ps))
+    rej = {r.capability.id: r.category for r in res.rejected}
+    assert rej["t.always"] == "policy_requires_request"

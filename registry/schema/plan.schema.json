@@ -318,6 +318,12 @@
           "title": "Conflicts",
           "type": "array"
         },
+        "context_chars": {
+          "default": 0,
+          "description": "Always-loaded context this capability adds (registry.context_load)",
+          "title": "Context Chars",
+          "type": "integer"
+        },
         "dependencies": {
           "items": {
             "type": "string"

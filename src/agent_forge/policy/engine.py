@@ -86,6 +86,11 @@ class Policy(BaseModel):
     require_signoff: bool = Field(
         default=False, description="deny capabilities whose review has no signed_off_by"
     )
+    max_context_chars: int | None = Field(
+        default=None,
+        ge=0,
+        description="capabilities adding more always-loaded context than this need a request",
+    )
 
 
 @dataclass
@@ -96,12 +101,18 @@ class PolicySet:
     def names(self) -> list[str]:
         return [n for n, _ in self.layers]
 
-    def evaluate(self, cap: Capability, platform: Platform) -> tuple[Decision, list[str]]:
-        """Combine layers: the strictest verdict wins. Returns (decision, reasons)."""
+    def evaluate(
+        self, cap: Capability, platform: Platform, context_chars: int | None = None
+    ) -> tuple[Decision, list[str]]:
+        """Combine layers: the strictest verdict wins. Returns (decision, reasons).
+
+        `context_chars` is the capability's always-loaded context cost on `platform`
+        (registry.context_load); budget rules are skipped when it is not supplied.
+        """
         worst = "allow"
         reasons: list[str] = []
         for name, pol in self.layers:
-            verdict, why = _evaluate_one(pol, cap, platform)
+            verdict, why = _evaluate_one(pol, cap, platform, context_chars)
             if _VERDICT_ORDER[verdict] > _VERDICT_ORDER[worst]:
                 worst = verdict
             reasons.extend(f"[{name}] {w}" for w in why)
@@ -115,7 +126,9 @@ class PolicySet:
         )
 
 
-def _evaluate_one(pol: Policy, cap: Capability, platform: Platform) -> tuple[str, list[str]]:
+def _evaluate_one(
+    pol: Policy, cap: Capability, platform: Platform, context_chars: int | None = None
+) -> tuple[str, list[str]]:
     verdict = "allow"
     reasons: list[str] = []
 
@@ -133,6 +146,16 @@ def _evaluate_one(pol: Policy, cap: Capability, platform: Platform) -> tuple[str
         tighten("require_request", f"risk {cap.risk.value} requires an explicit request")
     if pol.require_signoff and not cap.review.signed_off_by:
         tighten("deny", "curation has no human sign-off (require_signoff)")
+    if (
+        pol.max_context_chars is not None
+        and context_chars is not None
+        and context_chars > pol.max_context_chars
+    ):
+        tighten(
+            "require_request",
+            f"adds {context_chars} always-loaded context chars "
+            f"(max_context_chars {pol.max_context_chars})",
+        )
     rules = pol.capabilities
     if rules.allow_only and not any(fnmatch.fnmatchcase(cap.id, g) for g in rules.allow_only):
         tighten("deny", "not in capabilities.allow_only")
