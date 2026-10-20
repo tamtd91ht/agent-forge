@@ -1,0 +1,108 @@
+name: release
+
+# Runs when a version tag is pushed (docs/operations.md#release-process). It never changes
+# the repository: it builds the artifacts, verifies them, and publishes a GitHub Release
+# that the installers resolve as "latest". Signing and SBOM are separate jobs so a failure
+# there is visible without hiding the build.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write   # create the release
+  id-token: write   # Sigstore keyless signing
+
+jobs:
+  build:
+    name: build and verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - name: Tag matches the package version
+        run: |
+          pkg="$(python -c 'import re,pathlib; print(re.search(r"__version__ = \"([^\"]+)\"", pathlib.Path("src/agent_forge/__init__.py").read_text()).group(1))')"
+          test "v$pkg" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != package v$pkg"; exit 1; }
+          grep -q "^## ${pkg} " CHANGELOG.md || { echo "CHANGELOG.md has no '## ${pkg} (date)' section"; exit 1; }
+      - name: Install from the lock file and test
+        run: |
+          uv sync --locked --all-extras
+          uv run ruff check src tests scripts
+          uv run python -m pytest -q
+          uv run agent-forge validate --no-provenance
+          uv run python scripts/export_schemas.py --check
+          uv run python scripts/matching_report.py
+      - name: Build sdist and wheel
+        run: uv build
+      - name: Collect release files and checksums
+        run: |
+          mkdir -p release
+          cp dist/* install.sh install.ps1 uv.lock release/
+          (cd release && sha256sum * > SHA256SUMS)
+          cat release/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: release/
+
+  sbom:
+    name: SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - name: Generate the SBOM from the locked runtime environment
+        run: |
+          uv sync --locked --no-dev
+          uv pip install cyclonedx-bom
+          uv run cyclonedx-py environment --of JSON -o agent-forge-${GITHUB_REF_NAME}.cdx.json
+          test -s agent-forge-${GITHUB_REF_NAME}.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: "*.cdx.json"
+
+  publish:
+    name: sign and publish the GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build, sbom]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: release
+      - name: Sign every release file with Sigstore (keyless, OIDC identity of this workflow)
+        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        with:
+          inputs: release/*
+      - name: Release notes from CHANGELOG.md
+        run: |
+          pkg="${GITHUB_REF_NAME#v}"
+          awk -v v="$pkg" '
+            $0 ~ "^## " v " " {on=1; next}
+            on && /^## / {exit}
+            on {print}
+          ' CHANGELOG.md > notes.md
+          test -s notes.md
+          printf '\n\n## Verify\n\nSee docs/operations.md#verifying-a-release (SHA256SUMS + Sigstore bundles).\n' >> notes.md
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release/* \
+            --title "agent-forge ${GITHUB_REF_NAME}" \
+            --notes-file notes.md \
+            --verify-tag

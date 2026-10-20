@@ -101,4 +101,4 @@ Checkouts live in `sources/checkouts/` (git-ignored). Revisions recorded in
 Phase B foundation → Phase C read-only MVP → Phase D curation (14 capabilities) → Phase E
 adapters (Claude Code, Codex) → Phase F apply/validate/status/rollback → Phase G e2e on a
 disposable fixture with spaces + Unicode in the path → Phase H docs. See
-`WORKSPACE_STATUS.md` for the current state and `CHANGELOG.md` for what shipped.
+`docs/history/WORKSPACE_STATUS.md` (historical) and `docs/engineering-roadmap.md` for the current state and `CHANGELOG.md` for what shipped.

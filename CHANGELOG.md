@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-10-20
+
+First tagged release. Everything below was developed after the untagged 0.1.0 build; the
+installers now resolve the latest GitHub Release instead of `main`.
+
+### Release engineering (6-month plan, phase 0)
+- `install.sh` / `install.ps1` install the latest GitHub Release by default; `AGENT_FORGE_VERSION=vX.Y.Z`
+  pins a release, `AGENT_FORGE_REF` still selects any branch or tag. `main` is used only when no
+  release can be resolved, and the installer says so.
+- `uv.lock` (cross-platform) locks every runtime and dev dependency; CI installs with
+  `uv sync --locked` on Windows, Linux and macOS and audits the locked runtime set with pip-audit.
+- `release.yml`: on a `vX.Y.Z` tag it checks the tag against the package version and the
+  changelog, runs the full verification from the lock, builds sdist + wheel, writes
+  `SHA256SUMS`, generates a CycloneDX SBOM, signs every file with Sigstore (keyless) and
+  publishes the GitHub Release with the changelog section as notes.
+- Installer smoke test runs on macOS as well.
+- Historical documents moved to `docs/history/`; quickstarts per stack in `docs/quickstart/`.
+
 ### Production hardening (ADR-0005; audit and gates in docs/engineering-roadmap.md)
 
 Security and integrity

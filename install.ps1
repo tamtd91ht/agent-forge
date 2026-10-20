@@ -10,20 +10,36 @@
 # Then open the project in Claude Code and run /agent-forge-upgrade.
 #
 # Optional environment variables:
-#   AGENT_FORGE_REF     branch or tag to install (default: main)
+#   AGENT_FORGE_VERSION release tag to install, e.g. v0.1.0 (default: the latest GitHub Release;
+#                       falls back to main only when no release can be resolved)
+#   AGENT_FORGE_REF     any branch or tag (overrides AGENT_FORGE_VERSION; for development)
 #   AGENT_FORGE_SOURCE  pip-installable source instead of the GitHub archive (a local checkout)
 
 & {
     $ErrorActionPreference = 'Stop'
     $Repo = 'tamtd91ht/agent-forge'
-    $Ref = if ($env:AGENT_FORGE_REF) { $env:AGENT_FORGE_REF } else { 'main' }
+    function Say($msg) { Write-Host "agent-forge: $msg" }
+
+    # Resolve the ref: explicit AGENT_FORGE_REF > AGENT_FORGE_VERSION > latest release > main.
+    # A release tag is pinned content; `main` moves, so it is only the last resort.
+    $Ref = if ($env:AGENT_FORGE_REF) { $env:AGENT_FORGE_REF } elseif ($env:AGENT_FORGE_VERSION) { $env:AGENT_FORGE_VERSION } else { $null }
+    if (-not $Ref -and -not $env:AGENT_FORGE_SOURCE) {
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+            $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -TimeoutSec 15 -Headers @{ 'User-Agent' = 'agent-forge-installer' }
+            if ($latest.tag_name) { $Ref = [string]$latest.tag_name }
+        } catch { $Ref = $null }
+        if (-not $Ref) {
+            Say 'could not resolve the latest release; installing from main (set AGENT_FORGE_VERSION to pin)'
+            $Ref = 'main'
+        }
+    }
+    if (-not $Ref) { $Ref = 'main' }
     $Source = if ($env:AGENT_FORGE_SOURCE) { $env:AGENT_FORGE_SOURCE } else { "https://github.com/$Repo/archive/$Ref.zip" }
     $Home_ = if ($env:AGENT_FORGE_INSTALL_DIR) { $env:AGENT_FORGE_INSTALL_DIR } else { Join-Path $HOME '.agent-forge' }
     $Venv = Join-Path $Home_ '.venv'
     $Bin = Join-Path $Home_ 'bin'
     $Project = (Get-Location).Path
-
-    function Say($msg) { Write-Host "agent-forge: $msg" }
 
     # 1. Python >= 3.11
     $py = $null
@@ -48,7 +64,7 @@
         & $py[0] @pyArgs -m venv $Venv
         if ($LASTEXITCODE -ne 0) { throw 'could not create the virtual environment' }
     }
-    Say "installing Agent Forge from $Source"
+    Say "installing Agent Forge $Ref from $Source"
     & $venvPy -m pip install --quiet --disable-pip-version-check --upgrade --force-reinstall $Source
     if ($LASTEXITCODE -ne 0) { throw 'pip install failed' }
 

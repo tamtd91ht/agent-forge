@@ -46,7 +46,7 @@ reversed. See [security.md](security.md#transactions-crashes-and-rollback).
 | Python | 3.11 – 3.14 | 3.11, 3.14 |
 | OS | Windows 10+, macOS, Linux | windows-latest, ubuntu-latest, macos-latest |
 | Coding tools | Claude Code (skills, rules, agents, CLAUDE.md, hooks, MCP); Codex (skills, AGENTS.md) | adapter conformance suite (`tests/conformance/`) |
-| Installer | `install.ps1` (PowerShell 5.1+), `install.sh` (POSIX sh) | windows-latest, ubuntu-latest |
+| Installer | `install.ps1` (PowerShell 5.1+), `install.sh` (POSIX sh); installs the latest GitHub Release, `AGENT_FORGE_VERSION` pins one | windows-latest, ubuntu-latest, macos-latest |
 
 Adapters record the date their conventions were last verified (`AdapterInfo.verified_on`);
 newer tool versions that change file conventions need an adapter update, which the
@@ -57,7 +57,7 @@ conformance suite gates.
 - **Upgrade:** re-run the installer (or `pip install -U` + `agent-forge init --refresh-registry`
   in a development checkout). Installed projects change only through `/agent-forge-upgrade`
   or `agent-forge upgrade`, plan → approve → apply.
-- **Downgrade:** install an older ref (`AGENT_FORGE_REF=<tag>`). Records carry
+- **Downgrade:** install an older release (`AGENT_FORGE_VERSION=<tag>`). Records carry
   `schema_version`; an older engine refuses documents with a version it does not know rather
   than misreading them.
 - **Uninstall:** roll back or `remove` capabilities per project, then delete `~/.agent-forge`.
@@ -73,8 +73,43 @@ the models.
 
 ## Release process
 
-1. `CHANGELOG.md` `Unreleased` → `## x.y.z (date)`; bump `src/agent_forge/__init__.py`
-   (the single version source).
-2. CI green on the release commit; `agent-forge validate` clean; example report 1.00.
-3. Tag `vx.y.z` and push; users pin with `AGENT_FORGE_REF=vx.y.z`.
-4. A security fix gets a patch release and a GitHub security advisory (see `SECURITY.md`).
+One page, so a second maintainer can do it without the first.
+
+1. **Prepare the commit.** `CHANGELOG.md`: move `Unreleased` into `## x.y.z — YYYY-MM-DD`
+   (the release workflow refuses a tag without that heading). Bump `__version__` in
+   `src/agent_forge/__init__.py` (single source) and run `uv lock` so `uv.lock` records the
+   new version. Semver: breaking CLI/JSON change → major (after 1.0) or minor (before),
+   new command or capability → minor, fix → patch.
+2. **Verify locally.** `/verify` in Claude Code, or `ruff`, `pytest`, `agent-forge validate`,
+   `scripts/export_schemas.py --check`, `scripts/matching_report.py`. CI must be green on
+   the commit.
+3. **Tag and push.** `git tag -a vx.y.z -m "agent-forge vx.y.z" && git push origin vx.y.z`.
+   `.github/workflows/release.yml` then: checks the tag against the package version and the
+   changelog; re-runs the verification from `uv.lock`; builds sdist and wheel; writes
+   `SHA256SUMS`; generates a CycloneDX SBOM; signs every file with Sigstore (keyless, the
+   workflow's OIDC identity); publishes the GitHub Release with the changelog section as
+   notes. Installers resolve this release as "latest" from then on.
+4. **Check the release page.** Files: `agent_forge-x.y.z.tar.gz`, `agent_forge-x.y.z-py3-none-any.whl`,
+   `install.sh`, `install.ps1`, `uv.lock`, `SHA256SUMS`, `*.cdx.json`, and one `.sigstore.json`
+   bundle per file. Run the installer on a clean machine with `AGENT_FORGE_VERSION=vx.y.z`.
+5. **Security fix:** patch release plus a GitHub security advisory (`SECURITY.md`).
+
+Repository metadata (once, by a maintainer with admin rights):
+
+```bash
+gh repo edit tamtd91ht/agent-forge --description "Reviewed skills, rules, hooks and MCP servers for Claude Code, Codex and other coding agents: scan, plan, approve, apply, roll back."   --add-topic claude-code --add-topic codex --add-topic ai-coding --add-topic mcp --add-topic developer-tools --add-topic cursor --add-topic copilot
+```
+
+## Verifying a release
+
+```bash
+# 1. checksums
+sha256sum -c SHA256SUMS
+# 2. Sigstore signature of any file (identity = this repository's release workflow)
+pipx run sigstore verify github install.sh   --bundle install.sh.sigstore.json   --repository tamtd91ht/agent-forge   --ref refs/tags/vx.y.z
+# 3. pin the installer to that release
+AGENT_FORGE_VERSION=vx.y.z sh install.sh
+```
+
+A release whose signature does not verify, or whose `SHA256SUMS` does not match, must not be
+installed; report it through `SECURITY.md`.

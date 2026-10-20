@@ -24,7 +24,7 @@ Read, from the Agent Forge checkout (`$AGENT_FORGE_HOME` or the current workspac
   no global writes, no upstream installers, provenance + license per asset).
 - `docs/adr/0002-upgrade-roadmap.md` — what was adopted and what was deliberately deferred
   (runtime plane, evaluation engine) and why.
-- `AGENT_FORGE_UPGRADE_PROPOSAL.md` — the long-term picture: Capability / Governance /
+- `docs/history/AGENT_FORGE_UPGRADE_PROPOSAL.md` — the long-term picture: Capability / Governance /
   Runtime planes, evaluation, marketplace, telemetry; and its red lines (an LLM never decides
   whether something is safe).
 - `docs/adr/0003-context-load-and-skill-calls.md` — always-loaded context is a measured cost,

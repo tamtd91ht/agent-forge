@@ -1,5 +1,9 @@
 # Agent Forge
 
+[![ci](https://github.com/tamtd91ht/agent-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/tamtd91ht/agent-forge/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/tamtd91ht/agent-forge?sort=semver)](https://github.com/tamtd91ht/agent-forge/releases/latest)
+[![license](https://img.shields.io/github/license/tamtd91ht/agent-forge)](LICENSE)
+
 Set up Claude Code (or Codex) for your project: reviewed skills, rules, subagents, hooks and
 MCP servers, chosen by the agent for your code and installed only after you say yes. Every
 install can be undone.
@@ -19,6 +23,14 @@ irm https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.ps1 | i
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh | bash
 ```
+
+The installer picks the latest release. To pin one (or to roll back), set
+`AGENT_FORGE_VERSION=v0.2.0` before the command; checksums and Sigstore signatures are on
+the [release page](https://github.com/tamtd91ht/agent-forge/releases/latest)
+([how to verify](docs/operations.md#verifying-a-release)).
+
+Five-minute quickstarts: [Node / TypeScript](docs/quickstart/node.md) ·
+[Python](docs/quickstart/python.md) · [Go](docs/quickstart/go.md) · [Java](docs/quickstart/java.md).
 
 ## Use
 
@@ -97,7 +109,8 @@ More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
   [Capability model](docs/capability-model.md) · [Adapters](docs/adapters.md) ·
   [Evaluation](docs/evaluation.md)
 - Direction and status: [product vision](docs/product-vision.md) ·
-  [engineering roadmap & release gates](docs/engineering-roadmap.md)
+  [engineering roadmap & release gates](docs/engineering-roadmap.md) ·
+  [6-month plan](docs/roadmap-2026h2.md)
 - Curation: [source curation](docs/source-curation.md) · [rejections](docs/rejections/README.md) ·
   [maintenance](docs/maintenance.md) · [upgrade lifecycle](docs/upgrade-lifecycle.md)
 - Decisions: [ADR-0001](docs/adr/0001-architecture-decisions.md) ·

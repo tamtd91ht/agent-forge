@@ -7,8 +7,8 @@ before changing engine code.
 ## Rules
 
 - Docs precedence: accepted ADRs (`docs/adr/`) decide; `docs/product-vision.md` is direction;
-  `docs/engineering-roadmap.md` is the task list and audit status. Root-level
-  `AGENT_FORGE*.md/.txt` files are historical input.
+  `docs/engineering-roadmap.md` is the task list and audit status. Files under
+  `docs/history/` are historical input.
 - Never execute anything under `sources/checkouts/` (untrusted upstream clones). Read only.
 - The only modules allowed to write into a target project are `apply/engine.py` and
   `rollback/engine.py`, and only through `apply/filesystem_safety` (`resolve_in_root`,

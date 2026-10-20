@@ -11,20 +11,46 @@
 # Then open the project in Claude Code and run /agent-forge-upgrade.
 #
 # Optional environment variables:
-#   AGENT_FORGE_REF     branch or tag to install (default: main)
+#   AGENT_FORGE_VERSION release tag to install, e.g. v0.1.0 (default: the latest GitHub Release;
+#                       falls back to main only when no release can be resolved)
+#   AGENT_FORGE_REF     any branch or tag (overrides AGENT_FORGE_VERSION; for development)
 #   AGENT_FORGE_SOURCE  pip-installable source instead of the GitHub archive (a local checkout)
 set -eu
 
+latest_release() {
+    # Prints the tag of the latest GitHub Release, or nothing (no network, no release yet).
+    api="https://api.github.com/repos/$1/releases/latest"
+    if command -v curl >/dev/null 2>&1; then
+        body="$(curl -fsSL --max-time 15 "$api" 2>/dev/null || true)"
+    elif command -v wget >/dev/null 2>&1; then
+        body="$(wget -qO- --timeout=15 "$api" 2>/dev/null || true)"
+    else
+        body=""
+    fi
+    printf '%s' "$body" | tr -d '\n\r' | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+}
+
 main() {
     repo="tamtd91ht/agent-forge"
-    ref="${AGENT_FORGE_REF:-main}"
+    say() { printf 'agent-forge: %s\n' "$1"; }
+
+    # Resolve the ref: explicit AGENT_FORGE_REF > AGENT_FORGE_VERSION > latest release > main.
+    # A release tag is pinned content; `main` moves, so it is only the last resort.
+    ref="${AGENT_FORGE_REF:-${AGENT_FORGE_VERSION:-}}"
+    if [ -z "$ref" ] && [ -z "${AGENT_FORGE_SOURCE:-}" ]; then
+        ref="$(latest_release "$repo" || true)"
+        if [ -z "$ref" ]; then
+            say "could not resolve the latest release; installing from main (set AGENT_FORGE_VERSION to pin)"
+            ref="main"
+        fi
+    fi
+    [ -n "$ref" ] || ref="main"
     source="${AGENT_FORGE_SOURCE:-https://github.com/$repo/archive/$ref.zip}"
     home_dir="${AGENT_FORGE_INSTALL_DIR:-$HOME/.agent-forge}"
     venv="$home_dir/.venv"
     bin="$home_dir/bin"
     project="$(pwd)"
 
-    say() { printf 'agent-forge: %s\n' "$1"; }
 
     # 1. Python >= 3.11
     py=""
@@ -46,7 +72,7 @@ main() {
         say "creating $venv"
         "$py" -m venv "$venv"
     fi
-    say "installing Agent Forge from $source"
+    say "installing Agent Forge $ref from $source"
     "$venv/bin/python" -m pip install --quiet --disable-pip-version-check --upgrade --force-reinstall "$source"
 
     # 3. launcher used by Claude Code

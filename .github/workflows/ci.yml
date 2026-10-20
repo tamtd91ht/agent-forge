@@ -23,25 +23,24 @@ jobs:
         python: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python }}
-          allow-prereleases: true
-      - name: Install
-        run: python -m pip install -e ".[dev]"
+      - name: Install from the lock file (fails if uv.lock is out of date)
+        run: uv sync --locked --all-extras
       - name: Lint
         run: |
-          ruff check src tests scripts
-          ruff format --check src tests scripts
+          uv run ruff check src tests scripts
+          uv run ruff format --check src tests scripts
       - name: Tests
-        run: python -m pytest -q
+        run: uv run python -m pytest -q
       - name: Registry
         # upstream checkouts are untrusted and not cloned in CI; provenance is checked locally
-        run: agent-forge validate --no-provenance
+        run: uv run agent-forge validate --no-provenance
       - name: Schemas match the models
-        run: python scripts/export_schemas.py --check
+        run: uv run python scripts/export_schemas.py --check
       - name: Example projects match their reviewed expectations
-        run: python scripts/matching_report.py
+        run: uv run python scripts/matching_report.py
 
   installer:
     name: installer (${{ matrix.os }})
@@ -49,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -66,6 +65,7 @@ jobs:
           sh "$GITHUB_WORKSPACE/install.sh"
           test -f .claude/skills/agent-forge-upgrade/SKILL.md
           "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" forge --dry-run . --json > /dev/null
+          "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" check . --json > /dev/null
       - name: Install into a scratch project (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -80,15 +80,19 @@ jobs:
           if (-not (Test-Path .claude\skills\agent-forge-upgrade\SKILL.md)) { throw "entry skill missing" }
           & "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" forge --dry-run . --json | Out-Null
           if ($LASTEXITCODE -ne 0) { throw "dry-run failed" }
+          & "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" check . --json | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "check failed" }
 
   audit:
-    name: dependency audit
+    name: dependency audit (locked runtime set)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: python -m pip install pip-audit
-      - name: Known vulnerabilities in runtime dependencies
-        run: pip-audit --strict --desc .
+      - name: Export the locked runtime requirements
+        run: uv export --no-dev --no-emit-project --format requirements-txt -o requirements-locked.txt
+      - run: uv pip install --system pip-audit
+      - name: Known vulnerabilities in the locked runtime dependencies
+        run: pip-audit --strict --desc -r requirements-locked.txt

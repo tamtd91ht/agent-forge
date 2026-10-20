@@ -1,6 +1,6 @@
 # ADR-0002: Response to the upgrade proposal (governance first, no runtime)
 
-Status: accepted (2026-10-16). Input: `AGENT_FORGE_UPGRADE_PROPOSAL.md` (review written from
+Status: accepted (2026-10-16). Input: `docs/history/AGENT_FORGE_UPGRADE_PROPOSAL.md` (review written from
 README/docs, not from the code). This ADR records what was adopted, what already existed,
 and what is rejected, so the proposal is not re-litigated.
 

@@ -1,3 +1,6 @@
+HISTORICAL DOCUMENT (2026-10-16): the original master prompt Agent Forge was built from.
+It is kept as input only; accepted ADRs in docs/adr/ decide, docs/product-vision.md is the direction.
+
 MASTER PROMPT — AGENT FORGE
 Build a Local-First AI Agent Capability Engineering Platform
 

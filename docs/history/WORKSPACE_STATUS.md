@@ -1,5 +1,5 @@
 > **Superseded (2026-10-20):** current status, audit and release-gate evidence live in
-> [docs/engineering-roadmap.md](docs/engineering-roadmap.md). This file records the
+> [docs/engineering-roadmap.md](../engineering-roadmap.md). This file records the
 > v0.1 build phases and is kept as history.
 
 # Workspace status
