@@ -3,7 +3,6 @@ agent, statistics and the report. No LLM is launched."""
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -12,7 +11,7 @@ import yaml
 from agent_forge_eval import cli
 from agent_forge_eval.harness import Arm, load_tasks, run_matrix, scripted_runner
 from agent_forge_eval.stats import compare, summarise, to_markdown, wilson
-from tests.conftest import REPO_ROOT
+from tests.conftest import REPO_ROOT, unwrap
 
 EXAMPLES = REPO_ROOT / "examples"
 FIXTURES = sorted(p for p in EXAMPLES.iterdir() if (p / "project").is_dir())
@@ -162,7 +161,7 @@ def test_cli_run_scripted_writes_report(tmp_path: Path, real_workspace, capsys) 
     assert code == 0
     files = sorted(out.iterdir())
     assert [f.suffix for f in files] == [".json", ".md"]
-    doc = json.loads(files[0].read_text(encoding="utf-8"))
+    doc = unwrap(files[0].read_text(encoding="utf-8"))
     assert doc["meta"]["tool"].startswith("scripted") and "NOT a measurement" in doc["meta"]["tool"]
     assert doc["summary"]["verdict"]["status"] == "incomplete"
     assert cli.main(["tasks", "--fixture", str(fx)]) == 0

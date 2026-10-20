@@ -2,7 +2,7 @@ schema_version: "1"
 id: forge.skill.agent-forge-upgrade
 name: Agent Forge upgrade skill
 description: The project's entry point to Agent Forge - user-invoked /agent-forge-upgrade has the coding agent review the project (code, CLAUDE.md, rules, skills) and drive the locally installed `agent-forge` to install or upgrade only the capabilities that fit, with the user approving every write.
-version: 2.0.0
+version: 2.0.1
 kind: skill
 category: meta.agent-forge
 purpose: Closes the gap between Agent Forge's manifest-based matching and a real review of the project. The agent decides what fits and why; Agent Forge stays the only writer (plans, hashes, rollback); the user stays the approver.
@@ -55,5 +55,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: e728d2143d030d7653607b911fb4f33a5f3f4716ec6bcc3a48d877cadc1979af
+  assets_sha256: 1488e953d4ba97697388701b10f3e57a9e9c36ec30ad42c02590aa725462a77b
   pinned_at: "2026-10-20"

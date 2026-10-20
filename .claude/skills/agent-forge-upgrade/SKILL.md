@@ -36,7 +36,7 @@ Windows (PowerShell):  irm https://raw.githubusercontent.com/tamtd91ht/agent-for
 macOS / Linux:         curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh | bash
 ```
 
-The same command updates Agent Forge and its catalog. Use `--json` on every call below.
+The same command updates Agent Forge and its catalog. Use `--json` on every call below. Every `--json` output is an envelope `{envelope: 1, command, ok, data}`; the fields named below live under `data`.
 
 ## 1. Facts from Agent Forge (all read-only)
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -17,7 +16,7 @@ from agent_forge.planner import build_assign_plan
 from agent_forge.policy.engine import load_policies
 from agent_forge.registry.loader import load_registry
 from agent_forge.scanner.project_profile import scan_project
-from tests.conftest import base_manifest, write_capability
+from tests.conftest import base_manifest, unwrap, write_capability
 
 runner = CliRunner()
 
@@ -68,7 +67,7 @@ def test_catalog_show_displays_evidence_or_says_none(
         app, ["catalog", "show", "t.always", "--workspace", ws], catch_exceptions=False
     )
     assert "none (value not measured" in out.output
-    data = json.loads(
+    data = unwrap(
         runner.invoke(app, ["catalog", "show", "t.ev", "--workspace", ws, "--json"]).stdout
     )
     assert data["review"]["evidence"][0]["decided_by"] == "tech-lead"

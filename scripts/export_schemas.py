@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agent_forge.models.capability import Capability  # noqa: E402
+from agent_forge.models.envelope import Envelope  # noqa: E402
 from agent_forge.models.plan import Plan  # noqa: E402
 from agent_forge.models.project import ProjectProfile  # noqa: E402
 from agent_forge.models.transaction import Transaction  # noqa: E402
@@ -24,6 +25,7 @@ SCHEMAS = {
     "plan.schema.json": Plan,
     "transaction.schema.json": Transaction,
     "project-profile.schema.json": ProjectProfile,
+    "envelope.schema.json": Envelope,
 }
 
 

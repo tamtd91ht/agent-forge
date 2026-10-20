@@ -1,0 +1,17 @@
+# Code owners: every path needs a review from the listed owners before merge.
+# The 6-month plan requires at least two maintainers with merge and release rights on
+# every path before the catalog is opened to outside teams. Until a second maintainer is
+# added (MAINTAINERS.md), branch protection should require one approval from this file;
+# the "two reviewers for registry/" rule is a branch-protection setting, not a CI check.
+#
+# Add the second maintainer as `@<github-handle>` on every line below.
+
+*                                   @tamtd91ht
+/src/agent_forge/apply/             @tamtd91ht
+/src/agent_forge/rollback/          @tamtd91ht
+/src/agent_forge/adapters/          @tamtd91ht
+/registry/                          @tamtd91ht
+/docs/adr/                          @tamtd91ht
+/.github/                           @tamtd91ht
+/install.sh                         @tamtd91ht
+/install.ps1                        @tamtd91ht

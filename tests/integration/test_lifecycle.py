@@ -27,7 +27,7 @@ from agent_forge.scanner.project_profile import scan_project
 from agent_forge.storage.transactions import Store
 from agent_forge.util import now_iso
 from agent_forge.validation.engine import validate_target
-from tests.conftest import base_manifest, skill_assets, write_capability
+from tests.conftest import base_manifest, skill_assets, unwrap, write_capability
 
 
 def _approve(workspace, plan, shared: bool = True) -> None:
@@ -100,7 +100,7 @@ def test_full_lifecycle_with_drift_and_rollback(workspace, make_project) -> None
     claude_md = (root / "CLAUDE.md").read_text(encoding="utf-8")
     assert claude_md.startswith("# Project\n\nUser instructions.\n")
     assert "agent-forge:begin id=t-notice" in claude_md
-    manifest = json.loads((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
+    manifest = unwrap((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
     ids = {c["capability_id"] for c in manifest["capabilities"]}
     assert {"t.always", "t.needs-always", "t.notice"} <= ids
     assert all(c["installed_at"] != "(set at apply time)" for c in manifest["capabilities"])
@@ -263,7 +263,7 @@ def test_corrupted_transaction_record_is_refused(workspace, make_project) -> Non
     store = Store(workspace)
     tx = apply_plan(workspace, store, reg, plan)
     path = store.transaction_path(tx.transaction_id)
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = unwrap(path.read_text(encoding="utf-8"))
     data["operations"][0]["before_sha256"] = "f" * 64
     path.write_text(json.dumps(data), encoding="utf-8")
     with pytest.raises(PlanError, match="integrity"):

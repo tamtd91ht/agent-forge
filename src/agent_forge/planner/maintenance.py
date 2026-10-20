@@ -129,7 +129,7 @@ def build_remove_plan(
         for r in records.values()
         if r.capability_id not in capability_ids
         and r.capability_id in reg.items
-        and set(reg.items[r.capability_id].capability.dependencies) & set(capability_ids)
+        and set(reg.items[r.capability_id].capability.dependency_ids) & set(capability_ids)
     ]
     if dependants:
         raise PlanError(

@@ -138,6 +138,8 @@ More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
   [results](docs/evaluation/README.md)
 - Teams: [team workflow](docs/team-workflow.md) · [pilots](docs/pilots/README.md) ·
   [team policy template](examples/policy/team-default.yaml)
+- Contributing: [a capability](docs/contributing-capabilities.md) · [your own registry](docs/registries.md) ·
+  [deprecation policy](docs/deprecation-policy.md) · [maintainers](MAINTAINERS.md)
 - [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
 Content comes from Everything Claude Code, UI UX Pro Max, REA, andrej-karpathy-skills and

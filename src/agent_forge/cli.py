@@ -56,6 +56,9 @@ app.add_typer(catalog_app, name="catalog")
 
 console = Console()
 err_console = Console(stderr=True)
+# command path of the running invocation ("agent-forge catalog show"), recorded by the
+# Typer callbacks for the JSON envelope
+_COMMAND: list[str] = []
 
 WorkspaceOpt = Annotated[
     Path | None,
@@ -103,9 +106,23 @@ def _store(ws: WorkspaceConfig):
     return Store(ws)
 
 
-def _print_json(data: Any) -> None:
-    # Plain stdout on purpose: Rich would wrap long lines and break machine consumers.
-    sys.stdout.write(json.dumps(data, ensure_ascii=False, default=str, indent=2) + "\n")
+def _print_json(data: Any, *, ok: bool | None = None) -> None:
+    """Print the JSON envelope v1 (models/envelope.py) around a command's document.
+
+    Plain stdout on purpose: Rich would wrap long lines and break machine consumers. `ok`
+    defaults to the document's own `ok` field when it has one.
+    """
+    from agent_forge.models.envelope import Envelope
+
+    if ok is None:
+        ok = bool(data.get("ok", True)) if isinstance(data, dict) else True
+    command = " ".join(_COMMAND) or "agent-forge"
+    env = Envelope(
+        command=command, agent_forge=__version__, generated_at=now_iso(), ok=ok, data=data
+    )
+    sys.stdout.write(
+        json.dumps(env.model_dump(mode="json"), ensure_ascii=False, default=str, indent=2) + "\n"
+    )
     sys.stdout.flush()
 
 
@@ -136,6 +153,7 @@ def _main(
     if version:
         console.print(f"agent-forge {__version__}")
         raise typer.Exit()
+    _COMMAND[:] = ["agent-forge", *([ctx.invoked_subcommand] if ctx.invoked_subcommand else [])]
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
@@ -291,6 +309,13 @@ def _seed(
 # ---- sources -----------------------------------------------------------------------------
 
 
+@sources_app.callback()
+def _sources(ctx: typer.Context) -> None:
+    """Manage approved upstream sources (clone, status, sync). Never installs."""
+    if ctx.invoked_subcommand:
+        _COMMAND.append(ctx.invoked_subcommand)
+
+
 @sources_app.command("list")
 def sources_list(
     workspace: WorkspaceOpt = None,
@@ -424,6 +449,7 @@ def catalog(
 ) -> None:
     """List curated capabilities (filters optional)."""
     if ctx.invoked_subcommand is not None:
+        _COMMAND.append(ctx.invoked_subcommand)
         return
 
     def body() -> None:
@@ -2210,6 +2236,19 @@ def status(
             console.print(
                 f"[red]needs recovery:[/] {tx_id}: {why}. Run `agent-forge rollback {tx_id}`."
             )
+        for r in rows:
+            if r["status"] in ("deprecated", "revoked"):
+                cap = reg.items.get(r["capability"])
+                instead = (
+                    f"; use {cap.capability.replaced_by}"
+                    if cap and cap.capability.replaced_by
+                    else ""
+                )
+                color = "red" if r["status"] == "revoked" else "yellow"
+                console.print(
+                    f"[{color}]{r['status']}:[/] {r['capability']} is {r['status']} in the registry{instead} "
+                    f"(docs/deprecation-policy.md; `agent-forge remove . {r['capability']}`)"
+                )
 
     _run(body)
 

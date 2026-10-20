@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 import yaml
 from typer.testing import CliRunner
 
 from agent_forge.cli import app
+from tests.conftest import unwrap
 
 pytestmark = pytest.mark.e2e
 runner = CliRunner()
@@ -21,7 +20,7 @@ def run(*args: str, expect: int = 0):
 
 
 def run_json(*args: str, expect: int = 0):
-    return json.loads(run(*args, expect=expect).stdout)
+    return unwrap(run(*args, expect=expect).stdout)
 
 
 BACKEND = {

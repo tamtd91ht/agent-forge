@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -19,6 +18,7 @@ from agent_forge.registry.loader import load_registry
 from agent_forge.scanner.project_profile import scan_project
 from agent_forge.storage.transactions import Store
 from agent_forge.util import now_iso
+from tests.conftest import unwrap
 
 
 def _approve(workspace, plan) -> None:
@@ -81,13 +81,13 @@ def test_remove_plan_deletes_files_sections_and_entries(workspace, make_project)
     assert tx.status == TransactionStatus.COMPLETED
     assert not (root / ".claude/skills/needs-always").exists()
     assert "agent-forge:begin" not in (root / "CLAUDE.md").read_text(encoding="utf-8")
-    settings = json.loads((root / ".claude/settings.json").read_text(encoding="utf-8"))
+    settings = unwrap((root / ".claude/settings.json").read_text(encoding="utf-8"))
     assert all(
         h["command"] != "echo t-hook" for g in settings["hooks"]["PostToolUse"] for h in g["hooks"]
     )
     assert settings["hooks"]["PostToolUse"][0]["hooks"][0]["command"] == "echo hi"  # user hook kept
     assert not (root / ".mcp.json").exists()  # only our server was in it
-    manifest = json.loads((root / ".agent-forge/managed.json").read_text(encoding="utf-8"))
+    manifest = unwrap((root / ".agent-forge/managed.json").read_text(encoding="utf-8"))
     assert {c["capability_id"] for c in manifest["capabilities"]} == {"t.always", "t.python-only"}
 
 

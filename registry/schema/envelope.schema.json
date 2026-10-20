@@ -1,0 +1,46 @@
+{
+  "$id": "https://agent-forge.local/schema/envelope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "agent_forge": {
+      "description": "Agent Forge version that produced the output",
+      "title": "Agent Forge",
+      "type": "string"
+    },
+    "command": {
+      "description": "Command path, e.g. 'agent-forge catalog show'",
+      "title": "Command",
+      "type": "string"
+    },
+    "data": {
+      "description": "The command's document (object or list)",
+      "title": "Data"
+    },
+    "envelope": {
+      "const": 1,
+      "default": 1,
+      "title": "Envelope",
+      "type": "integer"
+    },
+    "generated_at": {
+      "description": "ISO-8601 timestamp (UTC)",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "ok": {
+      "default": true,
+      "description": "False when the command reports failures",
+      "title": "Ok",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "command",
+    "agent_forge",
+    "generated_at",
+    "data"
+  ],
+  "title": "Envelope",
+  "type": "object"
+}

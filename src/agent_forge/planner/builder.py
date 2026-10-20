@@ -326,7 +326,7 @@ def _selected_entry(
         solves=cap.purpose,
         existing=cand.existing,
         adds=adds,
-        dependencies=list(cap.dependencies),
+        dependencies=list(cap.dependency_ids),
         conflicts=list(cap.conflicts),
         validation=validation,
         rollback=rollback,
@@ -371,7 +371,7 @@ def build_assign_plan(
             if cand is None:
                 continue
             lc = reg.get(cid)
-            blocked_deps = [d for d in lc.capability.dependencies if d in dropped]
+            blocked_deps = [d for d in lc.capability.dependency_ids if d in dropped]
             if blocked_deps:
                 needed = sorted({k for d in blocked_deps for k in dropped[d]})
                 rejected_for_approval.append(
@@ -597,7 +597,9 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
         if rec.version == cap.version:
             continue
         old_version = rec.version
-        missing_deps = [d for d in cap.dependencies if d not in {r.capability_id for r in records}]
+        missing_deps = [
+            d for d in cap.dependency_ids if d not in {r.capability_id for r in records}
+        ]
         if missing_deps:
             rejected.append(
                 RejectedCapability(
@@ -684,7 +686,7 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
                 ],
                 solves=cap.purpose,
                 adds=[f"{o.kind.value} {o.path}" for o in cap_ops],
-                dependencies=list(cap.dependencies),
+                dependencies=list(cap.dependency_ids),
                 conflicts=list(cap.conflicts),
                 validation=["hash verification", "platform format rules"],
                 rollback="restore previous version from transaction backups",

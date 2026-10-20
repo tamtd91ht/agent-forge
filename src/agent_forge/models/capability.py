@@ -17,6 +17,42 @@ CAPABILITY_ID_RE = re.compile(
     r"^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)*$"
 )
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+# A dependency is `id` or `id <constraints>`: comparators `>=`, `>`, `<=`, `<`, `==`, `^`
+# (same major) separated by spaces or commas, e.g. "ecc.rules.common >=1.1.0 <2.0.0".
+_CONSTRAINT_RE = re.compile(r"^(>=|<=|==|>|<|\^)(\d+\.\d+\.\d+)$")
+
+
+def parse_dependency(spec: str) -> tuple[str, list[tuple[str, str]]]:
+    """Split a dependency spec into (capability id, [(op, version)]). Raises ValueError."""
+    parts = spec.replace(",", " ").split()
+    if not parts:
+        raise ValueError("empty dependency")
+    cid, rest = parts[0], parts[1:]
+    if not CAPABILITY_ID_RE.match(cid):
+        raise ValueError(f"invalid capability id in dependency {spec!r}")
+    constraints: list[tuple[str, str]] = []
+    for c in rest:
+        m = _CONSTRAINT_RE.match(c)
+        if not m:
+            raise ValueError(f"invalid version constraint {c!r} in dependency {spec!r}")
+        constraints.append((m.group(1), m.group(2)))
+    return cid, constraints
+
+
+def version_satisfies(version: str, constraints: list[tuple[str, str]]) -> bool:
+    v = tuple(int(x) for x in version.split("."))
+    for op, want in constraints:
+        w = tuple(int(x) for x in want.split("."))
+        if (
+            (op == ">=" and not v >= w)
+            or (op == ">" and not v > w)
+            or (op == "<=" and not v <= w)
+            or (op == "<" and not v < w)
+            or (op == "==" and v != w)
+            or (op == "^" and not (v >= w and v[0] == w[0]))
+        ):
+            return False
+    return True
 
 
 class StrictModel(BaseModel):
@@ -292,7 +328,9 @@ class Capability(StrictModel):
     install_strategy: InstallStrategy
     destinations: list[Destination] = Field(default_factory=list)
     dependencies: list[str] = Field(
-        default_factory=list, description="Capability IDs required first"
+        default_factory=list,
+        description="Capability IDs required first, optionally with version constraints: "
+        "'id', 'id >=1.2.0', 'id >=1.0.0 <2.0.0', 'id ^1.0.0'",
     )
     conflicts: list[str] = Field(
         default_factory=list, description="Capability IDs that must not coexist"
@@ -327,6 +365,34 @@ class Capability(StrictModel):
             )
         return v
 
+    @field_validator("dependencies")
+    @classmethod
+    def _dependency_specs(cls, v: list[str]) -> list[str]:
+        seen: set[str] = set()
+        for spec in v:
+            cid, _ = parse_dependency(spec)
+            if cid in seen:
+                raise ValueError(f"dependency {cid!r} listed twice")
+            seen.add(cid)
+        return v
+
+    @property
+    def dependency_ids(self) -> list[str]:
+        """Dependency capability ids without their constraints."""
+        return [parse_dependency(s)[0] for s in self.dependencies]
+
+    @property
+    def dependency_constraints(self) -> dict[str, list[tuple[str, str]]]:
+        return dict(parse_dependency(s) for s in self.dependencies)
+
+    def unsatisfied_dependency(self, dep_id: str, version: str) -> str | None:
+        """Why `version` of `dep_id` does not satisfy this capability's constraint (None = ok)."""
+        constraints = self.dependency_constraints.get(dep_id, [])
+        if version_satisfies(version, constraints):
+            return None
+        wanted = " ".join(op + ver for op, ver in constraints)
+        return f"{self.id} requires {dep_id} {wanted}, registry has {version}"
+
     @field_validator("version")
     @classmethod
     def _semver(cls, v: str) -> str:
@@ -352,7 +418,7 @@ class Capability(StrictModel):
             raise ValueError(
                 f"{self.id}: native_plugin capabilities must declare runtime_requirements"
             )
-        if self.id in self.dependencies or self.id in self.conflicts:
+        if self.id in self.dependency_ids or self.id in self.conflicts:
             raise ValueError(f"{self.id}: capability cannot depend on or conflict with itself")
         if self.status == CapabilityStatus.CURATED and not self.license.redistribution_ok:
             raise ValueError(

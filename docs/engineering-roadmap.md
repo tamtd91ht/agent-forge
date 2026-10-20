@@ -188,10 +188,10 @@ Not production-ready for: capability **value** claims (Gate E: harness ready, no
 
 - **Evaluation runs:** the harness lives in `tools/agent-forge-eval` (opt-in, out of the
   core, ADR-0002); measurements are a maintainer task with a budget, see `evaluation.md`.
-- **Dependency version constraints:** deferred until a second released version of any
-  capability exists (ADR-0002). Tool-version ranges per adapter exist since ADR-0006.
-- **Keyed (HMAC) seals / signed releases:** the workspace is the trust anchor (A1); signing
-  needs a key-management decision and a release process first.
-- **Uniform JSON envelope for every `--json` command:** a breaking change for automation;
-  planned for the first versioned release, see `cli-reference.md`.
+- ~~Dependency version constraints~~: shipped (`capability-model.md#dependency-version-constraints`).
+  Tool-version ranges per adapter exist since ADR-0006.
+- **Keyed (HMAC) seals:** the workspace is the trust anchor (A1). Releases are signed with
+  Sigstore (keyless) by `release.yml`; a signed registry artifact waits for the public
+  registry repository (plan 4.7).
+- ~~Uniform JSON envelope~~: shipped (envelope v1, `cli-reference.md#json-output`).
 - **Orchestration / runtime (Phase 5):** out of the core (ADR-0002, vision §3.3).

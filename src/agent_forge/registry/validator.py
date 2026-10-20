@@ -34,7 +34,11 @@ def validate_registry(reg: Registry) -> RegistryReport:
     ids = set(reg.items)
     for cid, lc in sorted(reg.items.items()):
         cap = lc.capability
-        for dep in cap.dependencies:
+        for dep in cap.dependency_ids:
+            if dep in reg.items:
+                why = cap.unsatisfied_dependency(dep, reg.items[dep].capability.version)
+                if why:
+                    rep.errors.append(why)
             if dep not in ids:
                 rep.errors.append(f"{cid}: dependency {dep!r} does not exist in the registry")
             elif (
@@ -52,6 +56,7 @@ def validate_registry(reg: Registry) -> RegistryReport:
                 rep.errors.append(f"{cid}: assets directory missing: {lc.assets_dir}")
             else:
                 _check_markdown_links(cid, lc.assets_dir, rep)
+                _check_license_notice(cid, cap, lc.assets_dir, rep)
             for dest in cap.destinations:
                 src = lc.assets_dir / dest.source
                 if not src.exists():
@@ -106,6 +111,12 @@ def validate_registry(reg: Registry) -> RegistryReport:
 
 _CODE_RE = re.compile(r"^(```|~~~).*?^\1|`[^`\n]*`", re.MULTILINE | re.DOTALL)
 _LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
+
+
+def _check_license_notice(cid: str, cap, assets_dir: Path, rep: RegistryReport) -> None:
+    nf = cap.license.notice_file
+    if nf and not (assets_dir / nf).is_file():
+        rep.errors.append(f"{cid}: license.notice_file {nf!r} is missing from assets/")
 
 
 def _check_markdown_links(cid: str, assets_dir: Path, rep: RegistryReport) -> None:
@@ -186,7 +197,7 @@ def _check_skill_calls(reg: Registry, rep: RegistryReport) -> None:
                 continue
             seen.add(cur)
             provided.update(shipped[cur])
-            stack.extend(reg.items[cur].capability.dependencies)
+            stack.extend(reg.items[cur].capability.dependency_ids)
         for md in sorted(lc.assets_dir.rglob("SKILL.md")):
             text = _FENCE_RE.sub("", md.read_text(encoding="utf-8", errors="replace"))
             rel = md.relative_to(lc.assets_dir).as_posix()
@@ -216,7 +227,7 @@ def _check_dependency_cycles(reg: Registry, rep: RegistryReport) -> None:
         if st == 2 or node not in reg.items:
             return
         state[node] = 1
-        for dep in reg.items[node].capability.dependencies:
+        for dep in reg.items[node].capability.dependency_ids:
             visit(dep, [*stack, node])
         state[node] = 2
 
@@ -233,7 +244,7 @@ def resolve_dependencies(reg: Registry, selected: list[str]) -> list[str]:
         if cid in seen:
             return
         seen.add(cid)
-        for dep in reg.get(cid).capability.dependencies:
+        for dep in reg.get(cid).capability.dependency_ids:
             visit(dep)
         order.append(cid)
 

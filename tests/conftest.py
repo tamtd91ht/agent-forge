@@ -18,6 +18,16 @@ import yaml
 from agent_forge.config import WORKSPACE_MARKER, WorkspaceConfig, load_workspace
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def unwrap(text: str):
+    """Parse JSON; if it is a JSON envelope v1 (every `--json` command), return its `data`."""
+    doc = json.loads(text)
+    if isinstance(doc, dict) and doc.get("envelope") == 1 and "data" in doc and "command" in doc:
+        return doc["data"]
+    return doc
+
+
 REAL_REGISTRY = REPO_ROOT / "registry"
 
 

@@ -142,13 +142,16 @@ def validate_target(
                 f"(`agent-forge remove . {rec.capability_id}`)",
             )
         if cap is not None:
-            for dep in cap.capability.dependencies:
-                if dep not in {m.capability_id for m in profile.managed}:
+            installed_versions = {m.capability_id: m.version for m in profile.managed}
+            for dep in cap.capability.dependency_ids:
+                if dep not in installed_versions:
                     rep.add(
                         "error",
                         "managed",
                         f"{rec.capability_id}: dependency {dep} is not installed",
                     )
+                elif why := cap.capability.unsatisfied_dependency(dep, installed_versions[dep]):
+                    rep.add("error", "managed", why.replace("registry has", "installed is"))
             installed = {m.capability_id for m in profile.managed}
             for conf in cap.capability.conflicts:
                 if conf in installed:

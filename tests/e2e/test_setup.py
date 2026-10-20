@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 from typer.testing import CliRunner
 
 from agent_forge.cli import app
+from tests.conftest import unwrap
 
 pytestmark = pytest.mark.e2e
 runner = CliRunner()
@@ -16,7 +15,7 @@ runner = CliRunner()
 def run_json(*args: str) -> dict:
     result = runner.invoke(app, list(args), catch_exceptions=False)
     assert result.exit_code == 0, f"{args}\n{result.output}"
-    return json.loads(result.stdout)
+    return unwrap(result.stdout)
 
 
 def test_setup_installs_only_the_entry_skill(real_workspace, make_project) -> None:
@@ -26,7 +25,7 @@ def test_setup_installs_only_the_entry_skill(real_workspace, make_project) -> No
         p.relative_to(root).as_posix() for p in root.rglob("*") if ".git" not in p.parts
     )
     out = run_json("setup", str(root), "--workspace", ws, "--json")
-    assert out["installed_version"] == "2.0.0" and len(out["steps"]) == 1
+    assert out["installed_version"] == "2.0.1" and len(out["steps"]) == 1
     skill = (root / ".claude/skills/agent-forge-upgrade/SKILL.md").read_text(encoding="utf-8")
     assert "disable-model-invocation: true" in skill
     after = sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if ".git" not in p.parts)
@@ -37,7 +36,7 @@ def test_setup_installs_only_the_entry_skill(real_workspace, make_project) -> No
         ".claude/skills/agent-forge-upgrade",
         ".claude/skills/agent-forge-upgrade/SKILL.md",
     ]
-    managed = json.loads((root / ".agent-forge/managed.json").read_text(encoding="utf-8"))
+    managed = unwrap((root / ".agent-forge/managed.json").read_text(encoding="utf-8"))
     assert [c["capability_id"] for c in managed["capabilities"]] == [
         "forge.skill.agent-forge-upgrade"
     ]
@@ -52,11 +51,11 @@ def test_setup_leaves_other_managed_capabilities_alone(real_workspace, make_proj
     run_json("forge", str(root), "--workspace", ws, "--yes", "--json")
     before = (root / ".agent-forge/managed.json").read_text(encoding="utf-8")
     out = run_json("setup", str(root), "--workspace", ws, "--json")
-    after = json.loads((root / ".agent-forge/managed.json").read_text(encoding="utf-8"))
+    after = unwrap((root / ".agent-forge/managed.json").read_text(encoding="utf-8"))
     ids = {c["capability_id"] for c in after["capabilities"]}
     assert "forge.skill.agent-forge-upgrade" in ids
     assert ids - {"forge.skill.agent-forge-upgrade"} == {
-        c["capability_id"] for c in json.loads(before)["capabilities"]
+        c["capability_id"] for c in unwrap(before)["capabilities"]
     }
     assert all(
         f.startswith((".claude/skills/agent-forge-upgrade", ".agent-forge"))

@@ -68,3 +68,25 @@ is and `validate` warns about it; a `revoked` one is a `validate` error in every
 still has it. Before either change, `agent-forge impact <id>` lists the projects this
 workspace installed it into. `rejected` entries stay in the registry as a record of the
 decision; the reason for upstream items never curated lives in `docs/rejections/`.
+
+## Dependency version constraints
+
+`dependencies` entries are capability ids, optionally followed by constraints:
+
+```yaml
+dependencies:
+  - ecc.rules.common                 # any version
+  - mattpocock.grilling >=1.1.0 <2.0.0
+  - karpathy.principles ^1.0.0       # same major, at least 1.0.0
+```
+
+Comparators: `>=`, `>`, `<=`, `<`, `==`, `^`. `validate` fails when the registry version of
+a dependency does not satisfy the constraint; matching rejects the dependant
+(`dependency_missing`) instead of installing an incompatible pair; `validate PATH` reports an
+installed pair that no longer satisfies it after an upgrade.
+
+## Evaluation evidence
+
+`review.evidence` holds one entry per baseline-vs-candidate evaluation (see
+[evaluation.md](evaluation.md)); `catalog show` prints the table or states that the value was
+not measured.

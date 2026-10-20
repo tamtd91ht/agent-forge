@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,7 @@ from agent_forge.registry.loader import load_registry
 from agent_forge.registry.validator import validate_registry
 from agent_forge.scanner.project_profile import scan_project
 from agent_forge.storage.audit import AuditLog
-from tests.conftest import base_manifest, skill_assets, write_capability
+from tests.conftest import base_manifest, skill_assets, unwrap, write_capability
 
 
 def test_unsafe_content_is_an_error_unless_acknowledged(tmp_path: Path) -> None:
@@ -93,7 +92,7 @@ def test_audit_log_redacts_tokens(tmp_path: Path) -> None:
     log.emit("PlanApproved", approved_by="dev api_key=hunter2", note=["ghp_" + "x" * 36])
     line = (tmp_path / "audit.jsonl").read_text(encoding="utf-8")
     assert "hunter2" not in line and "ghp_" not in line
-    assert json.loads(line)["approved_by"] == "dev api_key=<redacted>"
+    assert unwrap(line)["approved_by"] == "dev api_key=<redacted>"
 
 
 def test_installed_revoked_capability_fails_validation(workspace, make_project) -> None:
@@ -114,10 +113,8 @@ def test_installed_revoked_capability_fails_validation(workspace, make_project) 
     assert res.exit_code == 12
     assert any(
         "t.always" in f["message"] and "revoked" in f["message"] and f["level"] == "error"
-        for f in json.loads(res.stdout)["findings"]
+        for f in unwrap(res.stdout)["findings"]
     )
-    impact = json.loads(
-        runner.invoke(app, ["impact", "t.always", "--workspace", ws, "--json"]).stdout
-    )
+    impact = unwrap(runner.invoke(app, ["impact", "t.always", "--workspace", ws, "--json"]).stdout)
     assert impact["registry_status"] == "revoked"
     assert [i["target"] for i in impact["installations"]] == [str(root.resolve())]

@@ -1,5 +1,8 @@
 # Contributing
 
+Submitting a capability to the catalog: [docs/contributing-capabilities.md](docs/contributing-capabilities.md).
+Maintainer roster and merge rules: [MAINTAINERS.md](MAINTAINERS.md).
+
 Agent rules for coding agents working here are in [AGENTS.md](AGENTS.md); they apply to
 humans too.
 

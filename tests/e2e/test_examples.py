@@ -6,7 +6,7 @@ import importlib.util
 
 import pytest
 
-from tests.conftest import REPO_ROOT
+from tests.conftest import REPO_ROOT, unwrap
 
 pytestmark = pytest.mark.e2e
 
@@ -31,10 +31,9 @@ def test_every_example_has_reviewed_expectations() -> None:
 
 @pytest.mark.parametrize("name", EXAMPLES)
 def test_example_projects_match_expected(name: str) -> None:
-    import json
 
     example = REPO_ROOT / "examples" / name
-    expected = json.loads((example / "expected.json").read_text(encoding="utf-8"))
+    expected = unwrap((example / "expected.json").read_text(encoding="utf-8"))
     result = report.compare(expected, report.observe(example, REPO_ROOT / "registry"))
     assert result["profile_missing"] == {}, result
     assert result["unexpected"] == [] and result["missed"] == [], result

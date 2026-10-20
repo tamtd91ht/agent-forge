@@ -20,6 +20,7 @@ from agent_forge.scanner.project_profile import scan_project
 from agent_forge.storage.transactions import Store
 from agent_forge.util import now_iso
 from agent_forge.validation.engine import validate_target
+from tests.conftest import unwrap
 
 ALL = frozenset({"standard", "shared_file", "hook", "mcp"})
 
@@ -83,20 +84,20 @@ def test_apply_refuses_hook_without_class_approval(workspace, make_project) -> N
 def test_merge_preserves_user_settings_and_rollback_is_entry_aware(workspace, make_project) -> None:
     root = make_project("hm4", kind="claude")
     settings = root / ".claude" / "settings.json"
-    original = json.loads(settings.read_text(encoding="utf-8"))
+    original = unwrap(settings.read_text(encoding="utf-8"))
     reg, plan = _plan(workspace, root)
     _approve(workspace, plan, ALL)
     store = Store(workspace)
     tx = apply_plan(workspace, store, reg, plan)
     assert tx.status == TransactionStatus.COMPLETED
-    merged = json.loads(settings.read_text(encoding="utf-8"))
+    merged = unwrap(settings.read_text(encoding="utf-8"))
     assert merged["hooks"]["PostToolUse"][0]["hooks"][0]["command"] == "echo hi"  # user's hook kept
     assert any(
         h["command"] == "echo t-hook" for g in merged["hooks"]["PostToolUse"] for h in g["hooks"]
     )
-    mcp = json.loads((root / ".mcp.json").read_text(encoding="utf-8"))
+    mcp = unwrap((root / ".mcp.json").read_text(encoding="utf-8"))
     assert mcp["mcpServers"]["t-server"]["command"] == "npx"
-    manifest = json.loads((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
+    manifest = unwrap((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
     rec = next(c for c in manifest["capabilities"] if c["capability_id"] == "t.hook")
     assert ".claude/settings.json" in rec["json_merges"]
 
@@ -117,9 +118,9 @@ def test_merge_preserves_user_settings_and_rollback_is_entry_aware(workspace, ma
     assert not rp.conflicts
     rb = execute_rollback(store, rp)
     assert rb.status == TransactionStatus.COMPLETED
-    after_mcp = json.loads((root / ".mcp.json").read_text(encoding="utf-8"))
+    after_mcp = unwrap((root / ".mcp.json").read_text(encoding="utf-8"))
     assert after_mcp == {"mcpServers": {"mine": {"command": "mine"}}}
-    after_settings = json.loads(settings.read_text(encoding="utf-8"))
+    after_settings = unwrap(settings.read_text(encoding="utf-8"))
     assert after_settings["hooks"]["Stop"][0]["hooks"][0]["command"] == "user-stop"
     assert after_settings["hooks"]["PostToolUse"] == original["hooks"]["PostToolUse"]
     assert not any(

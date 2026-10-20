@@ -62,11 +62,25 @@ Exit codes 2–15 are each produced by a real CLI path in `tests/e2e/test_exit_c
 
 ## JSON output
 
-`--json` prints machine-readable output on stdout (human messages go to stderr). Documents
-that are also stored (plans, transactions, profiles, capabilities) carry `schema_version`
-and match `registry/schema/*.schema.json`; list-style outputs (`catalog`, `status`, `audit`,
-`policy`, `doctor`, `validate`, `impact`) are stable within a minor version. A uniform
-versioned envelope for every command is planned for the first versioned release.
+`--json` prints machine-readable output on stdout (human messages go to stderr), always as
+**JSON envelope v1** (`registry/schema/envelope.schema.json`):
+
+```json
+{
+  "envelope": 1,
+  "command": "agent-forge forge",
+  "agent_forge": "0.2.0",
+  "generated_at": "2026-10-20T10:00:00+00:00",
+  "ok": true,
+  "data": { "...": "the command's document" }
+}
+```
+
+`data` is the command's document: stored documents (plans, transactions, profiles,
+capabilities) carry their own `schema_version` and match `registry/schema/*.schema.json`;
+list-style outputs are stable within a minor version. `ok` is false only for commands that
+report findings and exit non-zero (`validate`, `check`, `doctor`). Errors never print JSON on
+stdout. Automation reads `envelope` first and refuses an unknown value.
 
 ## Side effects
 

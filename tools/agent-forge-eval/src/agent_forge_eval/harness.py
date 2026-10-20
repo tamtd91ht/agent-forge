@@ -211,6 +211,8 @@ def prepare_project(
                 f"agent-forge forge failed for {arm.capability}: {proc.stderr[-800:]}"
             )
         report = json.loads(proc.stdout)
+        if isinstance(report, dict) and report.get("envelope") == 1:
+            report = report["data"]  # JSON envelope v1
         selected = {cid for step in report.get("steps", []) for cid in step.get("selected", [])}
         managed = set(report.get("profile", {}).get("managed", []))
         if arm.capability not in selected | managed:

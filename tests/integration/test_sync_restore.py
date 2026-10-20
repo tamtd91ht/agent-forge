@@ -3,12 +3,11 @@ when it was committed), through the ordinary journaled apply engine."""
 
 from __future__ import annotations
 
-import json
-
 import pytest
 from typer.testing import CliRunner
 
 from agent_forge.cli import app
+from tests.conftest import unwrap
 
 runner = CliRunner()
 BACKEND = {
@@ -19,7 +18,7 @@ BACKEND = {
 def run_json(*args: str, expect: int = 0) -> dict:
     result = runner.invoke(app, list(args), catch_exceptions=False)
     assert result.exit_code == expect, f"{args}\n{result.output}"
-    return json.loads(result.stdout)
+    return unwrap(result.stdout)
 
 
 @pytest.mark.parametrize("delete_file", [False, True])

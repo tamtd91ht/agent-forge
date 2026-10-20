@@ -13,6 +13,7 @@ from agent_forge.apply.jsonmerge import (
     upsert_fragment,
 )
 from agent_forge.errors import ApplyError
+from tests.conftest import unwrap
 
 HOOK = {
     "hooks": {"PostToolUse": [{"matcher": "Edit", "hooks": [{"type": "command", "command": "x"}]}]}
@@ -30,13 +31,13 @@ USER = json.dumps(
 
 def test_upsert_into_missing_file() -> None:
     out = upsert_fragment(None, HOOK)
-    assert json.loads(out) == HOOK
+    assert unwrap(out) == HOOK
     assert contains_fragment(out, HOOK)
 
 
 def test_upsert_preserves_user_entries_and_is_idempotent() -> None:
     out = upsert_fragment(USER, HOOK)
-    data = json.loads(out)
+    data = unwrap(out)
     assert data["permissions"] == {"allow": ["Bash(git:*)"]}
     assert data["hooks"]["Stop"][0]["hooks"][0]["command"] == "user-stop"
     assert data["hooks"]["PostToolUse"] == HOOK["hooks"]["PostToolUse"]
@@ -48,7 +49,7 @@ def test_remove_restores_semantics() -> None:
     merged = upsert_fragment(USER, HOOK)
     merged = upsert_fragment(merged, MCP)
     back = remove_fragment(remove_fragment(merged, MCP), HOOK)
-    assert json.loads(back) == json.loads(USER)
+    assert unwrap(back) == unwrap(USER)
     assert remove_fragment(upsert_fragment(None, MCP), MCP) == ""
 
 
@@ -58,7 +59,7 @@ def test_mcp_conflict_detected_and_refused() -> None:
     with pytest.raises(ApplyError, match="different"):
         upsert_fragment(other, MCP)
     # removal never touches a server that is not ours
-    assert json.loads(remove_fragment(other, MCP))["mcpServers"]["ctx"] == {"command": "different"}
+    assert unwrap(remove_fragment(other, MCP))["mcpServers"]["ctx"] == {"command": "different"}
 
 
 def test_replace_fragment_upgrades_in_place() -> None:
@@ -72,7 +73,7 @@ def test_replace_fragment_upgrades_in_place() -> None:
     }
     cur = upsert_fragment(USER, v1)
     out = replace_fragment(cur, v1, v2)
-    data = json.loads(out)
+    data = unwrap(out)
     assert data["hooks"]["PostToolUse"] == v2["hooks"]["PostToolUse"]
     assert data["hooks"]["Stop"]
     assert contains_fragment(out, v2) and not contains_fragment(out, v1)

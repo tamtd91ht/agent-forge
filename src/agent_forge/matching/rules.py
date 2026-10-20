@@ -186,11 +186,34 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
     # exclusion, conflict ...) must not be pulled back in through the back door.
     _SATISFIABLE = {"not_applicable", "already_installed"}
     for cand in list(candidates):
-        for dep in cand.capability.dependencies:
+        for dep in cand.capability.dependency_ids:
             if dep in by_id:
+                unsatisfied = cand.capability.unsatisfied_dependency(
+                    dep, by_id[dep].capability.version
+                )
+                if unsatisfied:
+                    candidates.remove(cand)
+                    result.rejected.append(
+                        Rejection(
+                            cand.capability, cand.platform, "dependency_missing", [unsatisfied]
+                        )
+                    )
+                    break
                 by_id[dep].dependency_of.append(cand.capability.id)
                 continue
             if dep in installed:
+                unsatisfied = cand.capability.unsatisfied_dependency(dep, installed[dep])
+                if unsatisfied:
+                    candidates.remove(cand)
+                    result.rejected.append(
+                        Rejection(
+                            cand.capability,
+                            cand.platform,
+                            "dependency_missing",
+                            [unsatisfied.replace("registry has", "installed is")],
+                        )
+                    )
+                    break
                 continue  # satisfied by an existing managed install
             blocked = next(
                 (
@@ -206,6 +229,17 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
                 dep_cap = reg.get(dep).capability
             except Exception:
                 dep_cap = None
+            unsatisfied = (
+                cand.capability.unsatisfied_dependency(dep, dep_cap.version)
+                if dep_cap is not None
+                else None
+            )
+            if unsatisfied:
+                candidates.remove(cand)
+                result.rejected.append(
+                    Rejection(cand.capability, cand.platform, "dependency_missing", [unsatisfied])
+                )
+                break
             # A not-applicable dependency never reached the policy check in _evaluate_one.
             policy_block = (
                 _policy_block(reg, dep_cap, cand.platform, ctx) if dep_cap is not None else None
@@ -326,7 +360,7 @@ def _reconcile_optional_dependencies(candidates: list[Candidate], ctx: MatchCont
         for cand in candidates:
             if cand.optional:
                 continue
-            for dep in cand.capability.dependencies:
+            for dep in cand.capability.dependency_ids:
                 dep_cand = by_key.get((dep, cand.platform))
                 if dep_cand is None or not dep_cand.optional:
                     continue

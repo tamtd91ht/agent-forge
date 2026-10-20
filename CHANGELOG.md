@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Opening up (6-month plan, phase 4)
+- **Breaking for automation:** every `--json` command prints JSON envelope v1
+  (`{envelope: 1, command, agent_forge, generated_at, ok, data}`); the previous document is
+  `data`. `registry/schema/envelope.schema.json`; `tests/e2e/test_json_envelope.py` covers
+  every command. The entry skill (`forge.skill.agent-forge-upgrade` 2.0.1) reads `data`.
+- Dependency version constraints: `dependencies: ["id >=1.2.0 <2.0.0", "id ^1.0.0"]`;
+  `validate` checks the registry version, matching rejects an unsatisfied dependency
+  (`dependency_missing`), `validate PATH` checks installed versions.
+- `validate` errors when `license.notice_file` is missing from `assets/`.
+- `status` prints a deprecation / revocation line with the replacement and the policy link;
+  `docs/deprecation-policy.md` (notice periods, who decides).
+- Capability submission process: `docs/contributing-capabilities.md`, PR template,
+  `.github/CODEOWNERS`, `MAINTAINERS.md` (roster and merge/release rules).
+- `docs/registries.md`: a private or public registry in 10 minutes (layered registries).
+- Documentation site: `mkdocs.yml` + `docs-site` workflow (GitHub Pages); `docs/index.md`.
+- `docs/roadmap-2026h2.md`: the 6-month plan with per-item status and what is left for people.
+
 ### Value (6-month plan, phase 3)
 - `tools/agent-forge-eval`: opt-in local evaluation harness (ADR-0002). Baseline vs candidate
   (installed by the real engine) on a fixture's task set with `claude -p` / `codex exec`,

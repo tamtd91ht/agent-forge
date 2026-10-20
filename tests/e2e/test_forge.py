@@ -8,6 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from agent_forge.cli import app
+from tests.conftest import unwrap
 
 pytestmark = pytest.mark.e2e
 runner = CliRunner()
@@ -20,7 +21,7 @@ def run(*args: str, expect: int = 0, input: str | None = None):
 
 
 def run_json(*args: str, expect: int = 0):
-    return json.loads(run(*args, expect=expect).stdout)
+    return unwrap(run(*args, expect=expect).stdout)
 
 
 BACKEND_FILES = {
@@ -213,7 +214,7 @@ def test_forge_git_guard_shares_settings_with_secret_guard(real_workspace, make_
     assert {"forge.hook.guard-dangerous-git", "forge.hook.guard-secrets-python"} <= set(
         add["selected"]
     )
-    settings = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    settings = unwrap((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
     commands = [h["command"] for g in settings["hooks"]["PreToolUse"] for h in g["hooks"]]
     assert any("guard_git.py" in c for c in commands)
     assert any("guard_secrets.py" in c for c in commands)

@@ -663,7 +663,7 @@
       "type": "array"
     },
     "dependencies": {
-      "description": "Capability IDs required first",
+      "description": "Capability IDs required first, optionally with version constraints: 'id', 'id >=1.2.0', 'id >=1.0.0 <2.0.0', 'id ^1.0.0'",
       "items": {
         "type": "string"
       },

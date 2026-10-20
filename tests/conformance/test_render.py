@@ -15,7 +15,7 @@ from agent_forge.models.capability import CapabilityKind, MergeStrategy
 from agent_forge.planner.builder import _asset_files
 from agent_forge.registry.loader import load_registry
 from agent_forge.util import normalize_newlines
-from tests.conftest import REAL_REGISTRY
+from tests.conftest import REAL_REGISTRY, unwrap
 
 ADAPTERS = all_adapters()
 IDS = [a.platform.value for a in ADAPTERS]
@@ -121,9 +121,7 @@ def test_gemini_mcp_render_drops_type_and_maps_urls() -> None:
             }
         }
     )
-    out = json.loads(
-        get_adapter("gemini").render(CapabilityKind.MCP, ".gemini/settings.json", frag)
-    )
+    out = unwrap(get_adapter("gemini").render(CapabilityKind.MCP, ".gemini/settings.json", frag))
     assert out == {
         "mcpServers": {
             "a": {"command": "npx", "args": ["x"]},

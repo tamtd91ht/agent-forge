@@ -1,0 +1,68 @@
+site_name: Agent Forge
+site_description: Reviewed skills, rules, hooks and MCP servers for coding agents, installed only after you say yes.
+site_url: https://tamtd91ht.github.io/agent-forge/
+repo_url: https://github.com/tamtd91ht/agent-forge
+edit_uri: edit/main/docs/
+docs_dir: docs
+strict: false
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+  palette:
+    - scheme: default
+      toggle: { icon: material/brightness-7, name: dark }
+    - scheme: slate
+      toggle: { icon: material/brightness-4, name: light }
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc: { permalink: true }
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Start:
+      - Getting started: getting-started.md
+      - Quickstart Node: quickstart/node.md
+      - Quickstart Python: quickstart/python.md
+      - Quickstart Go: quickstart/go.md
+      - Quickstart Java: quickstart/java.md
+  - Use:
+      - CLI reference: cli-reference.md
+      - Team workflow: team-workflow.md
+      - Policy: policy.md
+      - Operations: operations.md
+      - Troubleshooting: troubleshooting.md
+      - Upgrade lifecycle: upgrade-lifecycle.md
+  - Understand:
+      - Architecture: architecture.md
+      - Capability model: capability-model.md
+      - Adapters: adapters.md
+      - Security model: security.md
+      - Evaluation: evaluation.md
+  - Contribute:
+      - Contributing a capability: contributing-capabilities.md
+      - Your own registry: registries.md
+      - Deprecation policy: deprecation-policy.md
+      - Source curation: source-curation.md
+      - Maintenance: maintenance.md
+      - Pilots: pilots/README.md
+  - Direction:
+      - Product vision: product-vision.md
+      - Engineering roadmap: engineering-roadmap.md
+      - 6-month plan: roadmap-2026h2.md
+      - ADR-0001: adr/0001-architecture-decisions.md
+      - ADR-0002: adr/0002-upgrade-roadmap.md
+      - ADR-0003: adr/0003-context-load-and-skill-calls.md
+      - ADR-0004: adr/0004-install-into-project.md
+      - ADR-0005: adr/0005-production-hardening.md
+      - ADR-0006: adr/0006-canonical-format-and-adapters.md

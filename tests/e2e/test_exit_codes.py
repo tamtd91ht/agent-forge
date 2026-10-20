@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -11,6 +10,7 @@ from typer.testing import CliRunner
 from agent_forge.cli import app
 from agent_forge.storage.locks import target_lock
 from agent_forge.storage.transactions import Store
+from tests.conftest import unwrap
 
 pytestmark = pytest.mark.e2e
 runner = CliRunner()
@@ -25,7 +25,7 @@ def _forge(ws: str, root: Path) -> dict:
         app, ["forge", str(root), "--workspace", ws, "--yes", "--shared-files", "--json"]
     )
     assert out.exit_code == 0, out.output
-    return json.loads(out.stdout)
+    return unwrap(out.stdout)
 
 
 def test_exit_codes(real_workspace, make_project, tmp_path: Path, monkeypatch) -> None:
@@ -46,14 +46,12 @@ def test_exit_codes(real_workspace, make_project, tmp_path: Path, monkeypatch) -
     assert code("scan", str(tmp_path / "missing"), "--workspace", ws) == 5
     assert code("approve", "plan-20990101-000000-abcdef", "--workspace", ws) == 6
 
-    plan = json.loads(runner.invoke(app, ["assign", str(root), "--workspace", ws, "--json"]).stdout)
+    plan = unwrap(runner.invoke(app, ["assign", str(root), "--workspace", ws, "--json"]).stdout)
     assert code("apply", plan["plan_id"], "--workspace", ws, "--yes") == 8  # never approved
     (root / "CLAUDE.md").write_text("# changed after planning\n", encoding="utf-8")
     assert code("approve", plan["plan_id"], "--workspace", ws, "--shared-files") == 7
 
-    plan2 = json.loads(
-        runner.invoke(app, ["assign", str(root), "--workspace", ws, "--json"]).stdout
-    )
+    plan2 = unwrap(runner.invoke(app, ["assign", str(root), "--workspace", ws, "--json"]).stdout)
     assert (
         code("approve", plan2["plan_id"], "--workspace", ws, "--shared-files", "--hooks", "--mcp")
         == 0
@@ -78,7 +76,7 @@ def test_exit_codes(real_workspace, make_project, tmp_path: Path, monkeypatch) -
     assert code("validate", str(target), "--workspace", ws) == 12
     assert code("sources", "sync", "ecc", "--workspace", ws) == 13
 
-    plan3 = json.loads(
+    plan3 = unwrap(
         runner.invoke(
             app,
             ["assign", str(make_project("codes-af", kind="claude")), "--workspace", ws, "--json"],

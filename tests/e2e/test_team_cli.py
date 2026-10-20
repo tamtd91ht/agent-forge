@@ -3,7 +3,6 @@ approval files for non-interactive approve/forge, and local `stats`."""
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -11,6 +10,7 @@ import yaml
 from typer.testing import CliRunner
 
 from agent_forge.cli import app
+from tests.conftest import unwrap
 
 pytestmark = pytest.mark.e2e
 runner = CliRunner()
@@ -28,7 +28,7 @@ def run(*args: str, expect: int = 0, input: str | None = None):
 
 
 def run_json(*args: str, expect: int = 0):
-    return json.loads(run(*args, expect=expect).stdout)
+    return unwrap(run(*args, expect=expect).stdout)
 
 
 def _flat(text: str) -> str:
@@ -40,7 +40,7 @@ def _forge(ws: str, root: Path) -> dict:
 
 
 def _managed_skill(root: Path) -> Path:
-    manifest = json.loads((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
+    manifest = unwrap((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
     for rec in manifest["capabilities"]:
         for rel in rec["files"]:
             if rel.endswith("SKILL.md"):
@@ -87,7 +87,7 @@ def test_sync_restores_a_fresh_clone_to_the_committed_state(real_workspace, make
     skill = _managed_skill(root)
     original = skill.read_text(encoding="utf-8")
     skill.unlink()
-    manifest = json.loads((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
+    manifest = unwrap((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
     rule = next(
         root / rel
         for rec in manifest["capabilities"]
