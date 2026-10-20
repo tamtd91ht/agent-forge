@@ -243,6 +243,8 @@ def _check_config_syntax(root: Path, profile: ProjectProfile, rep: ValidationRep
         ".claude/settings.local.json",
         ".mcp.json",
         ".codex/hooks.json",
+        ".cursor/mcp.json",
+        ".gemini/settings.json",
     ):
         p = root / rel
         if p.is_file():
@@ -256,11 +258,13 @@ def _check_config_syntax(root: Path, profile: ProjectProfile, rep: ValidationRep
             p = root / a.path
             if p.is_file():
                 fm, _ = parse_frontmatter(p.read_text(encoding="utf-8", errors="replace"))
-                if a.platform == Platform.CODEX and not (fm.get("name") and fm.get("description")):
+                if a.platform in (Platform.CODEX, Platform.COPILOT, Platform.GEMINI) and not (
+                    fm.get("name") and fm.get("description")
+                ):
                     rep.add(
                         "warning",
                         "adapter",
-                        f"{a.path}: Codex skills require name and description frontmatter",
+                        f"{a.path}: {a.platform.value} skills require name and description frontmatter",
                     )
 
 

@@ -25,7 +25,7 @@ review:
   rationale: 106 lines, markdown only. Installed only on request (tag `git` / `commits`) because many teams already have commit conventions in CLAUDE.md or AGENTS.md.
 applicability:
   tags: [git, commits]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -35,6 +35,14 @@ destinations:
   - platform: codex
     source: codex/conventional-commit-review
     dest: .agents/skills/conventional-commit-review
+    merge: create_only
+  - platform: copilot
+    source: claude_code/conventional-commit-review
+    dest: .github/skills/conventional-commit-review
+    merge: create_only
+  - platform: gemini
+    source: claude_code/conventional-commit-review
+    dest: .gemini/skills/conventional-commit-review
     merge: create_only
 equivalents:
   - kind: skill

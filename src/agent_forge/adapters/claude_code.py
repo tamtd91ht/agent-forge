@@ -50,6 +50,8 @@ class ClaudeCodeAdapter(PlatformAdapter):
             "plugins / marketplaces: not managed",
             "user-scoped ~/.claude is never touched",
         ),
+        version_command=("claude", "--version"),
+        min_version="2.0.0",  # hook event list and skills layout are the 2.x conventions
     )
 
     # ---- detection -----------------------------------------------------------------------

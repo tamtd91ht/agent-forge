@@ -35,7 +35,7 @@ review:
 applicability:
   always: true
   tags: [tdd, testing, quality]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -45,6 +45,14 @@ destinations:
   - platform: codex
     source: codex/tdd-workflow
     dest: .agents/skills/tdd-workflow
+    merge: create_only
+  - platform: copilot
+    source: claude_code/tdd-workflow
+    dest: .github/skills/tdd-workflow
+    merge: create_only
+  - platform: gemini
+    source: claude_code/tdd-workflow
+    dest: .gemini/skills/tdd-workflow
     merge: create_only
 conflicts: [mattpocock.tdd]
 equivalents:

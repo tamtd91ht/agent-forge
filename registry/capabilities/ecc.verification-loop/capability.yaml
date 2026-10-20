@@ -26,12 +26,20 @@ review:
 applicability:
   always: true
   tags: [verification, quality, testing]
-platforms: [claude_code]
+platforms: [claude_code, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
     source: claude_code/verification-loop
     dest: .claude/skills/verification-loop
+    merge: create_only
+  - platform: copilot
+    source: claude_code/verification-loop
+    dest: .github/skills/verification-loop
+    merge: create_only
+  - platform: gemini
+    source: claude_code/verification-loop
+    dest: .gemini/skills/verification-loop
     merge: create_only
 equivalents:
   - kind: skill

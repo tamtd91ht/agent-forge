@@ -1,6 +1,7 @@
 # CLI reference
 
-All commands accept `--workspace/-w PATH` and most accept `--json`. Paths with spaces and
+All commands accept `--workspace/-w PATH` and most accept `--json`. `--platform` values:
+`claude_code`, `codex`, `cursor`, `copilot`, `gemini` (default: detected). Paths with spaces and
 non-ASCII characters are supported everywhere.
 
 | Command | Modifies target? | Purpose |
@@ -54,9 +55,10 @@ non-ASCII characters are supported everywhere.
 | 12 | validation found errors |
 | 13 | source/git error |
 | 14 | plan not covered by the approval file (`--approval-file`): a capability, version or approval class outside the committed file |
+| 15 | the installed coding tool is outside the version range the adapter was verified for (`doctor` shows both) |
 | 130 | interrupted (Ctrl+C); run `agent-forge status` / `doctor` to see if a transaction needs recovery |
 
-Exit codes 2–14 are each produced by a real CLI path in `tests/e2e/test_exit_codes.py`.
+Exit codes 2–15 are each produced by a real CLI path in `tests/e2e/test_exit_codes.py` (15 with a stubbed tool).
 
 ## JSON output
 

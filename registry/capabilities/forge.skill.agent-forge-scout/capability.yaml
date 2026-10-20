@@ -20,12 +20,20 @@ review:
   rationale: Workspace-authored markdown only. Every step is read-only (gh/git shallow clone into a scratch directory, never sources/checkouts/), it forbids executing anything from the reviewed repository and treats its contents as untrusted data, and it hands the user proposed sources.yaml / ADR text instead of writing it. Opt-in (tag `agent-forge`); also shipped in the repo's own `.claude/skills/`.
 applicability:
   tags: [agent-forge, meta, scout, research]
-platforms: [claude_code]
+platforms: [claude_code, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
     source: claude_code/agent-forge-scout
     dest: .claude/skills/agent-forge-scout
+    merge: create_only
+  - platform: copilot
+    source: claude_code/agent-forge-scout
+    dest: .github/skills/agent-forge-scout
+    merge: create_only
+  - platform: gemini
+    source: claude_code/agent-forge-scout
+    dest: .gemini/skills/agent-forge-scout
     merge: create_only
 equivalents:
   - kind: skill

@@ -26,6 +26,13 @@ class AdapterInfo:
     managed_roots: tuple[str, ...]
     supported_kinds: tuple[CapabilityKind, ...]
     unsupported_notes: tuple[str, ...]
+    # How to ask the installed tool for its version (None = not detectable), and the range of
+    # tool versions these conventions were verified for. `doctor` reports the detected
+    # version; planning refuses a tool outside the range (exit 15) and warns when it cannot
+    # tell. Ranges are inclusive, compared on the leading numeric components.
+    version_command: tuple[str, ...] | None = None
+    min_version: str | None = None
+    max_version: str | None = None
 
 
 class PlatformAdapter(ABC):
@@ -49,6 +56,16 @@ class PlatformAdapter(ABC):
 
     def supports(self, kind: CapabilityKind) -> bool:
         return kind in self.info.supported_kinds
+
+    def render(self, kind: CapabilityKind, rel_path: str, content: str) -> str:
+        """Transpile canonical content into this platform's format (ADR-0006).
+
+        Called by the planner for every file of a destination, before validation and before
+        the content hash is taken, so the plan carries the rendered bytes. It must be a pure
+        function of (kind, rel_path, content): the same input renders the same output on any
+        machine. The default is the identity: Claude Code's formats are the canonical ones.
+        """
+        return content
 
     def is_shared_file(self, rel_path: str) -> bool:
         return rel_path in self.info.shared_files

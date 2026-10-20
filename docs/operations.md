@@ -45,12 +45,13 @@ reversed. See [security.md](security.md#transactions-crashes-and-rollback).
 |---|---|---|
 | Python | 3.11 – 3.14 | 3.11, 3.14 |
 | OS | Windows 10+, macOS, Linux | windows-latest, ubuntu-latest, macos-latest |
-| Coding tools | Claude Code (skills, rules, agents, CLAUDE.md, hooks, MCP); Codex (skills, AGENTS.md) | adapter conformance suite (`tests/conformance/`) |
+| Coding tools | Claude Code ≥ 2.0 (skills, rules, agents, CLAUDE.md, hooks, MCP); Codex (skills, AGENTS.md); Cursor (rules, instructions, MCP); GitHub Copilot (skills, path instructions, repository instructions); Gemini CLI (skills, GEMINI.md, MCP) | adapter conformance suite (`tests/conformance/`), `doctor` tool-version check, weekly docs watch |
 | Installer | `install.ps1` (PowerShell 5.1+), `install.sh` (POSIX sh); installs the latest GitHub Release, `AGENT_FORGE_VERSION` pins one | windows-latest, ubuntu-latest, macos-latest |
 
-Adapters record the date their conventions were last verified (`AdapterInfo.verified_on`);
-newer tool versions that change file conventions need an adapter update, which the
-conformance suite gates.
+Adapters record the date their conventions were last verified (`AdapterInfo.verified_on`)
+and the tool version range (`min_version`/`max_version`); a tool outside the range is
+refused at planning time (exit 15). The weekly `docs-watch` workflow opens an issue when a
+verified documentation page changes; the adapter update is gated by the conformance suite.
 
 ## Distribution
 

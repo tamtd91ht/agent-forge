@@ -21,7 +21,7 @@ review:
 applicability:
   always: true
   tags: [agent-forge, meta]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini, cursor]
 install_strategy: section_merge
 destinations:
   - platform: claude_code
@@ -34,6 +34,20 @@ destinations:
     dest: AGENTS.md
     merge: append_section
     section_id: agent-forge-managed
+  - platform: copilot
+    source: claude_code/notice.md
+    dest: .github/copilot-instructions.md
+    merge: append_section
+    section_id: agent-forge-managed
+  - platform: gemini
+    source: claude_code/notice.md
+    dest: GEMINI.md
+    merge: append_section
+    section_id: agent-forge-managed
+  - platform: cursor
+    source: claude_code/notice.md
+    dest: .cursor/rules/agent-forge-agent-forge-managed.mdc
+    merge: create_only
 removal: remove_section
 risk: low
 benefit_score: 3

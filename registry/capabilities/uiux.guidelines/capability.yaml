@@ -28,7 +28,7 @@ applicability:
   project_types: [frontend, fullstack, mobile-or-desktop]
   frameworks: [react, nextjs, vue, nuxt, svelte, angular, astro, remix, react-native, electron, tailwind]
   tags: [ui, ux, design, accessibility]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -38,6 +38,14 @@ destinations:
   - platform: codex
     source: codex/ui-ux-guidelines
     dest: .agents/skills/ui-ux-guidelines
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ui-ux-guidelines
+    dest: .github/skills/ui-ux-guidelines
+    merge: create_only
+  - platform: gemini
+    source: claude_code/ui-ux-guidelines
+    dest: .gemini/skills/ui-ux-guidelines
     merge: create_only
 conflicts: [uiux.full-toolkit]
 equivalents:

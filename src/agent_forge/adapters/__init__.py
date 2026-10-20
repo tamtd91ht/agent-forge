@@ -5,11 +5,17 @@ from __future__ import annotations
 from agent_forge.adapters.base import PlatformAdapter
 from agent_forge.adapters.claude_code import ClaudeCodeAdapter
 from agent_forge.adapters.codex import CodexAdapter
+from agent_forge.adapters.copilot import CopilotAdapter
+from agent_forge.adapters.cursor import CursorAdapter
+from agent_forge.adapters.gemini import GeminiAdapter
 from agent_forge.models.capability import Platform
 
 _ADAPTERS: dict[Platform, PlatformAdapter] = {
     Platform.CLAUDE_CODE: ClaudeCodeAdapter(),
     Platform.CODEX: CodexAdapter(),
+    Platform.CURSOR: CursorAdapter(),
+    Platform.COPILOT: CopilotAdapter(),
+    Platform.GEMINI: GeminiAdapter(),
 }
 
 

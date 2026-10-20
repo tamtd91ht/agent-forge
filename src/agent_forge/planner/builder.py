@@ -81,19 +81,30 @@ class _TargetReader:
 
 
 def _asset_files(lc: LoadedCapability, dest: Destination) -> list[tuple[str, str]]:
-    """Return [(dest_rel_path, content)] for a destination (file or directory source)."""
+    """Return [(dest_rel_path, content)] for a destination (file or directory source).
+
+    Content is passed through the destination platform's `render` (ADR-0006): the canonical
+    asset is transpiled into the platform's format here, once, so plans, hashes, diffs and
+    `managed.json` all see the rendered bytes.
+    """
     src = lc.assets_dir / dest.source
     if not src.exists():
         raise PlanError(f"{lc.id}: asset missing: assets/{dest.source}")
+    adapter = get_adapter(dest.platform)
+    kind = lc.capability.kind
     out: list[tuple[str, str]] = []
     if src.is_file():
-        out.append((dest.dest.rstrip("/"), _read_asset(src, lc.id)))
+        rel = dest.dest.rstrip("/")
+        out.append((rel, adapter.render(kind, rel, _read_asset(src, lc.id))))
         return out
     base = dest.dest.rstrip("/")
     for p in sorted(src.rglob("*")):
         if p.is_file() and not p.is_symlink():
-            rel = p.relative_to(src).as_posix()
-            out.append((f"{base}/{rel}", _read_asset(p, lc.id)))
+            rel = f"{base}/{p.relative_to(src).as_posix()}"
+            content = _read_asset(p, lc.id)
+            if _is_primary(lc.capability, rel):
+                content = adapter.render(kind, rel, content)
+            out.append((rel, content))
     return out
 
 

@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Platforms (6-month plan, phase 2; ADR-0006)
+- Adapters for **Cursor** (`.cursor/rules/**/*.mdc`, `.cursor/mcp.json`), **GitHub Copilot**
+  (`.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`,
+  `.github/skills/<name>/SKILL.md`) and **Gemini CLI** (`GEMINI.md`, `.gemini/skills/<name>/SKILL.md`,
+  `.gemini/settings.json` `mcpServers`), each verified against the official pages on 2026-10-20.
+- Canonical content + per-adapter rendering: a destination points any platform at the
+  canonical (Claude Code format) asset; `PlatformAdapter.render` transpiles it in the planner,
+  deterministically, before hashing (Cursor rules/instructions, Copilot rules, Gemini MCP).
+  24 curated capabilities gained Cursor / Copilot / Gemini destinations with no new asset files.
+  `tests/conformance/test_render.py` gates every adapter and every curated destination.
+- Tool version detection: adapters declare `version_command` and the verified range;
+  `doctor` shows the detected version; `forge`/`assign`/`upgrade`/`setup` refuse a tool
+  outside the range (new exit code 15) and note tools that are absent. Claude Code: ≥ 2.0.0.
+- `scripts/watch_docs.py` + weekly `docs-watch` workflow: digests of the verified
+  documentation pages (`adapters/docs_hashes.json`); a change opens an issue.
+- `validate` checks `.cursor/mcp.json` and `.gemini/settings.json` syntax; the scanner
+  attributes `GEMINI.md` and `.github/copilot-instructions.md` to their adapters.
+
 ### Team workflow (6-month plan, phase 1)
 - `agent-forge check PATH`: read-only CI gate with one exit code (0 / 12) for drift, missing
   or revoked capabilities, invalid `managed.json`, unfinished transactions and config syntax;

@@ -28,7 +28,7 @@ review:
   rationale: 114-line SKILL.md plus two disclosed references, verbatim. Reference-only content; TypeScript examples are illustrative and apply to any language.
 applicability:
   tags: [architecture, codebase-design, deep-modules, mattpocock]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -38,6 +38,14 @@ destinations:
   - platform: codex
     source: codex/codebase-design
     dest: .agents/skills/codebase-design
+    merge: create_only
+  - platform: copilot
+    source: claude_code/codebase-design
+    dest: .github/skills/codebase-design
+    merge: create_only
+  - platform: gemini
+    source: claude_code/codebase-design
+    dest: .gemini/skills/codebase-design
     merge: create_only
 equivalents:
   - kind: skill

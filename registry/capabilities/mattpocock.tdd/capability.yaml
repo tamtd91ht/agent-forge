@@ -28,7 +28,7 @@ review:
   rationale: Adapted in one line - the pointer to the upstream `code-review` skill names two-axis-review instead, which is installed only when requested. Calls the codebase-design skill, a declared dependency. Conflicts with ecc.tdd-workflow (two TDD skills would compete); an explicit request wins.
 applicability:
   tags: [tdd-seams, mattpocock]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -38,6 +38,14 @@ destinations:
   - platform: codex
     source: codex/tdd
     dest: .agents/skills/tdd
+    merge: create_only
+  - platform: copilot
+    source: claude_code/tdd
+    dest: .github/skills/tdd
+    merge: create_only
+  - platform: gemini
+    source: claude_code/tdd
+    dest: .gemini/skills/tdd
     merge: create_only
 dependencies: [mattpocock.codebase-design]
 conflicts: [ecc.tdd-workflow]

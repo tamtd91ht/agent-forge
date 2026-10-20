@@ -26,7 +26,7 @@ review:
   rationale: 30 lines of markdown, verbatim, model-invoked. Mentions dispatching a sub-agent to look up facts; no tools, scripts or external services are assumed.
 applicability:
   tags: [grilling, grill, planning, mattpocock]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -36,6 +36,14 @@ destinations:
   - platform: codex
     source: codex/grilling
     dest: .agents/skills/grilling
+    merge: create_only
+  - platform: copilot
+    source: claude_code/grilling
+    dest: .github/skills/grilling
+    merge: create_only
+  - platform: gemini
+    source: claude_code/grilling
+    dest: .gemini/skills/grilling
     merge: create_only
 equivalents:
   - kind: skill

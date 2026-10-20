@@ -25,7 +25,7 @@ review:
 applicability:
   always: true
   tags: [behavior, guidelines, karpathy]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini, cursor]
 install_strategy: section_merge
 destinations:
   - platform: claude_code
@@ -38,6 +38,20 @@ destinations:
     dest: AGENTS.md
     merge: append_section
     section_id: karpathy-principles
+  - platform: copilot
+    source: claude_code/principles.md
+    dest: .github/copilot-instructions.md
+    merge: append_section
+    section_id: karpathy-principles
+  - platform: gemini
+    source: claude_code/principles.md
+    dest: GEMINI.md
+    merge: append_section
+    section_id: karpathy-principles
+  - platform: cursor
+    source: claude_code/principles.md
+    dest: .cursor/rules/agent-forge-karpathy-principles.mdc
+    merge: create_only
 removal: remove_section
 conflicts: [karpathy.guidelines]
 equivalents:

@@ -92,3 +92,9 @@ class ApprovalFileMismatch(ApprovalError):
     """The plan goes beyond what a committed approval file covers (CI gate)."""
 
     exit_code = 14
+
+
+class IncompatibleToolVersion(AgentForgeError):
+    """The installed coding tool is outside the version range the adapter was verified for."""
+
+    exit_code = 15

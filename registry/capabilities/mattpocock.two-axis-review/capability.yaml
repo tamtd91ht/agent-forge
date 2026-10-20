@@ -26,7 +26,7 @@ review:
   rationale: Adapted from upstream code-review (89 lines). Renamed to two-axis-review because `code-review` collides with harness built-ins (Claude Code ships one). The precondition to run setup-matt-pocock-skills (not curated - writes CLAUDE.md outside markers, creates tracker labels) is replaced by the project's own issue-tracker docs; the agent uses git and, if present, gh/glab. Attribution footer added.
 applicability:
   tags: [code-review, review, two-axis-review, mattpocock]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -36,6 +36,14 @@ destinations:
   - platform: codex
     source: codex/two-axis-review
     dest: .agents/skills/two-axis-review
+    merge: create_only
+  - platform: copilot
+    source: claude_code/two-axis-review
+    dest: .github/skills/two-axis-review
+    merge: create_only
+  - platform: gemini
+    source: claude_code/two-axis-review
+    dest: .gemini/skills/two-axis-review
     merge: create_only
 equivalents:
   - kind: skill

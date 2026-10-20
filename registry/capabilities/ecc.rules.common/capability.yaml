@@ -33,12 +33,68 @@ review:
 applicability:
   always: true
   tags: [standards, rules]
-platforms: [claude_code]
+platforms: [claude_code, cursor, copilot]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
     source: claude_code/ecc-common
     dest: .claude/rules/ecc-common
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/code-review.md
+    dest: .cursor/rules/ecc-common/code-review.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/code-review.md
+    dest: .github/instructions/ecc-common-code-review.instructions.md
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/coding-style.md
+    dest: .cursor/rules/ecc-common/coding-style.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/coding-style.md
+    dest: .github/instructions/ecc-common-coding-style.instructions.md
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/development-workflow.md
+    dest: .cursor/rules/ecc-common/development-workflow.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/development-workflow.md
+    dest: .github/instructions/ecc-common-development-workflow.instructions.md
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/LICENSE-ECC.txt
+    dest: .cursor/rules/ecc-common/LICENSE-ECC.txt
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/LICENSE-ECC.txt
+    dest: .github/instructions/ecc-common/LICENSE-ECC.txt
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/patterns.md
+    dest: .cursor/rules/ecc-common/patterns.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/patterns.md
+    dest: .github/instructions/ecc-common-patterns.instructions.md
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/security.md
+    dest: .cursor/rules/ecc-common/security.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/security.md
+    dest: .github/instructions/ecc-common-security.instructions.md
+    merge: create_only
+  - platform: cursor
+    source: claude_code/ecc-common/testing.md
+    dest: .cursor/rules/ecc-common/testing.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ecc-common/testing.md
+    dest: .github/instructions/ecc-common-testing.instructions.md
     merge: create_only
 conflicts: [ecc.coding-standards]
 equivalents:

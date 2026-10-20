@@ -26,12 +26,22 @@ review:
 applicability:
   project_types: [frontend, fullstack]
   tags: [e2e, browser, mcp, testing]
-platforms: [claude_code]
+platforms: [claude_code, cursor, gemini]
 install_strategy: section_merge
 destinations:
   - platform: claude_code
     source: claude_code/mcp.json
     dest: .mcp.json
+    merge: json_merge
+    section_id: mcp-playwright
+  - platform: cursor
+    source: claude_code/mcp.json
+    dest: .cursor/mcp.json
+    merge: json_merge
+    section_id: mcp-playwright
+  - platform: gemini
+    source: claude_code/mcp.json
+    dest: .gemini/settings.json
     merge: json_merge
     section_id: mcp-playwright
 equivalents:

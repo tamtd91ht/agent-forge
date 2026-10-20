@@ -28,12 +28,22 @@ review:
 applicability:
   always: true
   tags: [docs, mcp, knowledge]
-platforms: [claude_code]
+platforms: [claude_code, cursor, gemini]
 install_strategy: section_merge
 destinations:
   - platform: claude_code
     source: claude_code/mcp.json
     dest: .mcp.json
+    merge: json_merge
+    section_id: mcp-context7
+  - platform: cursor
+    source: claude_code/mcp.json
+    dest: .cursor/mcp.json
+    merge: json_merge
+    section_id: mcp-context7
+  - platform: gemini
+    source: claude_code/mcp.json
+    dest: .gemini/settings.json
     merge: json_merge
     section_id: mcp-context7
 equivalents:

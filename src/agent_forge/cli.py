@@ -666,6 +666,13 @@ def _policies(ws: WorkspaceConfig, target_root: Path | None):
     return load_policies(ws.registry_dir, ws.root, target_root)
 
 
+def _tool_notes(platforms: list[Platform]) -> list[str]:
+    """Refuse an incompatible coding tool (exit 15); note tools that cannot be checked."""
+    from agent_forge.adapters.tool_versions import check_tool_compatibility
+
+    return check_tool_compatibility(platforms)
+
+
 def _ctx(ws, target_root, platforms, want, request, exclude, include_optional):
     from agent_forge.matching.rules import MatchContext
 
@@ -693,7 +700,9 @@ def assign(
     platform: Annotated[
         list[str] | None,
         typer.Option(
-            "--platform", "-p", help="Target platform(s): claude_code, codex. Default: detected."
+            "--platform",
+            "-p",
+            help="Target platform(s): claude_code, codex, cursor, copilot, gemini. Default: detected.",
         ),
     ] = None,
     want: Annotated[
@@ -722,6 +731,7 @@ def assign(
         reg = _registry(ws)
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
+        notes = [*notes, *_tool_notes(platforms)]
         ctx = _ctx(
             ws,
             Path(profile.canonical_path),
@@ -774,6 +784,7 @@ def upgrade(
         reg = _registry(ws)
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
+        notes = [*notes, *_tool_notes(platforms)]
         plan = build_upgrade_plan(
             reg,
             profile,
@@ -1235,7 +1246,11 @@ def forge(
     workspace: WorkspaceOpt = None,
     platform: Annotated[
         list[str] | None,
-        typer.Option("--platform", "-p", help="claude_code, codex (default: detected)."),
+        typer.Option(
+            "--platform",
+            "-p",
+            help="claude_code, codex, cursor, copilot, gemini (default: detected).",
+        ),
     ] = None,
     want: Annotated[
         list[str] | None, typer.Option("--want", help="Request capabilities carrying this tag.")
@@ -1325,6 +1340,7 @@ def forge(
         # 1. scan
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
+        notes = [*notes, *_tool_notes(platforms)]
         if not as_json:
             _print_profile(profile)
             for n in notes:
@@ -1518,7 +1534,11 @@ def setup(
     workspace: WorkspaceOpt = None,
     platform: Annotated[
         list[str] | None,
-        typer.Option("--platform", "-p", help="claude_code, codex (default: detected)."),
+        typer.Option(
+            "--platform",
+            "-p",
+            help="claude_code, codex, cursor, copilot, gemini (default: detected).",
+        ),
     ] = None,
     as_json: JsonOpt = False,
 ) -> None:
@@ -1542,6 +1562,7 @@ def setup(
         target = path or Path.cwd()
         profile = scan_project(target, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
+        notes = [*notes, *_tool_notes(platforms)]
         ctx = MatchContext(
             platforms=tuple(platforms),
             requested_ids=frozenset({ENTRY_CAPABILITY}),
@@ -1788,6 +1809,26 @@ def doctor(workspace: WorkspaceOpt = None, as_json: JsonOpt = False) -> int:
         if shutil.which("git"):
             v = subprocess.run(["git", "--version"], capture_output=True, text=True, check=False)
             add("git version", v.returncode == 0, v.stdout.strip())
+        from agent_forge.adapters import all_adapters
+        from agent_forge.adapters.tool_versions import detect_tool_version
+
+        for adapter in all_adapters():
+            tv = detect_tool_version(adapter.platform)
+            if tv.tool is None:
+                continue
+            verified = f"verified {tv.min_version or 'any'} .. {tv.max_version or 'any'}"
+            if not tv.found:
+                detail = f"not on PATH ({verified})"
+            elif tv.version is None:
+                detail = f"version not reported ({verified})"
+            else:
+                detail = f"{tv.version} ({verified})"
+            add(
+                f"{adapter.platform.value} version",
+                tv.compatible is not False,
+                detail,
+                level="warning" if tv.compatible is None else "error",
+            )
         try:
             ws = _ws(workspace)
             add("workspace", True, str(ws.root))

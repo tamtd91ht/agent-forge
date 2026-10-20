@@ -28,7 +28,7 @@ def _forge(ws: str, root: Path) -> dict:
     return json.loads(out.stdout)
 
 
-def test_exit_codes(real_workspace, make_project, tmp_path: Path) -> None:
+def test_exit_codes(real_workspace, make_project, tmp_path: Path, monkeypatch) -> None:
     ws = str(real_workspace.root)
     root = make_project("codes", kind="claude")
 
@@ -92,3 +92,13 @@ def test_exit_codes(real_workspace, make_project, tmp_path: Path) -> None:
     assert (
         code("approve", plan3["plan_id"], "--workspace", ws, "--approval-file", str(approval)) == 14
     )
+
+    # 15: the coding tool is older than the adapter's verified range (stubbed `claude`)
+    from agent_forge.adapters import tool_versions as tv
+
+    class _Old:
+        stdout, stderr, returncode = "1.0.0 (Claude Code)", "", 0
+
+    monkeypatch.setattr(tv.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(tv.subprocess, "run", lambda *a, **k: _Old())
+    assert code("assign", str(root), "--workspace", ws, "--platform", "claude_code") == 15

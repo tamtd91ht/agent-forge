@@ -25,7 +25,7 @@ review:
   rationale: 67 lines of markdown, verbatim. Frontmatter is name/description/license only, name equals the directory, so it is valid for Codex too. No scripts, hooks or tool assumptions. Upstream ships no LICENSE file; MIT is declared in README.md and in this file's frontmatter.
 applicability:
   tags: [karpathy, guidelines-skill]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -35,6 +35,14 @@ destinations:
   - platform: codex
     source: codex/karpathy-guidelines
     dest: .agents/skills/karpathy-guidelines
+    merge: create_only
+  - platform: copilot
+    source: claude_code/karpathy-guidelines
+    dest: .github/skills/karpathy-guidelines
+    merge: create_only
+  - platform: gemini
+    source: claude_code/karpathy-guidelines
+    dest: .gemini/skills/karpathy-guidelines
     merge: create_only
 conflicts: [karpathy.principles]
 equivalents:

@@ -30,7 +30,7 @@ review:
 applicability:
   always: true
   tags: [debugging, diagnose, mattpocock]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -40,6 +40,14 @@ destinations:
   - platform: codex
     source: codex/diagnosing-bugs
     dest: .agents/skills/diagnosing-bugs
+    merge: create_only
+  - platform: copilot
+    source: claude_code/diagnosing-bugs
+    dest: .github/skills/diagnosing-bugs
+    merge: create_only
+  - platform: gemini
+    source: claude_code/diagnosing-bugs
+    dest: .gemini/skills/diagnosing-bugs
     merge: create_only
 equivalents:
   - kind: skill

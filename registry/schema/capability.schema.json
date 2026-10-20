@@ -323,7 +323,10 @@
     "Platform": {
       "enum": [
         "claude_code",
-        "codex"
+        "codex",
+        "cursor",
+        "copilot",
+        "gemini"
       ],
       "title": "Platform",
       "type": "string"

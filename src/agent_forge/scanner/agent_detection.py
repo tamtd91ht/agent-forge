@@ -36,7 +36,7 @@ def detect_agents(walker: Walker) -> AgentInventory:
             inv.platforms.append(det)
         inv.assets.extend(adapter.collect_assets(walker))
     # Generic instruction files other tools read (recorded, not owned by any adapter)
-    for name in (".cursorrules", ".windsurfrules", "GEMINI.md", ".github/copilot-instructions.md"):
+    for name in (".cursorrules", ".windsurfrules", ".clinerules", ".junie/guidelines.md"):
         if walker.exists(name):
             text = walker.read_text(name) or ""
             inv.assets.append(

@@ -4,7 +4,7 @@
 [![release](https://img.shields.io/github/v/release/tamtd91ht/agent-forge?sort=semver)](https://github.com/tamtd91ht/agent-forge/releases/latest)
 [![license](https://img.shields.io/github/license/tamtd91ht/agent-forge)](LICENSE)
 
-Set up Claude Code (or Codex) for your project: reviewed skills, rules, subagents, hooks and
+Set up Claude Code, Codex, Cursor, GitHub Copilot or Gemini CLI for your project: reviewed skills, rules, subagents, hooks and
 MCP servers, chosen by the agent for your code and installed only after you say yes. Every
 install can be undone.
 

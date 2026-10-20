@@ -165,31 +165,31 @@ Evidence for the production gates of [product-vision.md §11](product-vision.md#
 | | interrupted transactions detected and recovered | met | `test_crash_mid_apply_is_journaled_and_recoverable`, `doctor`/`status`/`validate` |
 | | rollback preserves post-apply edits; partial report | met | `test_full_lifecycle_with_drift_and_rollback` |
 | | backup integrity, transaction consistency | met | `test_tampered_backup_is_not_restored`, `test_corrupted_transaction_record_is_refused` |
-| D Compatibility | clean install per supported OS | configured | CI `installer` job (Windows, Linux); local smoke on Windows; macOS installer not exercised |
-| | adapter conformance | met | `tests/conformance/test_adapters.py` |
+| D Compatibility | clean install per supported OS | met | CI `installer` job (Windows, Linux, macOS) against the checkout; releases pinned by tag |
+| | adapter conformance | met | `tests/conformance/test_adapters.py`, `test_render.py` (5 adapters, ADR-0006) |
 | | existing configuration preserved | met | section/JSON merge tests, `test_setup_installs_only_the_entry_skill` |
 | | upgrade/downgrade documented | met | `docs/operations.md` |
-| | unsupported versions fail clearly | partial | unknown `schema_version` refused; coding-tool versions are not detected (adapters record `verified_on`) |
+| | unsupported versions fail clearly | met | unknown `schema_version` refused; tool versions detected and bounded (`tests/unit/test_tool_versions.py`, exit 15); weekly docs watch |
 | E Value | representative fixture set | met | `examples/` (6 projects) |
 | | matching precision / missed measured | met | `scripts/matching_report.py`, CI |
 | | baseline-vs-candidate evaluation | not met | designed in `docs/evaluation.md`; deliberately not in the core yet |
 | | evidence vs AI explanation separated | met | plans carry evidence and reasons from rules; the agent's review is a separate conversation output |
 | | limitations documented | met | `docs/security.md` (known gaps, runtime boundary), `docs/evaluation.md` |
-| F Release | versioning, changelog, release process | met | single version source, `CHANGELOG.md`, `docs/operations.md#release-process`; no release tagged yet |
-| | dependencies pinned, vulnerability checks | partial | pip-audit + Dependabot in CI; runtime dependencies are ranges, no lock file |
+| F Release | versioning, changelog, release process | met | single version source, `CHANGELOG.md`, `release.yml` (tag check, build, SHA256SUMS, SBOM, Sigstore), `docs/operations.md#release-process` |
+| | dependencies pinned, vulnerability checks | met | `uv.lock`, CI installs `--locked`, pip-audit on the locked set, Dependabot |
 | | CLI output and exit codes documented | met | `docs/cli-reference.md`, `test_exit_codes` |
 | | security contact, triage | met | `SECURITY.md` |
 | | install, troubleshooting, recovery guides | met | `README.md`, `docs/troubleshooting.md`, `docs/operations.md` |
 
-Not production-ready for: capability **value** claims (Gate E evaluation not met) and
-installer use from an unpinned `main` (tag a release first).
+Not production-ready for: capability **value** claims (Gate E evaluation not met). The
+6-month plan that follows these gates is tracked in [roadmap-2026h2.md](roadmap-2026h2.md).
 
 ### Deferred, with reasons
 
 - **Evaluation engine (Phase 4):** methodology in [`evaluation.md`](evaluation.md); running
   real LLM sessions stays opt-in and out of the core (ADR-0002).
-- **Dependency version constraints, tool-version ranges per adapter:** deferred until a
-  second released version of any capability or tool format exists (ADR-0002).
+- **Dependency version constraints:** deferred until a second released version of any
+  capability exists (ADR-0002). Tool-version ranges per adapter exist since ADR-0006.
 - **Keyed (HMAC) seals / signed releases:** the workspace is the trust anchor (A1); signing
   needs a key-management decision and a release process first.
 - **Uniform JSON envelope for every `--json` command:** a breaking change for automation;

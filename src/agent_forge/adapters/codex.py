@@ -44,6 +44,7 @@ class CodexAdapter(PlatformAdapter):
             "mcp: declared in .codex/config.toml (trusted projects only); not installed",
             "AGENTS.md chain is capped at 32 KiB by default (project_doc_max_bytes); sections must stay small",
         ),
+        version_command=("codex", "--version"),  # no range yet: conventions predate rust-v0.163.0
     )
 
     def detect(self, walker: Walker) -> PlatformDetection | None:

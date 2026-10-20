@@ -45,6 +45,9 @@ class Provenance(StrEnum):
 class Platform(StrEnum):
     CLAUDE_CODE = "claude_code"
     CODEX = "codex"
+    CURSOR = "cursor"
+    COPILOT = "copilot"
+    GEMINI = "gemini"
 
 
 class RiskLevel(StrEnum):

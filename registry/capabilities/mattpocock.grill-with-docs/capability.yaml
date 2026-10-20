@@ -26,7 +26,7 @@ review:
   rationale: A 7-line user-invoked skill (disable-model-invocation; Codex policy.allow_implicit_invocation false) that calls the grilling and domain-modeling skills, which are declared dependencies. Costs no always-loaded context.
 applicability:
   tags: [grill-with-docs, grilling, domain-modeling, mattpocock]
-platforms: [claude_code, codex]
+platforms: [claude_code, codex, copilot, gemini]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
@@ -36,6 +36,14 @@ destinations:
   - platform: codex
     source: codex/grill-with-docs
     dest: .agents/skills/grill-with-docs
+    merge: create_only
+  - platform: copilot
+    source: claude_code/grill-with-docs
+    dest: .github/skills/grill-with-docs
+    merge: create_only
+  - platform: gemini
+    source: claude_code/grill-with-docs
+    dest: .gemini/skills/grill-with-docs
     merge: create_only
 dependencies: [mattpocock.grilling, mattpocock.domain-modeling]
 equivalents:
