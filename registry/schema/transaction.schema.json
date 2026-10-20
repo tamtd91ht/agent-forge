@@ -34,6 +34,19 @@
           "description": "Relative path inside the transaction backup dir",
           "title": "Backup"
         },
+        "backup_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "sha256 of the exact backed-up bytes",
+          "title": "Backup Sha256"
+        },
         "before_sha256": {
           "anyOf": [
             {
@@ -84,6 +97,25 @@
           "default": null,
           "description": "For merge_json operations: the fragment that was merged",
           "title": "Fragment"
+        },
+        "intended_after_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hash the file will have once this write lands (None = delete)",
+          "title": "Intended After Sha256"
+        },
+        "journaled": {
+          "default": false,
+          "description": "Recorded (with before hash and backup) before the write was attempted",
+          "title": "Journaled",
+          "type": "boolean"
         },
         "kind": {
           "$ref": "#/$defs/OperationKind"
@@ -138,7 +170,8 @@
         "failed",
         "partial",
         "rolled_back",
-        "rollback_conflict"
+        "rollback_conflict",
+        "recovery_required"
       ],
       "title": "TransactionStatus",
       "type": "string"
@@ -247,6 +280,7 @@
       "title": "Rollback Of"
     },
     "schema_version": {
+      "const": "1",
       "default": "1",
       "title": "Schema Version",
       "type": "string"

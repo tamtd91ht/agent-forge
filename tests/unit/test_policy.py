@@ -96,10 +96,28 @@ def test_project_policy_layer_is_loaded_and_only_tightens(tmp_path: Path, make_p
     ps = load_policies(REAL_REGISTRY, None, root)
     assert ps.names == ["default", "project"]
     assert ps.evaluate(_cap(id="t.python-only"), Platform.CLAUDE_CODE)[0] == Decision.DENY
-    # invalid project policy never crashes planning; it is reported as a layer name
-    (root / ".agent-forge" / "policy.yaml").write_text("max_risk: [not valid]\n", encoding="utf-8")
-    ps2 = load_policies(REAL_REGISTRY, None, root)
-    assert "invalid" in ps2.names[-1]
+
+
+def test_invalid_project_policy_fails_closed(make_project) -> None:
+    root = make_project("pol-invalid")
+    (root / ".agent-forge").mkdir()
+    # meant to deny something, but malformed: ignoring it would silently loosen policy
+    (root / ".agent-forge" / "policy.yaml").write_text(
+        "capabilities: {deny: t.always}\nmax_risk: [not valid]\n", encoding="utf-8"
+    )
+    with pytest.raises(WorkspaceError, match="invalid policy") as exc:
+        load_policies(REAL_REGISTRY, None, root)
+    assert "nothing is planned" in (exc.value.hint or "")
+
+
+def test_policy_digest_tracks_every_layer(make_project) -> None:
+    root = make_project("pol-digest")
+    before = load_policies(REAL_REGISTRY, None, root).digest
+    (root / ".agent-forge").mkdir()
+    (root / ".agent-forge" / "policy.yaml").write_text(
+        yaml.safe_dump({"capabilities": {"deny": ["t.*"]}}), encoding="utf-8"
+    )
+    assert load_policies(REAL_REGISTRY, None, root).digest != before
 
 
 def test_unknown_policy_keys_rejected(tmp_path: Path) -> None:

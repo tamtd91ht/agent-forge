@@ -1,3 +1,7 @@
+> **Superseded (2026-10-20):** current status, audit and release-gate evidence live in
+> [docs/engineering-roadmap.md](docs/engineering-roadmap.md). This file records the
+> v0.1 build phases and is kept as history.
+
 # Workspace status
 
 Updated: 2026-10-16. Version 0.1.0. Git repository initialised by the build session; **no

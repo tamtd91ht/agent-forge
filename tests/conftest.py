@@ -171,6 +171,12 @@ def synthetic_registry(tmp_path: Path) -> Path:
             "t.hook",
             kind="hook",
             risk="medium",
+            review={
+                "reviewed_at": "2026-10-16",
+                "reviewer": "pytest",
+                "rationale": "fixture",
+                "risk_rationale": "fixture: runs a process",
+            },
             platforms=["claude_code"],
             destinations=[
                 {
@@ -205,6 +211,12 @@ def synthetic_registry(tmp_path: Path) -> Path:
             "t.mcp",
             kind="mcp",
             risk="medium",
+            review={
+                "reviewed_at": "2026-10-16",
+                "reviewer": "pytest",
+                "rationale": "fixture",
+                "risk_rationale": "fixture: runs a process",
+            },
             platforms=["claude_code"],
             install_strategy="section_merge",
             destinations=[

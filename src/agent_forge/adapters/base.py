@@ -63,3 +63,8 @@ class PlatformAdapter(ABC):
             elif rel == root:
                 return True
         return False
+
+    def owns(self, rel_path: str) -> bool:
+        """Is `rel_path` this platform's own file? `.agent-forge/` is shared by every adapter."""
+        rel = rel_path.replace("\\", "/")
+        return self.path_allowed(rel) and not rel.startswith(".agent-forge/")

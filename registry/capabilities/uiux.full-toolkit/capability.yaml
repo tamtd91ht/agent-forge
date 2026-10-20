@@ -24,6 +24,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge curation (automated session; human sign-off pending)
   rationale: Verified that `uipro init --ai <platform>` writes SKILL.md + data/ + scripts/ into the project skill directory and copies 6 sub-skills; the core scripts are stdlib-only and make no network calls, but sub-skills design/ and ui-styling/ call external APIs or subprocess. Recorded as a native capability so the recommendation engine can point at it without Agent Forge executing the installer.
+  risk_rationale: "The upstream installer copies scripts and sub-skills that call external APIs. Agent Forge never runs it (native_plugin, hint only)."
 applicability:
   project_types: [frontend, fullstack, mobile-or-desktop]
   tags: [ui, ux, design-system]

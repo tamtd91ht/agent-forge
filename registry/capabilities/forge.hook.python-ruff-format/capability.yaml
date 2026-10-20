@@ -18,6 +18,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge maintainers
   rationale: Stdlib script; runs one subprocess (`ruff format -- <file>`) and only when ruff is on PATH. No network. Installed for Python projects; declared runtime requirement `ruff` is optional because the script degrades to a no-op. Requires `approve --hooks`.
+  risk_rationale: "Runs `ruff format` on the edited file after each edit: a process launch that rewrites one file. No network, no-op without ruff; gated by approve --hooks."
 applicability:
   languages: [python]
   tags: [formatting, hooks, quality]

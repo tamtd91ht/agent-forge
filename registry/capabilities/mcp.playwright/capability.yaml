@@ -22,6 +22,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge maintainers
   rationale: Stdio server via `npx -y @playwright/mcp@latest`; downloads the package and browser binaries on first use and controls a browser, so it is gated behind `approve --mcp` and Claude Code's own project-server trust prompt. The upstream template's `--browser chrome` flag was dropped so the server can pick an installed browser. Only recommended for frontend / fullstack projects.
+  risk_rationale: "Launches a process from npm (`npx -y`, latest) that downloads browsers and drives one. Gated by approve --mcp plus Claude Code's trust prompt; only for frontend/fullstack."
 applicability:
   project_types: [frontend, fullstack]
   tags: [e2e, browser, mcp, testing]

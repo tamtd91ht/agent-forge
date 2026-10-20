@@ -20,15 +20,16 @@ non-ASCII characters are supported everywhere.
 | `diff PLAN_ID [--full]` | no | Unified diffs against the current target; flags stale files and shared-file ops. |
 | `approve PLAN_ID [--shared-files] [--hooks] [--mcp] [--by NAME] [--revoke]` | no | Bind approval to the plan digest. Refuses stale plans. Each approval class must be granted explicitly: `--shared-files` (CLAUDE.md/AGENTS.md sections), `--hooks` (entries merged into `.claude/settings.json`, they run commands), `--mcp` (servers merged into `.mcp.json`, they launch processes). |
 | `apply PLAN_ID [--yes]` | **yes** | Pre-flight, confirm, transactional write. `--yes` skips only the prompt. |
-| `validate [PATH] [--no-provenance]` | no | Registry/provenance checks; with PATH also managed files, config syntax, duplicates, transactions. |
+| `validate [PATH] [--no-provenance]` | no | Registry checks (schema, digests and pins, links, skill-to-skill calls, content safety, risk rationale, provenance); with PATH also managed files, deprecated/revoked installs, config syntax, duplicates, transactions (tampered, invalid backup references, **unfinished transactions**). |
 | `status PATH` | no | Managed capabilities, drift, outdated versions, conflicts, recent transactions and plans. |
 | `rollback TX_ID [--partial] [--yes]` | **yes** | Reverse a transaction; never overwrites user-modified files. |
 | `remove PATH ID... [--keep-modified]` | no (plan) | Plan removal of managed capabilities: managed files, CLAUDE.md/AGENTS.md sections, merged hook/MCP entries, manifest. Refuses files you edited unless `--keep-modified` (they become user-owned) and refuses when other managed capabilities depend on them. Approve + apply as usual. |
 | `drift PATH` | no | Expected vs actual for every managed file (hash), section (present?) and merged entry (present?). |
 | `repair PATH [--strategy restore\|unmanage] [--capability ID]` | no (plan) | `restore` rewrites drifted files from the registry at the installed version (your edits are replaced, backups kept); `unmanage` drops the capability from the manifest and leaves files alone. |
 | `policy [PATH]` | no | Effective policy layers (default → workspace `policy.yaml` → project `.agent-forge/policy.yaml`) and the allow / require_request / deny verdict per capability and platform. |
-| `audit [--event E] [--limit N]` | no | Append-only log of plans created/approved/revoked, transactions and rollbacks (`state/audit.jsonl`). |
-| `doctor` | no | Environment and workspace health: python/git/node/npx/claude/codex on PATH, registry validity, integrity pins, human sign-off count, policy layers, audit log. |
+| `audit [--event E] [--limit N]` | no | Append-only log of plans created/approved/revoked, transactions and rollbacks (`state/audit.jsonl`); credential-looking values are redacted. |
+| `impact ID` | no | Projects this workspace installed `ID` into (read from each project's `managed.json`), installed version, outdated or not; registry status and `replaced_by`. |
+| `doctor` | no | Environment and workspace health: python/git/node/npx/claude/codex on PATH, registry validity, integrity pins, human sign-off count, policy layers, unfinished transactions, audit log. |
 | `reindex` | no | Rebuild the SQLite index from JSON documents. |
 
 ## Exit codes
@@ -49,6 +50,17 @@ non-ASCII characters are supported everywhere.
 | 11 | rollback conflict (user modified files after apply) |
 | 12 | validation found errors |
 | 13 | source/git error |
+| 130 | interrupted (Ctrl+C); run `agent-forge status` / `doctor` to see if a transaction needs recovery |
+
+Exit codes 2–13 are each produced by a real CLI path in `tests/e2e/test_exit_codes.py`.
+
+## JSON output
+
+`--json` prints machine-readable output on stdout (human messages go to stderr). Documents
+that are also stored (plans, transactions, profiles, capabilities) carry `schema_version`
+and match `registry/schema/*.schema.json`; list-style outputs (`catalog`, `status`, `audit`,
+`policy`, `doctor`, `validate`, `impact`) are stable within a minor version. A uniform
+versioned envelope for every command is planned for the first versioned release.
 
 ## Side effects
 

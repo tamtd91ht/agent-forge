@@ -9,6 +9,8 @@ from pydantic import ValidationError
 
 from agent_forge import MANAGED_MANIFEST_VERSION
 from agent_forge.adapters import all_adapters
+from agent_forge.apply.filesystem_safety import validate_relative_path
+from agent_forge.errors import SafetyViolation
 from agent_forge.models.project import AgentAsset, ManagedCapabilityRecord, PlatformDetection
 from agent_forge.scanner.filesystem import Walker
 from agent_forge.util import sha256_text
@@ -76,8 +78,10 @@ def parse_managed_manifest(text: str) -> tuple[list[ManagedCapabilityRecord], li
         if rec.capability_id in seen:
             problems.append(f"duplicate managed record for {rec.capability_id}")
             continue
-        for rel in rec.files:
-            if rel.startswith(("/", "\\")) or ".." in rel.split("/"):
+        for rel in [*rec.files, *rec.sections, *rec.json_merges]:
+            try:
+                validate_relative_path(rel)
+            except SafetyViolation:
                 problems.append(f"managed record {rec.capability_id} lists unsafe path {rel!r}")
                 break
         else:

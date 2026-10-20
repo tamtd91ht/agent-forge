@@ -8,13 +8,14 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from agent_forge.adapters import get_adapter
+from agent_forge.adapters import get_adapter, platform_owning
+from agent_forge.apply.backup import valid_backup_name
 from agent_forge.apply.filesystem_safety import resolve_in_root
 from agent_forge.apply.jsonmerge import contains_fragment
 from agent_forge.apply.sections import find_section
 from agent_forge.config import WorkspaceConfig
 from agent_forge.errors import ApplyError, SafetyViolation
-from agent_forge.models.capability import CapabilityKind, Platform
+from agent_forge.models.capability import CapabilityKind, CapabilityStatus, Platform
 from agent_forge.models.project import ProjectProfile
 from agent_forge.models.transaction import Transaction
 from agent_forge.registry.loader import Registry
@@ -119,6 +120,21 @@ def validate_target(
                 "managed",
                 f"{rec.capability_id}: installed {rec.version}, registry {cap.capability.version} (run `upgrade`)",
             )
+        if cap is not None and cap.capability.status in (
+            CapabilityStatus.DEPRECATED,
+            CapabilityStatus.REVOKED,
+            CapabilityStatus.REJECTED,
+        ):
+            status = cap.capability.status
+            instead = (
+                f"; use {cap.capability.replaced_by} instead" if cap.capability.replaced_by else ""
+            )
+            rep.add(
+                "error" if status == CapabilityStatus.REVOKED else "warning",
+                "managed",
+                f"{rec.capability_id}: installed but now {status.value} in the registry{instead} "
+                f"(`agent-forge remove . {rec.capability_id}`)",
+            )
         if cap is not None:
             for dep in cap.capability.dependencies:
                 if dep not in {m.capability_id for m in profile.managed}:
@@ -207,11 +223,7 @@ def validate_target(
 
 
 def _platform_for_path(rel: str) -> Platform | None:
-    if rel.startswith(".claude/") or rel in ("CLAUDE.md", ".mcp.json"):
-        return Platform.CLAUDE_CODE
-    if rel.startswith((".agents/skills/", ".codex/")) or rel == "AGENTS.md":
-        return Platform.CODEX
-    return None
+    return platform_owning(rel)
 
 
 def _is_primary(kind: CapabilityKind, rel: str) -> bool:
@@ -274,7 +286,21 @@ def _check_transactions(store: Store, profile: ProjectProfile, rep: ValidationRe
             rep.add(
                 "error", "transactions", f"{tx.transaction_id}: integrity hash mismatch (edited?)"
             )
+        reason = store.recovery_reason(tx)
+        if reason:
+            rep.add(
+                "error",
+                "transactions",
+                f"{tx.transaction_id}: {reason}; run `agent-forge rollback {tx.transaction_id}`",
+            )
         for op in tx.operations:
+            if op.backup and not valid_backup_name(op.backup):
+                rep.add(
+                    "error",
+                    "transactions",
+                    f"{tx.transaction_id}: invalid backup reference for {op.path} (tampered record?)",
+                )
+                continue
             if (
                 op.applied
                 and op.backup

@@ -1,0 +1,31 @@
+{
+  "reviewed": "2026-10-20",
+  "notes": "Gin HTTP service. Backend -> security-review; Go is covered by error-handling. No hooks: neither Python nor Node is guaranteed.",
+  "languages": [
+    "go"
+  ],
+  "frameworks": [
+    "gin"
+  ],
+  "project_types": [
+    "backend"
+  ],
+  "test_commands": [
+    "go test ./..."
+  ],
+  "recommended": [
+    "ecc.agent.planner",
+    "ecc.error-handling",
+    "ecc.rules.common",
+    "ecc.security-review",
+    "ecc.tdd-workflow",
+    "ecc.verification-loop",
+    "forge.managed-notice",
+    "karpathy.principles",
+    "mattpocock.diagnosing-bugs",
+    "mcp.context7"
+  ],
+  "optional": [
+    "ecc.agent.code-reviewer"
+  ]
+}

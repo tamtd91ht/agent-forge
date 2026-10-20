@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import fnmatch
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agent_forge.models.capability import CapabilityStatus, InstallStrategy, MergeStrategy
+from agent_forge.models.capability import (
+    CapabilityStatus,
+    InstallStrategy,
+    MergeStrategy,
+    RiskLevel,
+)
+from agent_forge.registry.content_safety import scan_assets
 from agent_forge.registry.loader import Registry
 from agent_forge.util import parse_frontmatter
 
@@ -74,6 +81,18 @@ def validate_registry(reg: Registry) -> RegistryReport:
             rep.errors.append(f"{cid}: curated capability needs a review rationale")
         if (
             cap.status == CapabilityStatus.CURATED
+            and cap.risk != RiskLevel.LOW
+            and not (cap.review.risk_rationale or "").strip()
+        ):
+            rep.errors.append(
+                f"{cid}: risk {cap.risk.value} needs review.risk_rationale (why, and what limits it)"
+            )
+        if cap.replaced_by is not None and cap.replaced_by not in ids:
+            rep.errors.append(f"{cid}: replaced_by {cap.replaced_by!r} does not exist")
+        if cap.status == CapabilityStatus.CURATED:
+            _check_content_safety(cid, lc.assets_dir, cap.review.acknowledged_findings, rep)
+        if (
+            cap.status == CapabilityStatus.CURATED
             and cap.source.source_id != "workspace"
             and not cap.source.revision
         ):
@@ -103,6 +122,28 @@ def _check_markdown_links(cid: str, assets_dir: Path, rep: RegistryReport) -> No
             if not (md.parent / path).exists():
                 rel = md.relative_to(assets_dir).as_posix()
                 rep.errors.append(f"{cid}: broken link in assets/{rel}: {target}")
+
+
+def _check_content_safety(cid: str, assets_dir: Path, acks: list, rep: RegistryReport) -> None:
+    """Unacknowledged content-safety findings are errors; acknowledgements that no longer match
+    anything are warnings (stale review notes hide the next real finding)."""
+    used: set[int] = set()
+    for f in scan_assets(assets_dir):
+        match = next(
+            (
+                i
+                for i, a in enumerate(acks)
+                if a.rule == f.rule and fnmatch.fnmatchcase(f.path, a.path)
+            ),
+            None,
+        )
+        if match is None:
+            rep.errors.append(f"{cid}: unsafe content not acknowledged in review: {f.message}")
+        else:
+            used.add(match)
+    for i, a in enumerate(acks):
+        if i not in used:
+            rep.warnings.append(f"{cid}: acknowledged finding {a.rule} @ {a.path} no longer occurs")
 
 
 _FENCE_RE = re.compile(r"^(```|~~~).*?^\1", re.MULTILINE | re.DOTALL)

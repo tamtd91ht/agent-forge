@@ -114,3 +114,23 @@ def test_transaction_integrity_seal() -> None:
     assert tx.integrity_ok()
     tx.notes.append("edited")
     assert not tx.integrity_ok()
+
+
+def test_unknown_schema_versions_are_refused() -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    from agent_forge.models.transaction import Transaction
+
+    with pytest.raises(ValidationError):
+        Transaction.model_validate(
+            {
+                "schema_version": "2",
+                "transaction_id": "tx-1",
+                "plan_id": "plan-1",
+                "plan_digest": "x",
+                "forge_version": "0",
+                "target_canonical_path": "/t",
+                "started_at": "2026-10-20T00:00:00+00:00",
+            }
+        )

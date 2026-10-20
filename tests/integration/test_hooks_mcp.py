@@ -24,7 +24,7 @@ from agent_forge.validation.engine import validate_target
 ALL = frozenset({"standard", "shared_file", "hook", "mcp"})
 
 
-def _approve(plan, classes: set[str]) -> None:
+def _approve(workspace, plan, classes: set[str]) -> None:
     missing = [
         o for o in plan.operations_needing_extra_approval() if o.approval_class not in classes
     ]
@@ -35,6 +35,7 @@ def _approve(plan, classes: set[str]) -> None:
     plan.approval.plan_digest = plan.content_digest()
     plan.approval.extra_approvals = [o.op_id for o in plan.operations_needing_extra_approval()]
     plan.status = PlanStatus.APPROVED
+    Store(workspace).record_approval(plan)
 
 
 def _plan(workspace, root: Path, allowed=ALL):
@@ -72,7 +73,7 @@ def test_ungranted_classes_are_left_out_of_the_plan(workspace, make_project) -> 
 def test_apply_refuses_hook_without_class_approval(workspace, make_project) -> None:
     root = make_project("hm3", kind="claude")
     reg, plan = _plan(workspace, root)
-    _approve(plan, ALL)
+    _approve(workspace, plan, ALL)
     hook_op = next(o for o in plan.operations if o.approval_class == "hook")
     plan.approval.extra_approvals.remove(hook_op.op_id)  # simulate approve without --hooks
     with pytest.raises(ApprovalError, match="hook change needs explicit approval"):
@@ -84,7 +85,7 @@ def test_merge_preserves_user_settings_and_rollback_is_entry_aware(workspace, ma
     settings = root / ".claude" / "settings.json"
     original = json.loads(settings.read_text(encoding="utf-8"))
     reg, plan = _plan(workspace, root)
-    _approve(plan, ALL)
+    _approve(workspace, plan, ALL)
     store = Store(workspace)
     tx = apply_plan(workspace, store, reg, plan)
     assert tx.status == TransactionStatus.COMPLETED

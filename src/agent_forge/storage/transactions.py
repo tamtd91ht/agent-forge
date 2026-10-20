@@ -10,9 +10,10 @@ from pydantic import ValidationError
 from agent_forge.config import WorkspaceConfig
 from agent_forge.errors import PlanError
 from agent_forge.models.plan import Plan
-from agent_forge.models.transaction import Transaction
+from agent_forge.models.transaction import Transaction, TransactionStatus
 from agent_forge.storage.audit import AuditLog
 from agent_forge.storage.database import Database
+from agent_forge.storage.locks import lock_holder
 from agent_forge.util import read_json, write_json
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$")
@@ -67,6 +68,39 @@ class Store:
     def list_plans(self, target: str | None = None) -> list[dict]:
         return self.db.list_plans(target)
 
+    # ---- approvals -----------------------------------------------------------------------
+    # The plan file carries its own approval, but its digest is plain SHA-256: anyone who can
+    # edit the plan can recompute it. `approve` therefore also records the digest here, and
+    # `apply` requires the two to agree, so an edited or copied-in plan is never applied
+    # without a fresh `approve` (which the audit log records).
+
+    def approval_path(self, plan_id: str) -> Path:
+        return self.ws.state_dir / "approvals" / f"{_check_id(plan_id, 'plan')}.json"
+
+    def record_approval(self, plan: Plan) -> None:
+        write_json(
+            self.approval_path(plan.plan_id),
+            {
+                "plan_id": plan.plan_id,
+                "plan_digest": plan.approval.plan_digest,
+                "approved_at": plan.approval.approved_at,
+                "approved_by": plan.approval.approved_by,
+            },
+        )
+
+    def revoke_approval(self, plan_id: str) -> None:
+        self.approval_path(plan_id).unlink(missing_ok=True)
+
+    def recorded_approval_digest(self, plan_id: str) -> str | None:
+        path = self.approval_path(plan_id)
+        if not path.is_file():
+            return None
+        try:
+            data = read_json(path)
+        except ValueError:
+            return None
+        return data.get("plan_digest") if isinstance(data, dict) else None
+
     # ---- transactions --------------------------------------------------------------------
 
     def transaction_dir(self, tx_id: str) -> Path:
@@ -107,6 +141,34 @@ class Store:
 
     def list_transactions(self, target: str | None = None, limit: int = 50) -> list[dict]:
         return self.db.list_transactions(target, limit)
+
+    def recovery_reason(self, tx: Transaction) -> str | None:
+        """Why `tx` left the project in an unfinished state, or None if it did not."""
+        if tx.rollback_of is not None:
+            return None
+        if tx.status == TransactionStatus.IN_PROGRESS:
+            if lock_holder(self.ws, tx.target_canonical_path) is not None:
+                return None  # really running right now
+            return "interrupted while applying (process stopped)"
+        if tx.status == TransactionStatus.PARTIAL:
+            return "apply failed after writing some files"
+        if tx.status == TransactionStatus.FAILED and any(o.journaled for o in tx.operations):
+            return "apply failed around a write"
+        if tx.status == TransactionStatus.RECOVERY_REQUIRED:
+            return "a rollback of it failed midway"
+        return None
+
+    def transactions_needing_recovery(self, target: str | None = None) -> list[tuple[str, str]]:
+        out: list[tuple[str, str]] = []
+        for row in self.list_transactions(target, limit=500):
+            try:
+                tx = self.load_transaction(row["transaction_id"])
+            except PlanError:
+                continue
+            reason = self.recovery_reason(tx)
+            if reason:
+                out.append((tx.transaction_id, reason))
+        return out
 
     # ---- maintenance ---------------------------------------------------------------------
 

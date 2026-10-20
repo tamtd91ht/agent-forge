@@ -133,6 +133,38 @@ def test_managed_manifest_unsafe_paths_rejected(make_project) -> None:
 
 
 @pytest.mark.parametrize(
+    "path", ["C:/Windows/x", "CON", "a/NUL.txt", ".git/config", r"\\srv\share\x"]
+)
+def test_managed_manifest_rejects_every_unsafe_path_form(make_project, path: str) -> None:
+    bad = {
+        "version": "1",
+        "capabilities": [
+            {
+                "capability_id": "x",
+                "version": "1.0.0",
+                "transaction_id": "t",
+                "installed_at": "now",
+                "files": {path: "h"},
+            }
+        ],
+    }
+    root = make_project("badpaths2", files={".agent-forge/managed.json": json.dumps(bad)})
+    assert not scan_project(root).managed
+
+
+def test_scan_read_is_bounded_when_file_grows(tmp_path: Path) -> None:
+    root = tmp_path / "grow"
+    root.mkdir()
+    f = root / "notes.md"
+    f.write_text("small", encoding="utf-8")
+    w = Walker(root, max_files=10, max_file_bytes=100)
+    list(w.walk())
+    f.write_text("x" * 10_000, encoding="utf-8")  # grows after the walk recorded its size
+    assert w.read_text("notes.md") is None
+    assert w.read_bytes("notes.md") is None
+
+
+@pytest.mark.parametrize(
     "name", [".env", ".env.production", "id_ed25519", "x.pem", "credentials.json", "secrets.yaml"]
 )
 def test_looks_secret(name: str) -> None:
@@ -142,3 +174,37 @@ def test_looks_secret(name: str) -> None:
 @pytest.mark.parametrize("name", [".env.example", "README.md", "package.json"])
 def test_not_secret(name: str) -> None:
     assert not looks_secret(name)
+
+
+def test_low_confidence_detection_is_reported(make_project) -> None:
+    root = make_project(
+        "lowconf", files={"scripts/a.ts": "export {}\n", "scripts/b.ts": "export {}\n"}
+    )
+    profile = scan_project(root)
+    assert "typescript" not in profile.language_names
+    assert any("low-confidence language 'typescript'" in w for w in profile.warnings)
+
+
+def test_profile_override_file(make_project) -> None:
+    root = make_project(
+        "override",
+        files={
+            ".agent-forge/profile.yaml": (
+                "languages: [java]\nframeworks: [spring]\nproject_types: [backend]\n"
+                "ignore: [python, test:pytest]\n"
+            )
+        },
+    )
+    profile = scan_project(root)
+    assert {"java"} <= profile.language_names and "python" not in profile.language_names
+    assert "spring" in profile.framework_names and "test:pytest" not in profile.framework_names
+    assert "backend" in profile.project_type_names
+    java = next(d for d in profile.languages if d.name == "java")
+    assert java.confidence == 1.0 and java.evidence[0].path == ".agent-forge/profile.yaml"
+
+
+def test_invalid_profile_override_is_reported_not_applied(make_project) -> None:
+    root = make_project("override-bad", files={".agent-forge/profile.yaml": "languages: java\n"})
+    profile = scan_project(root)
+    assert any("profile.yaml ignored" in w for w in profile.warnings)
+    assert "java" not in profile.language_names

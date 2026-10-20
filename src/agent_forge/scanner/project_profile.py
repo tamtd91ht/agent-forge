@@ -8,6 +8,9 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import yaml
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
 from agent_forge import __version__
 from agent_forge.config import DEFAULT_CONFIG
 from agent_forge.errors import ScanError
@@ -80,6 +83,36 @@ _PY_FRAMEWORKS: dict[str, tuple[str, ...]] = {
     "streamlit": ("streamlit",),
 }
 
+# Manifests are searched this deep, so services/api/pyproject.toml or apps/web/package.json in
+# a monorepo count as evidence, not only the root.
+_MANIFEST_DEPTH = 3
+
+_JVM_FRAMEWORKS: dict[str, tuple[str, ...]] = {
+    "spring": ("spring-boot", "org.springframework"),
+    "quarkus": ("io.quarkus",),
+    "micronaut": ("io.micronaut",),
+    "test:junit": ("junit",),
+}
+_GO_FRAMEWORKS: dict[str, tuple[str, ...]] = {
+    "gin": ("github.com/gin-gonic/gin",),
+    "echo": ("github.com/labstack/echo",),
+    "fiber": ("github.com/gofiber/fiber",),
+    "chi": ("github.com/go-chi/chi",),
+    "grpc": ("google.golang.org/grpc",),
+    "cobra": ("github.com/spf13/cobra",),
+}
+_RUST_FRAMEWORKS: dict[str, tuple[str, ...]] = {
+    "axum": ("axum",),
+    "actix-web": ("actix-web",),
+    "rocket": ("rocket",),
+    "clap": ("clap",),
+}
+_BACKEND_FRAMEWORKS = {
+    "express", "fastify", "nestjs", "django", "fastapi", "flask", "spring", "quarkus",
+    "micronaut", "gin", "echo", "fiber", "chi", "grpc", "aspnetcore", "axum", "actix-web",
+    "rocket", "rails", "laravel", "symfony",
+}  # fmt: skip
+
 _AGENT_DEPS = (
     "@anthropic-ai/sdk",
     "anthropic",
@@ -107,7 +140,7 @@ def _detect_languages(walker: Walker) -> dict[str, Detection]:
     det: dict[str, Detection] = {}
     for lang, files in _LANG_FILES.items():
         for fname, conf in files:
-            for entry in walker.find_by_name(fname, max_depth=1):
+            for entry in walker.find_by_name(fname, max_depth=_MANIFEST_DEPTH):
                 _add(det, lang, conf, entry.rel, "manifest file")
     counts: dict[str, int] = {}
     for lang, suffixes in _LANG_SUFFIXES.items():
@@ -145,7 +178,7 @@ def _detect_node(
     warnings: list[str],
 ) -> set[str]:
     agent_deps: set[str] = set()
-    for entry in walker.find_by_name("package.json", max_depth=2):
+    for entry in walker.find_by_name("package.json", max_depth=_MANIFEST_DEPTH):
         pkg = _read_package_json(walker, entry.rel)
         if pkg is None:
             continue
@@ -187,26 +220,30 @@ def _detect_node(
     return agent_deps
 
 
+def _cd(rel: str) -> str:
+    """`cd <dir> && ` for a manifest below the root, '' at the root."""
+    return f"cd {rel.rsplit('/', 1)[0]} && " if "/" in rel else ""
+
+
 def _detect_python(
     walker: Walker, frameworks: dict[str, Detection], types: dict[str, Detection], tests: list[str]
 ) -> set[str]:
     agent_deps: set[str] = set()
-    text = walker.read_text("pyproject.toml")
-    if text:
+    for entry in walker.find_by_name("pyproject.toml", max_depth=_MANIFEST_DEPTH):
+        text = walker.read_text(entry.rel)
+        if not text:
+            continue
         try:
             data = tomllib.loads(text)
         except (tomllib.TOMLDecodeError, ValueError):
-            data = {}
+            continue
         project = data.get("project") if isinstance(data.get("project"), dict) else {}
         deps: list[str] = list(project.get("dependencies") or [])
         for group in (project.get("optional-dependencies") or {}).values():
             if isinstance(group, list):
                 deps.extend(group)
-        poetry = (
-            ((data.get("tool") or {}).get("poetry") or {})
-            if isinstance(data.get("tool"), dict)
-            else {}
-        )
+        tool = data.get("tool") if isinstance(data.get("tool"), dict) else {}
+        poetry = tool.get("poetry") if isinstance(tool.get("poetry"), dict) else {}
         if isinstance(poetry.get("dependencies"), dict):
             deps.extend(poetry["dependencies"].keys())
         names = {
@@ -214,19 +251,17 @@ def _detect_python(
         }
         for fw, pkgs in _PY_FRAMEWORKS.items():
             if any(p in names for p in pkgs):
-                _add(frameworks, fw, 0.9, "pyproject.toml", "dependency")
-        for dep in _AGENT_DEPS:
-            if dep in names:
-                agent_deps.add(dep)
-        if "pytest" in names or isinstance((data.get("tool") or {}).get("pytest"), dict):
-            _add(frameworks, "test:pytest", 0.8, "pyproject.toml", "test tool")
-            tests.append("pytest")
+                _add(frameworks, fw, 0.9, entry.rel, "dependency")
+        agent_deps |= {dep for dep in _AGENT_DEPS if dep in names}
+        if "pytest" in names or isinstance(tool.get("pytest"), dict):
+            _add(frameworks, "test:pytest", 0.8, entry.rel, "test tool")
+            tests.append(f"{_cd(entry.rel)}pytest")
         if project.get("scripts"):
-            _add(types, "cli", 0.7, "pyproject.toml", "project.scripts")
-        if "ruff" in names or isinstance((data.get("tool") or {}).get("ruff"), dict):
-            tests.append("ruff check .")
-    req = walker.read_text("requirements.txt")
-    if req:
+            _add(types, "cli", 0.7, entry.rel, "project.scripts")
+        if "ruff" in names or isinstance(tool.get("ruff"), dict):
+            tests.append(f"{_cd(entry.rel)}ruff check .")
+    for entry in walker.find_by_name("requirements.txt", max_depth=_MANIFEST_DEPTH):
+        req = walker.read_text(entry.rel) or ""
         names = {
             re.split(r"[\s\[<>=!~;]", line.strip(), maxsplit=1)[0].lower()
             for line in req.splitlines()
@@ -234,15 +269,69 @@ def _detect_python(
         }
         for fw, pkgs in _PY_FRAMEWORKS.items():
             if any(p in names for p in pkgs):
-                _add(frameworks, fw, 0.8, "requirements.txt", "dependency")
-        for dep in _AGENT_DEPS:
-            if dep in names:
-                agent_deps.add(dep)
-        if "pytest" in names and "pytest" not in tests:
-            tests.append("pytest")
-    if walker.exists("manage.py"):
-        _add(frameworks, "django", 0.9, "manage.py", "django entry point")
+                _add(frameworks, fw, 0.8, entry.rel, "dependency")
+        agent_deps |= {dep for dep in _AGENT_DEPS if dep in names}
+        if "pytest" in names:
+            tests.append(f"{_cd(entry.rel)}pytest")
+    for entry in walker.find_by_name("manage.py", max_depth=_MANIFEST_DEPTH):
+        _add(frameworks, "django", 0.9, entry.rel, "django entry point")
     return agent_deps
+
+
+def _scan_markers(
+    walker: Walker,
+    rel: str,
+    table: dict[str, tuple[str, ...]],
+    frameworks: dict[str, Detection],
+    detail: str,
+) -> str:
+    text = walker.read_text(rel) or ""
+    for fw, markers in table.items():
+        if any(m in text for m in markers):
+            _add(frameworks, fw, 0.85, rel, detail)
+    return text
+
+
+def _detect_jvm_go_rust_dotnet(
+    walker: Walker,
+    languages: dict[str, Detection],
+    frameworks: dict[str, Detection],
+    tests: list[str],
+) -> None:
+    for name in ("pom.xml", "build.gradle", "build.gradle.kts"):
+        for entry in walker.find_by_name(name, max_depth=_MANIFEST_DEPTH):
+            _scan_markers(walker, entry.rel, _JVM_FRAMEWORKS, frameworks, "build dependency")
+            here = entry.rel.rsplit("/", 1)[0] + "/" if "/" in entry.rel else ""
+            if name == "pom.xml":
+                runner = "./mvnw" if walker.exists(f"{here}mvnw") else "mvn"
+            else:
+                runner = "./gradlew" if walker.exists(f"{here}gradlew") else "gradle"
+            tests.append(f"{_cd(entry.rel)}{runner} test")
+    for entry in walker.find_by_name("go.mod", max_depth=_MANIFEST_DEPTH):
+        _scan_markers(walker, entry.rel, _GO_FRAMEWORKS, frameworks, "go.mod require")
+        tests.append(f"{_cd(entry.rel)}go test ./...")
+    for entry in walker.find_by_name("Cargo.toml", max_depth=_MANIFEST_DEPTH):
+        _scan_markers(walker, entry.rel, _RUST_FRAMEWORKS, frameworks, "Cargo dependency")
+        tests.append(f"{_cd(entry.rel)}cargo test")
+    projects = [
+        e
+        for e in walker.find_by_suffix((".csproj", ".fsproj"))
+        if e.rel.count("/") <= _MANIFEST_DEPTH
+    ]
+    for entry in projects:
+        _add(languages, "csharp", 0.9, entry.rel, "project file")
+        if 'Sdk="Microsoft.NET.Sdk.Web"' in (walker.read_text(entry.rel) or ""):
+            _add(frameworks, "aspnetcore", 0.9, entry.rel, "web SDK")
+    if projects:
+        tests.append("dotnet test")
+    gemfile = walker.read_text("Gemfile") or ""
+    if re.search(r"""gem ['"]rails['"]""", gemfile):
+        _add(frameworks, "rails", 0.9, "Gemfile", "dependency")
+    composer = walker.read_text("composer.json") or ""
+    if '"laravel/framework"' in composer:
+        _add(frameworks, "laravel", 0.9, "composer.json", "dependency")
+    if '"symfony/framework-bundle"' in composer:
+        _add(frameworks, "symfony", 0.9, "composer.json", "dependency")
 
 
 def _detect_project_types(
@@ -254,7 +343,7 @@ def _detect_project_types(
     fw = set(frameworks)
     if fw & {"react", "nextjs", "vue", "nuxt", "svelte", "angular", "astro", "remix"}:
         _add(types, "frontend", 0.9, "*", "frontend framework")
-    if fw & {"express", "fastify", "nestjs", "django", "fastapi", "flask"}:
+    if fw & _BACKEND_FRAMEWORKS:
         _add(types, "backend", 0.9, "*", "backend framework")
     if "nextjs" in fw or "nuxt" in fw or "remix" in fw:
         _add(types, "fullstack", 0.7, "*", "fullstack framework")
@@ -276,8 +365,35 @@ def _detect_project_types(
             "*",
             "infra indicators",
         )
-    if "go" in languages and walker.find_by_name("main.go", max_depth=2):
+    if "cobra" in fw or "clap" in fw:
+        _add(types, "cli", 0.7, "*", "CLI framework")
+    if (
+        "go" in languages
+        and walker.find_by_name("main.go", max_depth=2)
+        and not fw & _BACKEND_FRAMEWORKS
+    ):
         _add(types, "cli", 0.5, "main.go", "go main package")
+    manifest_dirs = {
+        e.rel.rsplit("/", 1)[0]
+        for name in (
+            "package.json",
+            "pyproject.toml",
+            "go.mod",
+            "pom.xml",
+            "build.gradle",
+            "Cargo.toml",
+        )
+        for e in walker.find_by_name(name, max_depth=_MANIFEST_DEPTH)
+        if "/" in e.rel
+    }
+    if len(manifest_dirs) >= 2:
+        _add(
+            types,
+            "monorepo",
+            0.7,
+            ", ".join(sorted(manifest_dirs)[:4]),
+            f"{len(manifest_dirs)} project manifests in subdirectories",
+        )
     if "rust" in languages and walker.exists("src/main.rs"):
         _add(types, "cli", 0.6, "src/main.rs", "rust binary crate")
     if "rust" in languages and walker.exists("src/lib.rs"):
@@ -287,6 +403,52 @@ def _detect_project_types(
             _add(types, "generic", 0.5, "*", "no specific project type indicators")
         else:
             _add(types, "unknown", 0.3, "*", "no language indicators")
+
+
+PROFILE_OVERRIDE = ".agent-forge/profile.yaml"
+
+
+class ProfileOverride(BaseModel):
+    """`.agent-forge/profile.yaml`: what the team confirms or rules out about its project."""
+
+    model_config = ConfigDict(extra="forbid")
+    languages: list[str] = Field(default_factory=list)
+    frameworks: list[str] = Field(default_factory=list)
+    project_types: list[str] = Field(default_factory=list)
+    ignore: list[str] = Field(
+        default_factory=list, description="detections to drop (language/framework/type names)"
+    )
+
+
+def _apply_overrides(
+    walker: Walker,
+    languages: dict[str, Detection],
+    frameworks: dict[str, Detection],
+    warnings: list[str],
+    types: dict[str, Detection],
+    *,
+    project_types_only: bool = False,
+) -> None:
+    text = walker.read_text(PROFILE_OVERRIDE)
+    if text is None:
+        return
+    try:
+        raw = yaml.safe_load(text) or {}
+        ov = ProfileOverride.model_validate(raw)
+    except (yaml.YAMLError, ValidationError, TypeError) as exc:
+        if not project_types_only:
+            warnings.append(f"{PROFILE_OVERRIDE} ignored: invalid ({str(exc).splitlines()[0]})")
+        return
+    targets = [(types, ov.project_types)] if project_types_only else [
+        (languages, ov.languages), (frameworks, ov.frameworks)
+    ]  # fmt: skip
+    for dets, names in targets:
+        for name in names:
+            dets.pop(name, None)
+            _add(dets, name, 1.0, PROFILE_OVERRIDE, "confirmed by the project")
+    for dets in (types,) if project_types_only else (languages, frameworks):
+        for name in ov.ignore:
+            dets.pop(name, None)
 
 
 def _git_state(root: Path) -> GitState:
@@ -350,15 +512,15 @@ def scan_project(target: Path, *, limits: dict[str, int] | None = None) -> Proje
     agent_deps: set[str] = set()
     agent_deps |= _detect_node(walker, frameworks, types, tests, warnings)
     agent_deps |= _detect_python(walker, frameworks, types, tests)
-    if walker.exists("go.mod"):
-        tests.append("go test ./...")
-    if walker.exists("Cargo.toml"):
-        tests.append("cargo test")
+    _detect_jvm_go_rust_dotnet(walker, languages, frameworks, tests)
     if walker.exists("Makefile"):
         mk = walker.read_text("Makefile") or ""
-        if re.search(r"^test:", mk, re.MULTILINE):
-            tests.append("make test")
+        for target in ("test", "lint", "format", "build"):
+            if re.search(rf"^{target}:", mk, re.MULTILINE):
+                tests.append(f"make {target}")
+    _apply_overrides(walker, languages, frameworks, warnings, types)
     _detect_project_types(walker, languages, frameworks, types)
+    _apply_overrides(walker, languages, frameworks, warnings, types, project_types_only=True)
     if agent_deps:
         _add(
             frameworks,
@@ -367,6 +529,13 @@ def scan_project(target: Path, *, limits: dict[str, int] | None = None) -> Proje
             "*",
             "agent-related dependencies: " + ", ".join(sorted(agent_deps)),
         )
+    for kind, dets in (("language", languages), ("framework", frameworks), ("project type", types)):
+        for d in dets.values():
+            if 0.3 <= d.confidence < 0.5:
+                warnings.append(
+                    f"low-confidence {kind} '{d.name}' ({d.confidence:.2f}, {d.evidence[0].detail}) "
+                    "is not used for recommendations; confirm it in .agent-forge/profile.yaml"
+                )
     inv = detect_agents(walker)
     warnings.extend(inv.warnings)
     if walker.stats.truncated:

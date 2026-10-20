@@ -21,19 +21,20 @@ from agent_forge.storage.transactions import Store
 from agent_forge.util import now_iso
 
 
-def _approve(plan) -> None:
+def _approve(workspace, plan) -> None:
     plan.approval.status = "approved"
     plan.approval.approved_at = now_iso()
     plan.approval.plan_digest = plan.content_digest()
     plan.approval.extra_approvals = [o.op_id for o in plan.operations_needing_extra_approval()]
     plan.status = PlanStatus.APPROVED
+    Store(workspace).record_approval(plan)
 
 
 def _install(workspace, root: Path):
     reg = load_registry(workspace.registry_dir)
     profile = scan_project(root)
     plan, _ = build_assign_plan(reg, profile, MatchContext(platforms=(Platform.CLAUDE_CODE,)))
-    _approve(plan)
+    _approve(workspace, plan)
     store = Store(workspace)
     tx = apply_plan(workspace, store, reg, plan)
     assert tx.status == TransactionStatus.COMPLETED
@@ -75,7 +76,7 @@ def test_remove_plan_deletes_files_sections_and_entries(workspace, make_project)
         "hook",
         "mcp",
     }
-    _approve(plan)
+    _approve(workspace, plan)
     tx = apply_plan(workspace, store, reg, plan)
     assert tx.status == TransactionStatus.COMPLETED
     assert not (root / ".claude/skills/needs-always").exists()
@@ -116,7 +117,7 @@ def test_repair_restore_and_unmanage(workspace, make_project) -> None:
     assert paths[".claude/skills/always/SKILL.md"] == OperationKind.REPLACE
     assert paths[".claude/skills/needs-always/SKILL.md"] == OperationKind.CREATE
     assert plan.user_decisions
-    _approve(plan)
+    _approve(workspace, plan)
     tx = apply_plan(workspace, store, reg, plan)
     assert tx.status == TransactionStatus.COMPLETED
     assert skill.read_text(encoding="utf-8") == original
@@ -125,7 +126,7 @@ def test_repair_restore_and_unmanage(workspace, make_project) -> None:
     skill.write_text("mine now\n", encoding="utf-8")
     plan2 = build_repair_plan(reg, scan_project(root), "unmanage", ["t.always"])
     assert [o.path for o in plan2.operations] == [".agent-forge/managed.json"]
-    _approve(plan2)
+    _approve(workspace, plan2)
     apply_plan(workspace, store, reg, plan2)
     after = scan_project(root)
     assert "t.always" not in {m.capability_id for m in after.managed}

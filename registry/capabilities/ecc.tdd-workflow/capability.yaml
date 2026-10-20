@@ -23,6 +23,13 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge curation (automated session; human sign-off pending)
   rationale: Pure markdown (583 lines), no scripts, hooks or MCP dependencies. Mentions an optional `.claude/tdd/` plan location and an informational pre-commit hook section; both are harmless outside ECC. Frontmatter has name + description, so it is valid for both Claude Code and Codex Agent Skills.
+  acknowledged_findings:
+    - rule: instruction-override
+      path: "*/tdd-workflow/SKILL.md"
+      reason: "Defensive: tells the agent to treat 'ignore previous rules' inside plan files as data, not to follow it."
+    - rule: pipe-to-shell
+      path: "*/tdd-workflow/SKILL.md"
+      reason: "Defensive: cites `curl ... | sh` as an example that must be rejected."
   notes:
     - "Above the 500-line SKILL.md guideline; acceptable because the body is reference material loaded on demand."
 applicability:

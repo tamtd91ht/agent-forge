@@ -26,7 +26,15 @@ Every destination path is validated and resolved by `resolve_in_root`:
 | traversal | `../x`, `a/../../b` |
 | control / reserved characters, trailing dot or space, Windows device names | `CON`, `a<b`, `x. ` |
 | any existing component that is a symlink **or a reparse point (junction)** | `.claude -> /elsewhere` |
+| `.git` in any case, alternate data streams | `.git/hooks/x`, `a.md:stream` |
+| a name equal to an existing entry up to case or Unicode normalisation | `.Claude/` next to `.claude/`, NFD `é` next to NFC `é` |
 | a resolved path outside the resolved root | always re-checked after resolution |
+
+Writes go through `safe_write_bytes`: missing directories are created one at a time and the
+whole chain is re-checked immediately before the atomic rename. **Residual limit:** a local
+process that can write to the project could still swap a directory in the instant between
+that last check and the rename; the per-target lock only excludes other Agent Forge
+processes. Agent Forge is not a sandbox (see *Runtime boundary*).
 
 Planner and apply additionally require every path to be inside the adapter's managed roots
 (`CLAUDE.md`, `.claude/`, `.mcp.json`, `AGENTS.md`, `.agents/skills/`, `.codex/`,
@@ -35,18 +43,42 @@ Planner and apply additionally require every path to be inside the adapter's man
 
 ## Plan integrity
 
-- Approval records `sha256(plan content)`; any edit to the plan file invalidates it.
-- Every operation stores `before_sha256`; apply refuses if the file changed since planning.
-- The registry digest is stored; apply refuses if curated content changed.
-- Shared-file operations (`CLAUDE.md`, `AGENTS.md`, settings) need `approve --shared-files`.
+A plan's digest covers the target identity, every operation (path, content hash, before and
+after hashes, approval class), the selected capabilities, the registry digest (manifests,
+assets **and shipped policies**), the effective **policy digest**, and `created_at` /
+`expires_at`. Apply refuses a plan when any of these no longer holds:
+
+- **Approval is anchored in the workspace.** `approve` writes the digest to
+  `state/approvals/<plan>.json`; apply requires the plan's current digest to equal it. The
+  digest is plain SHA-256, so an edited plan could be re-hashed by hand: the anchor means it
+  still needs a fresh `approve`, which the audit log records. (An attacker who can write the
+  workspace itself is out of scope: the workspace is the trust anchor.)
+- Every operation stores `before_sha256`; apply refuses if the file changed since planning,
+  and re-checks each file again immediately before writing it.
+- Registry or policy changed since planning → stale. A project `policy.yaml` that is invalid
+  stops planning (fails closed) instead of being ignored.
+- Plans expire 7 days after creation (`expires_at`, inside the digest).
+- Shared-file, hook and MCP operations need their approval class.
 - `--yes` only skips the terminal prompt; it cannot bypass any of the above.
 
-## Transactions and rollback
+## Transactions, crashes and rollback
 
-- Each operation backs up the prior content under `state/transactions/<tx>/backup/`,
-  writes atomically (temp file + rename), reads back and verifies the hash, then persists the
-  transaction record. A crash leaves either the old or the new file, never a partial one.
-- Transaction records are sealed with a hash; rollback refuses tampered records.
+- Apply and rollback hold an exclusive per-target lock (`state/locks/`, O_EXCL, owner pid).
+  A second process gets a clear error; a lock left by a dead process is taken over.
+- Per operation: re-check hash → back up prior bytes (`state/transactions/<tx>/backup/`,
+  with their exact sha256) → **journal** (record saved with the intended hash) → re-check the
+  path → atomic write (temp file, fsync, rename) → read back → mark applied.
+- **Atomicity is per file, not per transaction.** A crash leaves each file either old or
+  new, never partial; the transaction may stop `in_progress` with its last write journaled
+  but unconfirmed. `validate`, `doctor` and `status` report such transactions, and
+  `agent-forge rollback <tx>` recovers them: a journaled operation whose file still has its
+  before hash is skipped, one at its intended hash is reversed, anything else is a conflict.
+- If saving the failure record itself fails, the original error is still reported; the
+  journal on disk is what rollback uses.
+- A rollback that fails midway marks the original `recovery_required`; running rollback
+  again resumes it (already-restored files are skipped).
+- Transaction records are sealed with a hash; rollback refuses tampered records. Backups are
+  restored only when their bytes match the recorded sha256, and backup names are validated.
 - Rollback restores only files whose current hash equals the recorded post-apply hash. Files
   the user changed afterwards are kept (strict mode refuses everything; `--partial` rolls
   back the untouched files). For shared files, only the managed section is removed when the
@@ -56,8 +88,8 @@ Planner and apply additionally require every path to be inside the adapter's man
 
 Three YAML layers are merged with "strictest verdict wins": `registry/policies/default.yaml`
 (part of the registry digest), `<workspace>/policy.yaml`, and the untrusted
-`<target>/.agent-forge/policy.yaml` (validated; an invalid file is ignored and reported, it
-can never loosen anything). Each capability gets one verdict before scoring:
+`<target>/.agent-forge/policy.yaml` (validated; an invalid file stops planning: it fails
+closed, because ignoring it would drop the restrictions it was written to add). Each capability gets one verdict before scoring:
 
 | Verdict | Effect |
 |---|---|
@@ -106,6 +138,12 @@ Scan reports go to `state/reports/` (never inside the target unless `--report` p
 there, which is refused when it resolves inside the target). Profiles contain file names,
 hashes and headings, not file contents or secret values. `state/` and `sources/checkouts/`
 are git-ignored.
+
+## Runtime boundary
+
+Agent Forge decides what is written into a project and records it. It does not sandbox the
+coding agent afterwards: what an installed hook, MCP server or the agent itself may execute
+is governed by Claude Code / Codex permissions, the operating system or a container.
 
 ## Known gaps
 

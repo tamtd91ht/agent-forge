@@ -21,6 +21,8 @@ only switch a whole class off (`classes: {hook: deny}`).
 from __future__ import annotations
 
 import fnmatch
+import hashlib
+import json
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
@@ -100,6 +102,12 @@ class PolicySet:
     @property
     def names(self) -> list[str]:
         return [n for n, _ in self.layers]
+
+    @property
+    def digest(self) -> str:
+        """Digest of the effective layers; plans bind to it so a policy change re-plans."""
+        payload = json.dumps(describe(self), sort_keys=True).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
 
     def evaluate(
         self, cap: Capability, platform: Platform, context_chars: int | None = None
@@ -218,15 +226,19 @@ def load_policies(
             ps.layers.append(("workspace", _load_file(wp, trusted=True)))
     if target_root is not None:
         tp = target_root / ".agent-forge" / "policy.yaml"
-        if tp.is_file() and not tp.is_symlink():
+        if tp.is_symlink():
+            raise WorkspaceError(f"{tp}: project policy must be a regular file, not a link")
+        if tp.is_file():
             # Project policies are untrusted input: they can only tighten, which the
-            # strictest-wins combination guarantees; a broken file is reported, not fatal.
+            # strictest-wins combination guarantees. A broken file fails closed: ignoring it
+            # would silently drop the restrictions it was written to add.
             try:
                 ps.layers.append(("project", _load_file(tp, trusted=False)))
             except WorkspaceError as exc:
-                ps.layers.append(
-                    (f"project (invalid, ignored: {exc.message[:80]})", Policy(name="invalid"))
-                )
+                raise WorkspaceError(
+                    exc.message,
+                    hint="Fix or remove .agent-forge/policy.yaml; nothing is planned while it is invalid.",
+                ) from exc
     return ps
 
 

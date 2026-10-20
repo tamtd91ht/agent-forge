@@ -12,6 +12,7 @@ import re
 import shutil
 import sys
 from collections.abc import Callable
+from datetime import UTC, datetime
 from importlib import resources
 from pathlib import Path
 from typing import Annotated, Any
@@ -1001,6 +1002,19 @@ def _approve_plan(
         plan.status = PlanStatus.STALE
         store.save_plan(plan)
         raise StalePlanError("registry changed since planning", hint="Re-run `assign`/`upgrade`.")
+    if plan.is_expired(datetime.now(UTC)):
+        plan.status = PlanStatus.STALE
+        store.save_plan(plan)
+        raise StalePlanError(
+            f"plan expired at {plan.expires_at}", hint="Re-run `assign`/`upgrade`."
+        )
+    target = Path(plan.target.canonical_path)
+    if plan.policy_digest is not None and (
+        _policies(store.ws, target).digest != plan.policy_digest
+    ):
+        plan.status = PlanStatus.STALE
+        store.save_plan(plan)
+        raise StalePlanError("policy changed since planning", hint="Re-run `assign`/`upgrade`.")
     extra = plan.operations_needing_extra_approval()
     granted = {"shared_file": shared_files, "hook": hooks, "mcp": mcp}
     missing: dict[str, list[str]] = {}
@@ -1024,6 +1038,7 @@ def _approve_plan(
     plan.approval.extra_approvals = [o.op_id for o in extra]
     plan.status = PlanStatus.APPROVED
     store.save_plan(plan)
+    store.record_approval(plan)
     _audit(
         store,
         "PlanApproved",
@@ -1076,6 +1091,7 @@ def approve(
             plan.approval.extra_approvals = []
             plan.status = PlanStatus.REVOKED
             store.save_plan(plan)
+            store.revoke_approval(plan.plan_id)
             _audit(store, "PlanRevoked", plan_id=plan.plan_id, target=plan.target.canonical_path)
             console.print(f"[yellow]approval revoked for {plan_id}[/]")
             return
@@ -1731,6 +1747,13 @@ def doctor(workspace: WorkspaceOpt = None, as_json: JsonOpt = False) -> int:
             ps = _policies(ws, None)
             add("policy layers", True, ", ".join(ps.names))
             add("sources manifest", ws.sources_manifest.is_file(), str(ws.sources_manifest))
+            pending = _store(ws).transactions_needing_recovery()
+            add(
+                "unfinished transactions",
+                not pending,
+                "; ".join(f"{tx}: {why} (`agent-forge rollback {tx}`)" for tx, why in pending)
+                or "none",
+            )
             add(
                 "audit log",
                 True,
@@ -1813,6 +1836,64 @@ def audit(
             details = ", ".join(f"{k}={v}" for k, v in r.items() if k not in ("at", "event"))
             t.add_row(r["at"], r["event"], details)
         console.print(t)
+
+    _run(body)
+
+
+@app.command()
+def impact(
+    capability_id: Annotated[str, typer.Argument(help="Capability id, e.g. ecc.tdd-workflow.")],
+    workspace: WorkspaceOpt = None,
+    as_json: JsonOpt = False,
+) -> None:
+    """Where is a capability installed? Checks every project this workspace has written to
+    (read-only), so a deprecated or revoked entry can be traced before it is removed."""
+
+    def body() -> None:
+        from agent_forge.scanner.agent_detection import MANAGED_MANIFEST, parse_managed_manifest
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        store = _store(ws)
+        cap = reg.items.get(capability_id)
+        targets = sorted({row["target"] for row in store.list_transactions(limit=100_000)})
+        rows: list[dict[str, Any]] = []
+        for target in targets:
+            manifest = Path(target) / MANAGED_MANIFEST
+            if not manifest.is_file() or manifest.is_symlink():
+                continue
+            records, _ = parse_managed_manifest(manifest.read_text(encoding="utf-8"))
+            for rec in records:
+                if rec.capability_id == capability_id:
+                    rows.append(
+                        {
+                            "target": target,
+                            "installed": rec.version,
+                            "transaction": rec.transaction_id,
+                            "outdated": cap is not None and cap.capability.version != rec.version,
+                        }
+                    )
+        result = {
+            "capability_id": capability_id,
+            "registry_version": cap.capability.version if cap else None,
+            "registry_status": cap.capability.status.value if cap else "missing",
+            "replaced_by": cap.capability.replaced_by if cap else None,
+            "projects_checked": len(targets),
+            "installations": rows,
+        }
+        if as_json:
+            _print_json(result)
+            return
+        console.print(
+            f"{capability_id}: registry {result['registry_version'] or '-'} "
+            f"({result['registry_status']}), installed in {len(rows)} of "
+            f"{len(targets)} project(s) this workspace has written to"
+        )
+        for r in rows:
+            console.print(
+                f"  {r['target']}  {r['installed']}"
+                + ("  [yellow]outdated[/]" if r["outdated"] else "")
+            )
 
     _run(body)
 
@@ -1905,6 +1986,7 @@ def status(
             )
         txs = store.list_transactions(profile.canonical_path, limit=10)
         plans_ = [p for p in store.list_plans(profile.canonical_path)][:10]
+        unfinished = store.transactions_needing_recovery(profile.canonical_path)
         if as_json:
             _print_json(
                 {
@@ -1912,6 +1994,7 @@ def status(
                     "managed_manifest_valid": profile.managed_manifest_valid,
                     "capabilities": rows,
                     "transactions": txs,
+                    "needs_recovery": [{"transaction_id": t, "reason": r} for t, r in unfinished],
                     "plans": plans_,
                     "platforms": [p.platform.value for p in profile.platforms],
                 }
@@ -1970,6 +2053,10 @@ def status(
             console.print(t)
         if plans_:
             console.print("plans: " + ", ".join(f"{p['plan_id']} ({p['status']})" for p in plans_))
+        for tx_id, why in unfinished:
+            console.print(
+                f"[red]needs recovery:[/] {tx_id}: {why}. Run `agent-forge rollback {tx_id}`."
+            )
 
     _run(body)
 

@@ -445,6 +445,7 @@ def build_assign_plan(
         target=_identity(profile),
         target_path=profile.target_path,
         registry_digest=reg.digest,
+        policy_digest=ctx.policy.digest if ctx.policy is not None else None,
         selected=selected,
         rejected=rejected,
         dependency_order=order,
@@ -538,6 +539,16 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
         ):
             notes.append(
                 f"{cap.id}: registry entry is no longer installable ({cap.status.value}); left untouched"
+            )
+            continue
+        if cap.integrity is not None and cap.integrity.assets_sha256 != lc.assets_digest:
+            rejected.append(
+                RejectedCapability(
+                    capability_id=cap.id,
+                    version=cap.version,
+                    reasons=["registry assets differ from the reviewed, pinned digest"],
+                    category="integrity_mismatch",
+                )
             )
             continue
         if rec.drift:
@@ -677,6 +688,7 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
         target=_identity(profile),
         target_path=profile.target_path,
         registry_digest=reg.digest,
+        policy_digest=ctx.policy.digest if ctx.policy is not None else None,
         selected=selected,
         rejected=rejected,
         dependency_order=[s.capability_id for s in selected],

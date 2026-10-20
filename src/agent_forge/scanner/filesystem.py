@@ -196,9 +196,8 @@ class Walker:
             return None
         if entry.rel.lower().endswith(BINARY_SUFFIXES):
             return None
-        try:
-            data = entry.path.read_bytes()
-        except OSError:
+        data = self._read_bounded(entry.path)
+        if data is None:
             return None
         if b"\0" in data[:8192]:
             return None
@@ -210,8 +209,22 @@ class Walker:
         entry = self._index.get(rel)
         if entry is None or entry.size > self.max_file_bytes:
             return None
-        try:
+        data = self._read_bounded(entry.path)
+        if data is not None:
             self.stats.files_read += 1
-            return entry.path.read_bytes()
+        return data
+
+    def _read_bounded(self, path: Path) -> bytes | None:
+        """Read at most max_file_bytes; None if the file grew past the limit after the walk
+        or was replaced by a link."""
+        if path.is_symlink():
+            return None
+        try:
+            with path.open("rb") as fh:
+                data = fh.read(self.max_file_bytes + 1)
         except OSError:
             return None
+        if len(data) > self.max_file_bytes:
+            self.stats.skipped_large += 1
+            return None
+        return data

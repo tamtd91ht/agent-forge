@@ -1,5 +1,31 @@
 {
   "$defs": {
+    "AcknowledgedFinding": {
+      "additionalProperties": false,
+      "description": "A content-safety finding a reviewer read and accepted (registry/content_safety.py).",
+      "properties": {
+        "path": {
+          "description": "Asset path relative to assets/; fnmatch globs allowed",
+          "title": "Path",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule",
+        "path",
+        "reason"
+      ],
+      "title": "AcknowledgedFinding",
+      "type": "object"
+    },
     "Applicability": {
       "additionalProperties": false,
       "description": "Hard applicability conditions. Empty lists mean 'no constraint'.",
@@ -70,6 +96,7 @@
         "under_review",
         "curated",
         "deprecated",
+        "revoked",
         "rejected"
       ],
       "title": "CapabilityStatus",
@@ -315,6 +342,13 @@
     "ReviewInfo": {
       "additionalProperties": false,
       "properties": {
+        "acknowledged_findings": {
+          "items": {
+            "$ref": "#/$defs/AcknowledgedFinding"
+          },
+          "title": "Acknowledged Findings",
+          "type": "array"
+        },
         "notes": {
           "items": {
             "type": "string"
@@ -334,6 +368,19 @@
         "reviewer": {
           "title": "Reviewer",
           "type": "string"
+        },
+        "risk_rationale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why the risk level is what it is (required above low)",
+          "title": "Risk Rationale"
         },
         "signed_off_at": {
           "anyOf": [
@@ -616,6 +663,19 @@
       "title": "Removal",
       "type": "string"
     },
+    "replaced_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Capability id to use instead (deprecated / revoked entries)",
+      "title": "Replaced By"
+    },
     "review": {
       "$ref": "#/$defs/ReviewInfo"
     },
@@ -631,6 +691,7 @@
       "type": "array"
     },
     "schema_version": {
+      "const": "1",
       "default": "1",
       "title": "Schema Version",
       "type": "string"

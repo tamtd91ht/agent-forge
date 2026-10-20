@@ -1,0 +1,42 @@
+{
+  "reviewed": "2026-10-20",
+  "notes": "Next.js + TypeScript + Tailwind. Frontend/fullstack -> uiux.guidelines; Node hooks (secret guard, prettier). Playwright MCP and the shell-capable code-reviewer agent stay optional (permissions). No backend items beyond security-review (fullstack).",
+  "languages": [
+    "javascript",
+    "typescript"
+  ],
+  "frameworks": [
+    "nextjs",
+    "react",
+    "tailwind",
+    "test:vitest"
+  ],
+  "project_types": [
+    "frontend",
+    "fullstack"
+  ],
+  "test_commands": [
+    "npm run test",
+    "npm run lint",
+    "npm run build"
+  ],
+  "recommended": [
+    "ecc.agent.planner",
+    "ecc.error-handling",
+    "ecc.rules.common",
+    "ecc.security-review",
+    "ecc.tdd-workflow",
+    "ecc.verification-loop",
+    "forge.hook.guard-secrets-node",
+    "forge.hook.node-prettier-format",
+    "forge.managed-notice",
+    "karpathy.principles",
+    "mattpocock.diagnosing-bugs",
+    "mcp.context7",
+    "uiux.guidelines"
+  ],
+  "optional": [
+    "ecc.agent.code-reviewer",
+    "mcp.playwright"
+  ]
+}

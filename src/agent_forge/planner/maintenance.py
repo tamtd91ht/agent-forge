@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from agent_forge import __version__
+from agent_forge.adapters import platform_owning
 from agent_forge.apply.jsonmerge import contains_fragment, remove_fragment
 from agent_forge.apply.sections import find_section, remove_section
 from agent_forge.errors import ApplyError, PlanError
@@ -103,11 +104,7 @@ def drift_report(profile: ProjectProfile) -> DriftReport:
 
 
 def _platform_for(rel: str) -> Platform | None:
-    if rel.startswith((".claude/", ".mcp.json")) or rel == "CLAUDE.md":
-        return Platform.CLAUDE_CODE
-    if rel.startswith((".agents/skills/", ".codex/")) or rel == "AGENTS.md":
-        return Platform.CODEX
-    return None
+    return platform_owning(rel)
 
 
 # ---- remove --------------------------------------------------------------------------------

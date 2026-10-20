@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from agent_forge.apply.filesystem_safety import resolve_in_root
+from agent_forge.apply.filesystem_safety import resolve_in_root, safe_write_bytes
 from agent_forge.errors import SafetyViolation
 from agent_forge.scanner.filesystem import Walker
 
@@ -53,3 +53,17 @@ def test_resolve_refuses_junction_component(tmp_path: Path) -> None:
         pytest.skip("cannot create junction here")
     with pytest.raises(SafetyViolation, match="symlink or reparse point"):
         resolve_in_root(root, ".claude/skills/x/SKILL.md")
+
+
+def test_link_created_after_preflight_is_refused(tmp_path: Path) -> None:
+    """A directory swapped for a junction between planning and writing is caught at write time."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    root = tmp_path / "proj"
+    root.mkdir()
+    resolve_in_root(root, ".claude/skills/x/SKILL.md")  # what pre-flight saw: nothing there yet
+    if not _junction(root / ".claude", outside):
+        pytest.skip("cannot create junction here")
+    with pytest.raises(SafetyViolation):
+        safe_write_bytes(root, ".claude/skills/x/SKILL.md", b"payload")
+    assert not any(outside.rglob("*"))

@@ -8,10 +8,31 @@ broker; a future backend only needs to re-implement `AuditLog.emit`.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 from agent_forge.util import now_iso
+
+# Values that look like credentials are masked before anything reaches the log: an error
+# message or approver name can carry text the user pasted, and the log is never rewritten.
+_SECRET_RE = re.compile(
+    r"\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bsk-[A-Za-z0-9_-]{20,}"
+    r"|\bxox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----"
+    r"|((?:password|passwd|secret|token|api[_-]?key)\s*[=:]\s*)[^\s,;]+",
+    re.IGNORECASE,
+)
+
+
+def redact(value: Any) -> Any:
+    if isinstance(value, str):
+        return _SECRET_RE.sub(lambda m: (m.group(1) or "") + "<redacted>", value)
+    if isinstance(value, dict):
+        return {k: redact(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [redact(v) for v in value]
+    return value
+
 
 EVENTS = frozenset(
     {
@@ -36,7 +57,7 @@ class AuditLog:
     def emit(self, event: str, **fields: Any) -> dict[str, Any]:
         if event not in EVENTS:
             raise ValueError(f"unknown audit event {event!r}")
-        record = {"event": event, "at": now_iso(), **fields}
+        record = {"event": event, "at": now_iso(), **redact(fields)}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")

@@ -1,11 +1,16 @@
-"""Reverse a completed (or partial) transaction.
+"""Reverse a transaction: completed, partial, failed, or interrupted mid-apply.
 
 For each applied operation, newest first:
   current hash == after_sha256  -> safe: restore backup (or delete the file we created)
   current hash != after_sha256  -> conflict: the user changed it after apply; never overwritten
   file missing where we created -> already gone: nothing to do (noted)
+  current hash == before_sha256 -> already at its pre-apply content: nothing to do
+An operation journaled but not marked applied (the process died around the write) is
+recovered from what is on disk: still at its before hash -> never written, skip; at its
+intended hash -> written, reverse it like an applied one; anything else -> conflict.
 By default any conflict aborts the whole rollback. `partial=True` rolls back the safe files
-and reports the rest with a recovery recommendation.
+and reports the rest with a recovery recommendation. A rollback that fails midway marks the
+original transaction `recovery_required`; running rollback again resumes it.
 """
 
 from __future__ import annotations
@@ -21,6 +26,7 @@ from agent_forge.apply.sections import find_section, remove_section
 from agent_forge.errors import ApplyError, PlanError, RollbackConflict, SafetyViolation
 from agent_forge.models.plan import OperationKind
 from agent_forge.models.transaction import AppliedOperation, Transaction, TransactionStatus
+from agent_forge.storage.locks import lock_holder, target_lock
 from agent_forge.storage.transactions import Store
 from agent_forge.util import (
     atomic_write_bytes,
@@ -73,26 +79,36 @@ def plan_rollback(store: Store, tx: Transaction) -> RollbackPlan:
         )
     if tx.status in (TransactionStatus.ROLLED_BACK,):
         raise PlanError(f"transaction {tx.transaction_id} was already rolled back")
-    if tx.status not in (
-        TransactionStatus.COMPLETED,
-        TransactionStatus.PARTIAL,
-        TransactionStatus.ROLLBACK_CONFLICT,
-    ):
-        raise PlanError(
-            f"transaction {tx.transaction_id} is {tx.status.value}; nothing to roll back"
-        )
+    if tx.rollback_of is not None:
+        raise PlanError(f"{tx.transaction_id} is itself a rollback record; nothing to roll back")
+    if tx.status == TransactionStatus.IN_PROGRESS:
+        holder = lock_holder(store.ws, tx.target_canonical_path)
+        if holder is not None:
+            raise PlanError(
+                f"transaction {tx.transaction_id} is still running (pid {holder.get('pid')})",
+                hint="Wait for it to finish, then roll back.",
+            )
     root = Path(tx.target_canonical_path)
     if not root.is_dir():
         raise PlanError(f"target no longer exists: {root}")
     backups = BackupStore(store.backup_dir(tx.transaction_id))
     rp = RollbackPlan(transaction=tx)
     for op in reversed(tx.operations):
-        if not op.applied:
+        if not op.applied and not op.journaled:
             continue
         try:
             _, cur_hash = _current(root, op.path)
         except SafetyViolation as exc:
             rp.checks.append(RollbackCheck(op, "conflict", f"unsafe path now: {exc.message}"))
+            continue
+        if not op.applied:
+            # interrupted around the write: decide from what is on disk
+            if cur_hash == op.before_sha256:
+                rp.checks.append(RollbackCheck(op, "skip", "never written (interrupted before)"))
+                continue
+            op = op.model_copy(update={"after_sha256": op.intended_after_sha256, "applied": True})
+        elif cur_hash == op.before_sha256 and op.before_sha256 != op.after_sha256:
+            rp.checks.append(RollbackCheck(op, "skip", "already at its pre-apply content"))
             continue
         if op.after_sha256 is None:
             # we removed the file
@@ -167,6 +183,12 @@ def plan_rollback(store: Store, tx: Transaction) -> RollbackPlan:
 
 def execute_rollback(store: Store, rp: RollbackPlan, *, partial: bool = False) -> Transaction:
     tx = rp.transaction
+    with target_lock(store.ws, tx.target_canonical_path, f"rollback {tx.transaction_id}"):
+        return _execute_locked(store, rp, partial)
+
+
+def _execute_locked(store: Store, rp: RollbackPlan, partial: bool) -> Transaction:
+    tx = rp.transaction
     if rp.conflicts and not partial:
         lines = [f"{c.op.path}: {c.detail}" for c in rp.conflicts]
         raise RollbackConflict(
@@ -231,7 +253,8 @@ def execute_rollback(store: Store, rp: RollbackPlan, *, partial: bool = False) -
             else:
                 assert check.op.backup
                 data = backups.load(check.op.backup)
-                if (
+                exact = check.op.backup_sha256
+                if (exact is not None and sha256_bytes(data) != exact) or (
                     sha256_text(normalize_newlines(data.decode("utf-8", errors="replace")))
                     != check.op.before_sha256
                 ):
@@ -253,6 +276,10 @@ def execute_rollback(store: Store, rp: RollbackPlan, *, partial: bool = False) -
         rb.finished_at = now_iso()
         rb.notes.append(f"aborted: {exc}")
         store.save_transaction(rb)
+        # the original must not keep claiming a state it is no longer in
+        tx.status = TransactionStatus.RECOVERY_REQUIRED
+        tx.notes.append(f"rollback {rb.transaction_id} failed: {exc}; run rollback again")
+        store.save_transaction(tx)
         raise
     rb.status = TransactionStatus.COMPLETED
     rb.finished_at = now_iso()

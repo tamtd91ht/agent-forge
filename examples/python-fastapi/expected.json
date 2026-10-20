@@ -1,0 +1,35 @@
+{
+  "reviewed": "2026-10-20",
+  "notes": "FastAPI service with ruff. Python hooks (secret guard, ruff format); no UI items.",
+  "languages": [
+    "python"
+  ],
+  "frameworks": [
+    "fastapi",
+    "test:pytest"
+  ],
+  "project_types": [
+    "backend"
+  ],
+  "test_commands": [
+    "pytest",
+    "ruff check ."
+  ],
+  "recommended": [
+    "ecc.agent.planner",
+    "ecc.error-handling",
+    "ecc.rules.common",
+    "ecc.security-review",
+    "ecc.tdd-workflow",
+    "ecc.verification-loop",
+    "forge.hook.guard-secrets-python",
+    "forge.hook.python-ruff-format",
+    "forge.managed-notice",
+    "karpathy.principles",
+    "mattpocock.diagnosing-bugs",
+    "mcp.context7"
+  ],
+  "optional": [
+    "ecc.agent.code-reviewer"
+  ]
+}

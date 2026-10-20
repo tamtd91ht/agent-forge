@@ -4,7 +4,7 @@
 
 ```bash
 .venv/Scripts/ruff check src tests scripts && .venv/Scripts/ruff format --check src tests scripts
-.venv/Scripts/python -m pytest -q            # ~75 tests, < 1 min
+.venv/Scripts/python -m pytest -q            # ~270 tests, ~2 min
 agent-forge validate                          # registry + provenance
 python scripts/export_schemas.py              # after changing models (commit the result)
 ```

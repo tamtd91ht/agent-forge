@@ -79,7 +79,10 @@ Useful topics for `/agent-forge-upgrade <focus>` or `AF forge . --want <tag>`: `
 |---|---|
 | `/agent-forge-upgrade` is not listed | Start a new Claude Code session in the project root |
 | `Python 3.11 or newer is required` | Install Python from python.org, then re-run the install command |
-| `plan is stale` | The project changed after planning; run `/agent-forge-upgrade` again |
+| `plan is stale` / `expired` / `policy changed` | Run `/agent-forge-upgrade` again |
+| `needs recovery: tx-…` (status, doctor) | `AF rollback tx-…` ([recovery guide](docs/operations.md#recovery)) |
+| `another Agent Forge process is writing to this project` | Wait for it; if none is running, delete the lock file named in the message |
+| `invalid policy` | Fix or delete `.agent-forge/policy.yaml` ([policy](docs/policy.md)) |
 | `destination exists and is user-owned` | You already have a file there; rename it or skip that capability |
 | MCP server installed but not working | Remove its name from `disabledMcpjsonServers` in `.claude/settings.local.json` |
 | `files changed independently after apply` | You edited installed files; use `AF rollback --partial tx-…` |
@@ -89,14 +92,20 @@ More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
 ## Docs
 
 - [Getting started](docs/getting-started.md) · [CLI reference](docs/cli-reference.md) ·
+  [Operations & recovery](docs/operations.md) · [Policy](docs/policy.md) ·
   [Security model](docs/security.md) · [Architecture](docs/architecture.md) ·
-  [Capability model](docs/capability-model.md) · [Adapters](docs/adapters.md)
+  [Capability model](docs/capability-model.md) · [Adapters](docs/adapters.md) ·
+  [Evaluation](docs/evaluation.md)
+- Direction and status: [product vision](docs/product-vision.md) ·
+  [engineering roadmap & release gates](docs/engineering-roadmap.md)
 - Curation: [source curation](docs/source-curation.md) · [rejections](docs/rejections/README.md) ·
   [maintenance](docs/maintenance.md) · [upgrade lifecycle](docs/upgrade-lifecycle.md)
 - Decisions: [ADR-0001](docs/adr/0001-architecture-decisions.md) ·
   [ADR-0002](docs/adr/0002-upgrade-roadmap.md) ·
   [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) ·
-  [ADR-0004](docs/adr/0004-install-into-project.md) · [status](WORKSPACE_STATUS.md)
+  [ADR-0004](docs/adr/0004-install-into-project.md) ·
+  [ADR-0005](docs/adr/0005-production-hardening.md)
+- [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
 Content comes from Everything Claude Code, UI UX Pro Max, REA, andrej-karpathy-skills and
 Matt Pocock's skills; each item records its source commit and license.

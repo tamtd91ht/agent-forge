@@ -22,6 +22,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge maintainers
   rationale: Stdio server launched with `npx -y @upstash/context7-mcp@latest`; it downloads the package on first use and calls the Context7 API over the network, which is why it is its own approval class (`approve --mcp`) and Claude Code will additionally ask the user to trust the project server. No API key required for basic use. Merged into .mcp.json; other servers are preserved; a pre-existing `context7` entry with a different config is a planning conflict, never overwritten.
+  risk_rationale: "Launches a process from npm (`npx -y`, latest) that calls an external API. Gated by approve --mcp plus Claude Code's project-server trust prompt; no credentials passed."
   notes:
     - "Upstream template pins no version (@latest); pin in a fork if reproducibility matters."
 applicability:

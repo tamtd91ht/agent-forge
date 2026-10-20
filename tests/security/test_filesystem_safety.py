@@ -7,7 +7,12 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from agent_forge.apply.filesystem_safety import resolve_in_root, validate_relative_path
+from agent_forge.apply.backup import BackupStore
+from agent_forge.apply.filesystem_safety import (
+    resolve_in_root,
+    safe_write_bytes,
+    validate_relative_path,
+)
 from agent_forge.errors import SafetyViolation
 from agent_forge.util import atomic_write_text
 from tests.conftest import can_symlink
@@ -32,6 +37,13 @@ pytestmark = pytest.mark.security
         "bad\x00name",
         "trailing. ",
         "a/b<c",
+        "file.md:stream",
+        "CONIN$",
+        "dir/CONOUT$.txt",
+        "COM¹",
+        "LPT².md",
+        ".git/hooks/pre-commit",
+        "sub/.GIT/config",
     ],
 )
 def test_rejects_unsafe_relative_paths(bad: str) -> None:
@@ -88,3 +100,36 @@ def test_fuzzed_paths_never_escape(tmp_path_factory, s: str) -> None:
     except SafetyViolation:
         return
     assert root.resolve() in p.parents
+
+
+def test_alias_of_existing_entry_is_refused(tmp_path: Path) -> None:
+    root = tmp_path / "alias"
+    (root / ".claude" / "skills").mkdir(parents=True)
+    (root / "café.md").write_text("nfc", encoding="utf-8")
+    # same name up to case: one file on case-insensitive filesystems
+    with pytest.raises(SafetyViolation, match="alias"):
+        resolve_in_root(root, ".claude/Skills/x/SKILL.md")
+    # same name up to Unicode normalisation (NFD vs the existing NFC)
+    with pytest.raises(SafetyViolation, match="alias"):
+        resolve_in_root(root, "café.md")
+    assert resolve_in_root(root, ".claude/skills/x/SKILL.md")
+
+
+def test_safe_write_creates_and_rechecks_directories(tmp_path: Path) -> None:
+    root = tmp_path / "w"
+    root.mkdir()
+    dest = safe_write_bytes(root, "a/b/c/file.md", b"ok")
+    assert dest.read_bytes() == b"ok"
+    (root / "plain").write_text("x", encoding="utf-8")
+    with pytest.raises(SafetyViolation, match="not a directory"):
+        safe_write_bytes(root, "plain/inner.md", b"no")
+    (root / "dir.md").mkdir()
+    with pytest.raises(SafetyViolation, match="not a regular file"):
+        safe_write_bytes(root, "dir.md", b"no")
+
+
+@pytest.mark.parametrize("name", ["../../outside.0123456789ab", "a/b.0123456789ab", "x.md", ""])
+def test_backup_name_traversal_refused(tmp_path: Path, name: str) -> None:
+    store = BackupStore(tmp_path / "backup")
+    with pytest.raises(SafetyViolation):
+        store.load(name)

@@ -371,6 +371,19 @@ def _evaluate_one(
             "reference_only",
             ["reference-only capability: informs recommendations, never installed"],
         )
+    lc = reg.get(cap.id)
+    if cap.integrity is not None and cap.integrity.assets_sha256 != lc.assets_digest:
+        # content changed after it was reviewed and pinned: never install unreviewed bytes
+        return Rejection(
+            cap,
+            platform,
+            "integrity_mismatch",
+            [
+                "assets differ from the reviewed, pinned digest "
+                f"({lc.assets_digest[:12]} != {cap.integrity.assets_sha256[:12]}); "
+                "re-review and re-pin with scripts/pin_integrity.py"
+            ],
+        )
     if platform not in cap.platforms:
         return Rejection(
             cap,

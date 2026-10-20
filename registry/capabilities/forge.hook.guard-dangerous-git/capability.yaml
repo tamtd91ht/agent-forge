@@ -18,6 +18,7 @@ review:
   reviewed_at: "2026-10-20"
   reviewer: agent-forge maintainers
   rationale: Workspace-authored, inspired by mattpocock/skills misc/git-guardrails-claude-code but not copied (upstream needs jq, offers a ~/.claude install and blocks every push). Stdlib script with no network, no writes and no file reads; it parses only the hook payload with shlex, splits on && || ; | and newlines, and fails open on malformed input. Opt-in (tag) because it needs `python` on PATH; when Python is missing the hook errors without blocking. Merged into .claude/settings.json as a JSON fragment; requires `approve --hooks`.
+  risk_rationale: "Runs a command before every Bash call and can block it. Parses only the payload, no network, no writes, fails open; gated by approve --hooks and opt-in."
   notes:
     - "Matches git invocations, not aliases or wrapper scripts; it is a guard rail, not a sandbox."
 applicability:

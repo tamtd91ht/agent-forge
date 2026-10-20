@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from agent_forge.models.capability import Platform, RiskLevel
+
+# An approved plan must be applied within this window; afterwards re-plan (vision §7.1).
+PLAN_TTL = timedelta(days=7)
 
 
 class PlanStatus(StrEnum):
@@ -92,6 +96,7 @@ class RejectedCapability(BaseModel):
     category: str = Field(
         default="not_applicable",
         description="not_applicable | equivalent_exists | conflict | unsupported_platform | "
+        "integrity_mismatch | "
         "needs_runtime | reference_only | dependency_missing | already_installed | user_excluded",
     )
 
@@ -119,7 +124,7 @@ class TargetIdentity(BaseModel):
 
 class Plan(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    schema_version: str = "1"
+    schema_version: Literal["1"] = "1"  # an unknown version is refused, never misread
     plan_id: str
     kind: str = Field(description="assign | upgrade")
     created_at: str
@@ -127,6 +132,12 @@ class Plan(BaseModel):
     target: TargetIdentity
     target_path: str
     registry_digest: str
+    policy_digest: str | None = Field(
+        default=None, description="Digest of the effective policy layers the plan was built under"
+    )
+    expires_at: str | None = Field(
+        default=None, description="Approve/apply refuse the plan after this time (created_at + TTL)"
+    )
     selected: list[SelectedCapability] = Field(default_factory=list)
     rejected: list[RejectedCapability] = Field(default_factory=list)
     dependency_order: list[str] = Field(default_factory=list)
@@ -140,6 +151,16 @@ class Plan(BaseModel):
     status: PlanStatus = PlanStatus.DRAFT
     transaction_id: str | None = None
 
+    @model_validator(mode="after")
+    def _default_expiry(self) -> Plan:
+        if self.expires_at is None:
+            created = datetime.fromisoformat(self.created_at)
+            self.expires_at = (created + PLAN_TTL).isoformat()
+        return self
+
+    def is_expired(self, now: datetime) -> bool:
+        return self.expires_at is not None and now >= datetime.fromisoformat(self.expires_at)
+
     # ---- integrity -----------------------------------------------------------------------
 
     def content_digest(self) -> str:
@@ -150,6 +171,9 @@ class Plan(BaseModel):
             "kind": self.kind,
             "target": self.target.model_dump(mode="json"),
             "registry_digest": self.registry_digest,
+            "policy_digest": self.policy_digest,
+            "created_at": self.created_at,
+            "expires_at": self.expires_at,
             "selected": [s.model_dump(mode="json") for s in self.selected],
             "operations": [o.model_dump(mode="json") for o in self.operations],
         }

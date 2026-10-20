@@ -30,7 +30,7 @@ from agent_forge.validation.engine import validate_target
 from tests.conftest import base_manifest, skill_assets, write_capability
 
 
-def _approve(plan, shared: bool = True) -> None:
+def _approve(workspace, plan, shared: bool = True) -> None:
     plan.approval.status = "approved"
     plan.approval.approved_at = now_iso()
     plan.approval.plan_digest = plan.content_digest()
@@ -38,6 +38,7 @@ def _approve(plan, shared: bool = True) -> None:
         [o.op_id for o in plan.operations_needing_extra_approval()] if shared else []
     )
     plan.status = PlanStatus.APPROVED
+    Store(workspace).record_approval(plan)
 
 
 def _plan_for(workspace, root: Path, platforms=(Platform.CLAUDE_CODE,), **ctx):
@@ -76,10 +77,10 @@ def test_apply_requires_valid_approval(workspace, make_project) -> None:
     store = Store(workspace)
     with pytest.raises(ApprovalError):
         apply_plan(workspace, store, reg, plan)
-    _approve(plan, shared=False)  # shared-file op not approved
+    _approve(workspace, plan, shared=False)  # shared-file op not approved
     rep = preflight(plan, reg)
     assert not rep.ok and any("shared-file" in p for p in rep.problems)
-    _approve(plan, shared=True)
+    _approve(workspace, plan, shared=True)
     plan.operations[0].content = "tampered"
     plan.operations[0].content_sha256 = "0" * 64
     with pytest.raises(ApprovalError):
@@ -90,7 +91,7 @@ def test_full_lifecycle_with_drift_and_rollback(workspace, make_project) -> None
     root = make_project("t4", kind="claude")
     reg, _profile, plan = _plan_for(workspace, root)
     store = Store(workspace)
-    _approve(plan)
+    _approve(workspace, plan)
     store.save_plan(plan)
     tx = apply_plan(workspace, store, reg, plan)
     assert tx.status == TransactionStatus.COMPLETED
@@ -140,7 +141,7 @@ def test_full_lifecycle_with_drift_and_rollback(workspace, make_project) -> None
 def test_stale_plan_rejected_when_target_changes(workspace, make_project) -> None:
     root = make_project("t5", kind="claude")
     reg, _profile, plan = _plan_for(workspace, root)
-    _approve(plan)
+    _approve(workspace, plan)
     (root / "CLAUDE.md").write_text("# changed after planning\n", encoding="utf-8")
     assert any(d.stale for d in render_plan_diff(plan, root))
     with pytest.raises(StalePlanError):
@@ -150,7 +151,7 @@ def test_stale_plan_rejected_when_target_changes(workspace, make_project) -> Non
 def test_stale_plan_rejected_when_registry_changes(workspace, make_project) -> None:
     root = make_project("t6", kind="claude")
     _reg, _profile, plan = _plan_for(workspace, root)
-    _approve(plan)
+    _approve(workspace, plan)
     p = (
         workspace.registry_dir
         / "capabilities"
@@ -169,20 +170,20 @@ def test_stale_plan_rejected_when_registry_changes(workspace, make_project) -> N
 def test_apply_is_transactional_on_failure(workspace, make_project, monkeypatch) -> None:
     root = make_project("t7", kind="claude")
     reg, _profile, plan = _plan_for(workspace, root)
-    _approve(plan)
+    _approve(workspace, plan)
     store = Store(workspace)
     import agent_forge.apply.engine as engine
 
-    real = engine.atomic_write_bytes
+    real = engine.safe_write_bytes
     calls = {"n": 0}
 
-    def flaky(path, data):
+    def flaky(root, rel, data):
         calls["n"] += 1
         if calls["n"] == 3:
             raise OSError("disk full")
-        real(path, data)
+        return real(root, rel, data)
 
-    monkeypatch.setattr(engine, "atomic_write_bytes", flaky)
+    monkeypatch.setattr(engine, "safe_write_bytes", flaky)
     with pytest.raises(ApplyError):
         apply_plan(workspace, store, reg, plan)
     tx = store.load_transaction("tx-" + plan.plan_id.removeprefix("plan-"))
@@ -198,7 +199,7 @@ def test_apply_is_transactional_on_failure(workspace, make_project, monkeypatch)
 def test_upgrade_plan_replaces_only_unmodified_managed_files(workspace, make_project) -> None:
     root = make_project("t8", kind="claude")
     reg, _profile, plan = _plan_for(workspace, root)
-    _approve(plan)
+    _approve(workspace, plan)
     store = Store(workspace)
     apply_plan(workspace, store, reg, plan)
     # bump t.always to 1.1.0 with new content; user modifies t.needs-always
@@ -219,7 +220,7 @@ def test_upgrade_plan_replaces_only_unmodified_managed_files(workspace, make_pro
         r.capability_id == "t.needs-always" and r.category == "conflict" for r in up.rejected
     )
     assert up.user_decisions
-    _approve(up)
+    _approve(workspace, up)
     tx = apply_plan(workspace, store, reg2, up)
     assert tx.status == TransactionStatus.COMPLETED
     assert "New body." in (root / ".claude/skills/always/SKILL.md").read_text(encoding="utf-8")
@@ -245,7 +246,7 @@ def test_codex_and_claude_both(workspace, make_project) -> None:
     paths = {o.path for o in plan.operations}
     assert ".agents/skills/always/SKILL.md" in paths and ".claude/skills/always/SKILL.md" in paths
     assert "AGENTS.md" in paths and "CLAUDE.md" in paths
-    _approve(plan)
+    _approve(workspace, plan)
     store = Store(workspace)
     apply_plan(workspace, store, reg, plan)
     agents = (root / "AGENTS.md").read_text(encoding="utf-8")
@@ -258,7 +259,7 @@ def test_codex_and_claude_both(workspace, make_project) -> None:
 def test_corrupted_transaction_record_is_refused(workspace, make_project) -> None:
     root = make_project("t10", kind="claude")
     reg, _profile, plan = _plan_for(workspace, root)
-    _approve(plan)
+    _approve(workspace, plan)
     store = Store(workspace)
     tx = apply_plan(workspace, store, reg, plan)
     path = store.transaction_path(tx.transaction_id)

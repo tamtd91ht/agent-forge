@@ -2,6 +2,58 @@
 
 ## Unreleased
 
+### Production hardening (ADR-0005; audit and gates in docs/engineering-roadmap.md)
+
+Security and integrity
+- Approvals are recorded in the workspace (`state/approvals/`); apply refuses a plan whose
+  digest differs from the recorded one, so a hand-edited and re-hashed plan needs a new
+  `approve`.
+- Plans bind the effective policy (`policy_digest`) and expire after 7 days (`expires_at`);
+  the registry digest now covers `registry/policies/`. An invalid project `policy.yaml` fails
+  closed instead of being ignored.
+- Writes create directories one at a time and re-check the full path right before the
+  rename; `.git`, case/Unicode aliases of existing entries, `CONIN$`/`CONOUT$` and superscript
+  device names are refused; `managed.json` paths get the full path validation; backup
+  references are validated; scanner reads are bounded even if a file grows after the walk.
+- Content-safety scan of curated assets in `validate` (pipe-to-shell, broad deletes, sudo,
+  global config writes, embedded credentials, instruction overrides); findings are errors
+  unless acknowledged with a reason in the manifest.
+- Capabilities whose assets no longer match their pinned digest are rejected at plan time
+  (`integrity_mismatch`). `source.revision` must be a commit SHA. `review.risk_rationale` is
+  required above low risk. New `revoked` status and `replaced_by`; installed deprecated or
+  revoked capabilities are reported by `validate`.
+- Audit log redacts credential-looking values. Unknown `schema_version`s are refused.
+
+Recovery
+- Per-project exclusive lock around apply and rollback (stale locks of dead processes are
+  taken over).
+- Every operation is journaled (before hash, exact backup hash, intended hash) before its
+  write. Rollback now handles interrupted (`in_progress`), `failed` and `partial`
+  transactions, resolving journaled operations from what is on disk; a failed rollback marks
+  the original `recovery_required` and can be resumed. Backups are restored only when their
+  bytes match.
+- If saving the failure record fails, the original error is still reported.
+- `doctor`, `status` and `validate` report unfinished transactions with the rollback command.
+
+Quality and operations
+- `examples/` (Java/Spring, Go/Gin, Next.js, FastAPI, ASP.NET Core, mixed monorepo) with
+  reviewed expectations; `scripts/matching_report.py` measures precision/recall; CI gate.
+- Scanner: nested manifests (monorepos), Maven/Gradle/Spring/Quarkus/Micronaut, Go
+  frameworks, .NET/ASP.NET Core, Rust frameworks, Rails, Laravel/Symfony, build/test commands
+  per subproject, Makefile lint/format/build; low-confidence detections become warnings;
+  `.agent-forge/profile.yaml` confirms or rules out detections.
+- Adapter conformance suite; adapters own the path → platform mapping.
+- New `agent-forge impact <id>`; CI matrix (Windows/Linux/macOS × 3.11/3.14), installer
+  smoke tests, pip-audit, Dependabot; `export_schemas.py --check`; every exit code tested;
+  version single-sourced from `agent_forge/__init__.py`.
+- Docs: `product-vision.md` (the blueprint, as north star), `engineering-roadmap.md`
+  (evidence audit, backlog, release gates), `policy.md`, `operations.md`, `evaluation.md`,
+  ADR-0005, `SECURITY.md`, `CONTRIBUTING.md`; security doc states per-file atomicity and the
+  runtime boundary.
+
+### Fixed (hardening)
+- Codex adapter listed `AGENTS.override.md` as a shared file it can never write.
+
 ### Changed (ADR-0004: install from the project root)
 - New entry point: run `install.ps1` (`irm … | iex`) or `install.sh` (`curl … | bash`) in a
   project root. It installs or updates Agent Forge in `~/.agent-forge` (venv, launchers in

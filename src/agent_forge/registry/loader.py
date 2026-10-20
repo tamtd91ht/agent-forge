@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from agent_forge.errors import RegistryError
 from agent_forge.models.capability import Capability, CapabilityStatus
-from agent_forge.util import read_yaml, sha256_text, sha256_tree
+from agent_forge.util import normalize_newlines, read_yaml, sha256_text, sha256_tree
 
 MANIFEST_NAME = "capability.yaml"
 ASSETS_DIRNAME = "assets"
@@ -37,13 +37,21 @@ class Registry:
 
     @property
     def digest(self) -> str:
-        """Digest over every manifest and asset, stable across machines."""
+        """Digest over every manifest, asset and shipped policy, stable across machines."""
         h = hashlib.sha256()
         for cid in sorted(self.items):
             h.update(cid.encode("utf-8"))
             h.update(b"=")
             h.update(self.items[cid].content_digest.encode("ascii"))
             h.update(b"\n")
+        policies = self.root / "policies"
+        if policies.is_dir():
+            for p in sorted(policies.rglob("*")):
+                if p.is_file() and not p.is_symlink():
+                    text = normalize_newlines(p.read_text(encoding="utf-8", errors="replace"))
+                    h.update(f"policies/{p.relative_to(policies).as_posix()}=".encode())
+                    h.update(sha256_text(text).encode("ascii"))
+                    h.update(b"\n")
         return h.hexdigest()
 
     def get(self, capability_id: str) -> LoadedCapability:

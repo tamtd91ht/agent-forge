@@ -18,6 +18,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge maintainers
   rationale: Dependency-free Node script; spawns only the locally installed Prettier binary (no npx, no network) on the single edited file. Installed for JS/TS projects. Requires `approve --hooks`.
+  risk_rationale: "Runs the project's own Prettier binary on the edited file after each edit: a process launch that rewrites one file. No npx, no network; gated by approve --hooks."
 applicability:
   languages: [javascript, typescript]
   tags: [formatting, hooks, quality]

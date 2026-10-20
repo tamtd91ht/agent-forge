@@ -22,6 +22,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge curation (automated session; human sign-off pending)
   rationale: Documented frontmatter fields only (tools "Read, Grep, Glob, Bash", model "sonnet"). The agent has Bash access, so it is marked with the `runs_shell` permission and is therefore optional unless requested. Adapted only by an attribution footer.
+  risk_rationale: "Subagent with Bash access: it can run commands the main session would also need permission for. Limited by Claude Code's own permission prompts and listed as optional (permission `runs_shell`) unless requested."
 applicability:
   always: true
   tags: [review, agents]

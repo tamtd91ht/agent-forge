@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-forge"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Local-first, approval-first platform that scans, recommends, installs, validates and rolls back AI-agent capabilities for software projects."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -42,7 +42,12 @@ dev = [
 agent-forge = "agent_forge.cli:main"
 
 [project.urls]
-Documentation = "https://github.com/vihat/agent-forge#readme"
+Documentation = "https://github.com/tamtd91ht/agent-forge#readme"
+Source = "https://github.com/tamtd91ht/agent-forge"
+Changelog = "https://github.com/tamtd91ht/agent-forge/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "src/agent_forge/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_forge"]

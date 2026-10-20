@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -100,7 +100,7 @@ class ScanStats(BaseModel):
 
 class ProjectProfile(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    schema_version: str = "1"
+    schema_version: Literal["1"] = "1"  # an unknown version is refused, never misread
     scanned_at: str
     forge_version: str
     target_path: str = Field(description="Path as given by the user")

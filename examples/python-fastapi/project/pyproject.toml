@@ -1,0 +1,7 @@
+[project]
+name = "billing"
+version = "0.1.0"
+dependencies = ["fastapi", "uvicorn", "pytest"]
+
+[tool.ruff]
+line-length = 100

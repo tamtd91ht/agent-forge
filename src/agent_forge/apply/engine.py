@@ -2,10 +2,12 @@
 
 Pre-flight (all must pass before the first write):
   plan schema valid, status approved, approval digest == current digest
-  target exists, git root unchanged, registry digest unchanged
+  approval recorded in this workspace for exactly this digest, plan not expired
+  target exists, registry digest unchanged, effective policy unchanged
   every operation: safe path, adapter-managed root, current hash == before_sha256
   every shared-file operation explicitly approved
-Then: backup -> atomic write -> record, saving the transaction record after every operation.
+Then, under the target lock, per operation: re-check hash -> backup -> journal (record
+saved with the intended hash) -> re-check path -> atomic write -> read-back -> record.
 """
 
 from __future__ import annotations
@@ -13,12 +15,17 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 
 from agent_forge import __version__
 from agent_forge.adapters import get_adapter
 from agent_forge.apply.backup import BackupStore
-from agent_forge.apply.filesystem_safety import assert_regular_file_or_missing, resolve_in_root
+from agent_forge.apply.filesystem_safety import (
+    assert_regular_file_or_missing,
+    resolve_in_root,
+    safe_write_bytes,
+)
 from agent_forge.apply.jsonmerge import parse_fragment
 from agent_forge.config import WorkspaceConfig
 from agent_forge.errors import ApplyError, ApprovalError, SafetyViolation, StalePlanError
@@ -26,10 +33,11 @@ from agent_forge.models.plan import OperationKind, Plan, PlanStatus
 from agent_forge.models.transaction import AppliedOperation, Transaction, TransactionStatus
 from agent_forge.planner.builder import transaction_id_for
 from agent_forge.planner.diff import projected_content
+from agent_forge.policy.engine import load_policies
 from agent_forge.registry.loader import Registry
+from agent_forge.storage.locks import target_lock
 from agent_forge.storage.transactions import Store
 from agent_forge.util import (
-    atomic_write_bytes,
     normalize_newlines,
     now_iso,
     sha256_bytes,
@@ -51,7 +59,19 @@ def _current_bytes(root: Path, rel: str) -> bytes | None:
     return p.read_bytes() if p.exists() else None
 
 
-def preflight(plan: Plan, reg: Registry, *, require_registry_match: bool = True) -> PreflightReport:
+def preflight(
+    plan: Plan,
+    reg: Registry,
+    *,
+    require_registry_match: bool = True,
+    recorded_digest: str | None = None,
+    policy_digest: str | None = None,
+) -> PreflightReport:
+    """Check everything an approved plan depends on, without writing anything.
+
+    `recorded_digest` is the digest `approve` recorded in the workspace and `policy_digest`
+    the digest of the policy in force now; `apply_plan` always supplies both.
+    """
     rep = PreflightReport(ok=True)
     if plan.status != PlanStatus.APPROVED:
         rep.problems.append(
@@ -61,6 +81,15 @@ def preflight(plan: Plan, reg: Registry, *, require_registry_match: bool = True)
         rep.problems.append(
             "approval digest does not match the plan content (plan edited after approval?)"
         )
+    elif recorded_digest != plan.content_digest():
+        rep.problems.append(
+            "approval is not recorded in this workspace for this plan content "
+            "(plan edited or copied in after approval?)"
+        )
+    if plan.is_expired(datetime.now(UTC)):
+        rep.problems.append(f"plan expired at {plan.expires_at} (stale); create a new plan")
+    if plan.policy_digest is not None and policy_digest != plan.policy_digest:
+        rep.problems.append("policy changed since the plan was created (stale)")
     root = Path(plan.target.canonical_path)
     if not root.is_dir():
         rep.problems.append(f"target no longer exists: {root}")
@@ -122,7 +151,30 @@ def apply_plan(
     *,
     confirm: Callable[[PreflightReport], bool] | None = None,
 ) -> Transaction:
-    rep = preflight(plan, reg)
+    """Pre-flight, then write every operation inside a journaled transaction.
+
+    Runs under the target's exclusive lock, so pre-flight checks and writes see the same
+    project state and no other apply or rollback can interleave.
+    """
+    with target_lock(ws, plan.target.canonical_path, f"apply {plan.plan_id}"):
+        return _apply_locked(ws, store, reg, plan, confirm)
+
+
+def _apply_locked(
+    ws: WorkspaceConfig,
+    store: Store,
+    reg: Registry,
+    plan: Plan,
+    confirm: Callable[[PreflightReport], bool] | None,
+) -> Transaction:
+    target = Path(plan.target.canonical_path)
+    policies = load_policies(ws.registry_dir, ws.root, target if target.is_dir() else None)
+    rep = preflight(
+        plan,
+        reg,
+        recorded_digest=store.recorded_approval_digest(plan.plan_id),
+        policy_digest=policies.digest,
+    )
     if not rep.ok:
         stale = any("stale" in p or "registry changed" in p for p in rep.problems)
         approval = any("approval" in p for p in rep.problems)
@@ -134,7 +186,7 @@ def apply_plan(
     if confirm is not None and not confirm(rep):
         raise ApplyError("apply cancelled by user")
 
-    root = Path(plan.target.canonical_path)
+    root = target
     tx_id = transaction_id_for(plan.plan_id)
     if store.transaction_path(tx_id).exists():
         raise ApplyError(
@@ -181,18 +233,26 @@ def apply_plan(
                 raise StalePlanError(f"{op.path} changed between pre-flight and write; aborting")
             rec.before_sha256 = current_hash
             if current is not None:
-                rec.backup, _ = backups.save(op.path, current)
+                rec.backup, rec.backup_sha256 = backups.save(op.path, current)
             new_text = projected_content(op, current_norm)
             if op.kind == OperationKind.MANIFEST and new_text is not None:
                 new_text = _stamp_manifest(new_text, applied_at)
+            # Journal before touching the file: a crash from here on leaves a record that
+            # says what was about to change, with its backup, so rollback can recover it.
+            rec.intended_after_sha256 = sha256_text(new_text) if new_text is not None else None
+            rec.journaled = True
+            store.save_transaction(tx)
+            # Re-check right before the write: nothing may have been swapped for a link since.
+            dest = resolve_in_root(root, op.path)
+            assert_regular_file_or_missing(dest)
             if new_text is None:
                 dest.unlink()
                 rec.after_sha256 = None
                 _prune_empty_dirs(root, dest.parent)
             else:
                 data = new_text.encode("utf-8")
-                atomic_write_bytes(dest, data)
-                rec.after_sha256 = sha256_text(new_text)
+                safe_write_bytes(root, op.path, data)
+                rec.after_sha256 = rec.intended_after_sha256
                 if (
                     op.after_sha256
                     and op.kind != OperationKind.MANIFEST
@@ -209,23 +269,33 @@ def apply_plan(
     except Exception as exc:
         tx.status = (
             TransactionStatus.PARTIAL
-            if any(o.applied for o in tx.operations)
+            if any(o.applied or o.journaled for o in tx.operations)
             else TransactionStatus.FAILED
         )
         tx.finished_at = now_iso()
         if tx.operations and not tx.operations[-1].applied:
             tx.operations[-1].error = str(exc)
         tx.notes.append(f"aborted: {exc}")
-        store.save_transaction(tx)
-        plan.status = PlanStatus.FAILED
-        plan.transaction_id = tx_id
-        store.save_plan(plan)
+        record_error = None
+        try:
+            store.save_transaction(tx)
+            plan.status = PlanStatus.FAILED
+            plan.transaction_id = tx_id
+            store.save_plan(plan)
+        except Exception as save_exc:  # keep the original failure visible
+            record_error = save_exc
+        hint = f"Run `agent-forge rollback {tx_id}` to restore what was written."
+        if record_error is not None:
+            raise ApplyError(
+                f"apply failed: {exc}; the transaction record could not be updated either "
+                f"({record_error}), so it still reads in_progress",
+                hint=hint + " The journal written before each write lets rollback recover it.",
+            ) from exc
         if isinstance(exc, (ApplyError, StalePlanError, SafetyViolation)):
+            if exc.hint is None:
+                exc.hint = hint
             raise
-        raise ApplyError(
-            f"apply failed: {exc}",
-            hint=f"Run `agent-forge rollback {tx_id}` to restore applied files.",
-        ) from exc
+        raise ApplyError(f"apply failed: {exc}", hint=hint) from exc
     tx.status = TransactionStatus.COMPLETED
     tx.finished_at = now_iso()
     store.save_transaction(tx)

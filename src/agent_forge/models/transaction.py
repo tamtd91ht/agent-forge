@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -18,6 +19,7 @@ class TransactionStatus(StrEnum):
     PARTIAL = "partial"  # some operations applied, then a failure occurred
     ROLLED_BACK = "rolled_back"
     ROLLBACK_CONFLICT = "rollback_conflict"
+    RECOVERY_REQUIRED = "recovery_required"  # a rollback of this transaction failed midway
 
 
 class AppliedOperation(BaseModel):
@@ -32,6 +34,16 @@ class AppliedOperation(BaseModel):
     backup: str | None = Field(
         default=None, description="Relative path inside the transaction backup dir"
     )
+    backup_sha256: str | None = Field(
+        default=None, description="sha256 of the exact backed-up bytes"
+    )
+    journaled: bool = Field(
+        default=False,
+        description="Recorded (with before hash and backup) before the write was attempted",
+    )
+    intended_after_sha256: str | None = Field(
+        default=None, description="Hash the file will have once this write lands (None = delete)"
+    )
     applied: bool = False
     error: str | None = None
     fragment: dict | None = Field(
@@ -41,7 +53,7 @@ class AppliedOperation(BaseModel):
 
 class Transaction(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    schema_version: str = "1"
+    schema_version: Literal["1"] = "1"  # an unknown version is refused, never misread
     transaction_id: str
     plan_id: str
     plan_digest: str

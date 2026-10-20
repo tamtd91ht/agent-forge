@@ -1,3 +1,8 @@
+> **Status: historical input (2026-10-16).** Decisions on it are recorded in
+> [ADR-0002](docs/adr/0002-upgrade-roadmap.md); current direction is
+> [docs/product-vision.md](docs/product-vision.md), current tasks
+> [docs/engineering-roadmap.md](docs/engineering-roadmap.md).
+
 # Agent Forge — Review & Upgrade Proposal
 
 > **Repository:** `tamtd91ht/agent-forge`  

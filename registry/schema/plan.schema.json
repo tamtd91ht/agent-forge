@@ -264,7 +264,7 @@
         },
         "category": {
           "default": "not_applicable",
-          "description": "not_applicable | equivalent_exists | conflict | unsupported_platform | needs_runtime | reference_only | dependency_missing | already_installed | user_excluded",
+          "description": "not_applicable | equivalent_exists | conflict | unsupported_platform | integrity_mismatch | needs_runtime | reference_only | dependency_missing | already_installed | user_excluded",
           "title": "Category",
           "type": "string"
         },
@@ -467,6 +467,19 @@
       "title": "Dependency Order",
       "type": "array"
     },
+    "expires_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Approve/apply refuse the plan after this time (created_at + TTL)",
+      "title": "Expires At"
+    },
     "forge_version": {
       "title": "Forge Version",
       "type": "string"
@@ -494,6 +507,19 @@
       "title": "Plan Id",
       "type": "string"
     },
+    "policy_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Digest of the effective policy layers the plan was built under",
+      "title": "Policy Digest"
+    },
     "registry_digest": {
       "title": "Registry Digest",
       "type": "string"
@@ -515,6 +541,7 @@
       "type": "string"
     },
     "schema_version": {
+      "const": "1",
       "default": "1",
       "title": "Schema Version",
       "type": "string"

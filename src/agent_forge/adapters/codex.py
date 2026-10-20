@@ -32,7 +32,7 @@ class CodexAdapter(PlatformAdapter):
         docs_url="https://learn.chatgpt.com/docs/agent-configuration/agents-md",
         verified_on="2026-10-16",
         instruction_files=("AGENTS.md", "AGENTS.override.md"),
-        shared_files=("AGENTS.md", "AGENTS.override.md", ".codex/config.toml", ".codex/hooks.json"),
+        shared_files=("AGENTS.md", ".codex/config.toml", ".codex/hooks.json"),
         managed_roots=("AGENTS.md", ".agents/skills/", ".codex/", ".agent-forge/"),
         supported_kinds=(CapabilityKind.SKILL, CapabilityKind.INSTRUCTION),
         unsupported_notes=(

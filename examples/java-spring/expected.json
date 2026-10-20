@@ -1,0 +1,31 @@
+{
+  "reviewed": "2026-10-20",
+  "notes": "Spring Boot service with Maven wrapper. No JVM-specific capability exists in the registry, so only stack-independent ones apply; no Node/Python hooks (no runtime guaranteed); error-handling is TS/JS/Python/Go only.",
+  "languages": [
+    "java"
+  ],
+  "frameworks": [
+    "spring",
+    "test:junit"
+  ],
+  "project_types": [
+    "backend"
+  ],
+  "test_commands": [
+    "./mvnw test"
+  ],
+  "recommended": [
+    "ecc.agent.planner",
+    "ecc.rules.common",
+    "ecc.security-review",
+    "ecc.tdd-workflow",
+    "ecc.verification-loop",
+    "forge.managed-notice",
+    "karpathy.principles",
+    "mattpocock.diagnosing-bugs",
+    "mcp.context7"
+  ],
+  "optional": [
+    "ecc.agent.code-reviewer"
+  ]
+}

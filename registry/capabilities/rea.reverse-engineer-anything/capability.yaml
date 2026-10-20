@@ -24,6 +24,7 @@ review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge curation (automated session; human sign-off pending)
   rationale: The skill text states it "supplies instructions; it does not register the REA MCP server". Its tools attach debuggers, inject Frida scripts into processes, drive the user's browser and talk to adb devices. That is a native runtime with high privilege, so Agent Forge records it as a native capability with install hints and never copies the skill alone (it would be dead weight). Only surfaced when a user asks for reverse-engineering (tag), never by default.
+  risk_rationale: "Its runtime attaches debuggers, injects Frida scripts and drives devices. Agent Forge never installs it (native_plugin, hint only) and surfaces it only on explicit request."
   notes:
     - "DISCLAIMER.md forbids DRM / anti-cheat / licence bypass; carry that notice when enabling."
 applicability:

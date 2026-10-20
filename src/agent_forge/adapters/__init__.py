@@ -21,4 +21,10 @@ def get_adapter(platform: Platform) -> PlatformAdapter:
     return _ADAPTERS[platform]
 
 
-__all__ = ["PlatformAdapter", "all_adapters", "get_adapter"]
+def platform_owning(rel_path: str) -> Platform | None:
+    """The platform whose managed roots contain `rel_path` (None for shared/unknown paths)."""
+    owners = [a.platform for a in _ADAPTERS.values() if a.owns(rel_path)]
+    return owners[0] if len(owners) == 1 else None
+
+
+__all__ = ["PlatformAdapter", "all_adapters", "get_adapter", "platform_owning"]

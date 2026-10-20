@@ -28,7 +28,7 @@
 | `config` | workspace discovery and `agent-forge.yaml` | no |
 | `models/` | Pydantic models: capability, project profile, plan, transaction | no |
 | `sources/` | `sources.yaml`, git clone/fetch/compare, provenance checks | no (clones into workspace) |
-| `registry/` | load manifests, cross-validate (incl. skill-to-skill calls), catalog queries, registry digest, always-loaded context cost | no |
+| `registry/` | load manifests, cross-validate (incl. skill-to-skill calls and the content-safety scan), catalog queries, registry digest (incl. shipped policies), always-loaded context cost | no |
 | `scanner/` | bounded read-only walker, language/framework/type detection, agent inventory, managed-manifest validation | no |
 | `adapters/` | per-platform conventions: detection, inventory, managed roots, shared files, content rules | no |
 | `matching/` | hard rules, equivalence/conflict detection, scoring | no |
@@ -36,7 +36,7 @@
 | `apply/` | path safety, section merge, backups, transactional apply | **yes, only here** |
 | `rollback/` | conflict-aware reversal of a transaction | **yes** |
 | `validation/` | registry, provenance, managed installs, config syntax, transaction integrity | no |
-| `storage/` | JSON documents + SQLite index for plans/transactions | workspace only |
+| `storage/` | JSON documents + SQLite index for plans/transactions, approval records, per-project write locks, redacting audit log | workspace only |
 | `cli` | Typer commands, exit codes, JSON output | — |
 
 ## Data flow of one upgrade

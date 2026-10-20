@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -27,7 +27,8 @@ class CapabilityStatus(StrEnum):
     DISCOVERED = "discovered"
     UNDER_REVIEW = "under_review"
     CURATED = "curated"
-    DEPRECATED = "deprecated"
+    DEPRECATED = "deprecated"  # no new installs; installed copies keep working, `replaced_by`
+    REVOKED = "revoked"  # withdrawn for cause: installed copies are reported as errors
     REJECTED = "rejected"
 
 
@@ -95,6 +96,14 @@ class SourceRef(StrictModel):
     paths: list[str] = Field(
         default_factory=list, description="Upstream paths this capability derives from"
     )
+
+    @field_validator("revision")
+    @classmethod
+    def _immutable_revision(cls, v: str | None) -> str | None:
+        # a branch or tag name can move; only a full commit SHA pins content
+        if v is not None and not re.fullmatch(r"[0-9a-f]{40}", v):
+            raise ValueError(f"source.revision must be a full 40-hex commit SHA, got {v!r}")
+        return v
 
 
 class LicenseInfo(StrictModel):
@@ -174,10 +183,22 @@ class ValidationCheck(StrictModel):
     params: dict[str, Any] = Field(default_factory=dict)
 
 
+class AcknowledgedFinding(StrictModel):
+    """A content-safety finding a reviewer read and accepted (registry/content_safety.py)."""
+
+    rule: str
+    path: str = Field(description="Asset path relative to assets/; fnmatch globs allowed")
+    reason: str
+
+
 class ReviewInfo(StrictModel):
     reviewed_at: str = Field(description="ISO-8601 date")
     reviewer: str
     rationale: str
+    risk_rationale: str | None = Field(
+        default=None, description="Why the risk level is what it is (required above low)"
+    )
+    acknowledged_findings: list[AcknowledgedFinding] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
     signed_off_by: str | None = Field(
         default=None, description="Human who signed off the curation (None = pending)"
@@ -215,7 +236,7 @@ class Integrity(StrictModel):
 
 
 class Capability(StrictModel):
-    schema_version: str = "1"
+    schema_version: Literal["1"] = "1"  # an unknown version is refused, never misread
     id: str
     name: str
     description: str
@@ -224,6 +245,9 @@ class Capability(StrictModel):
     category: str
     purpose: str
     status: CapabilityStatus
+    replaced_by: str | None = Field(
+        default=None, description="Capability id to use instead (deprecated / revoked entries)"
+    )
     provenance: Provenance
     source: SourceRef
     license: LicenseInfo

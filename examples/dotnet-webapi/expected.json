@@ -1,0 +1,30 @@
+{
+  "reviewed": "2026-10-20",
+  "notes": "ASP.NET Core minimal API (.csproj with the Web SDK). Backend items only; dotnet test discovered.",
+  "languages": [
+    "csharp"
+  ],
+  "frameworks": [
+    "aspnetcore"
+  ],
+  "project_types": [
+    "backend"
+  ],
+  "test_commands": [
+    "dotnet test"
+  ],
+  "recommended": [
+    "ecc.agent.planner",
+    "ecc.rules.common",
+    "ecc.security-review",
+    "ecc.tdd-workflow",
+    "ecc.verification-loop",
+    "forge.managed-notice",
+    "karpathy.principles",
+    "mattpocock.diagnosing-bugs",
+    "mcp.context7"
+  ],
+  "optional": [
+    "ecc.agent.code-reviewer"
+  ]
+}
