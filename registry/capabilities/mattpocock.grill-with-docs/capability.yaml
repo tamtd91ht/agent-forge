@@ -1,0 +1,54 @@
+schema_version: "1"
+id: mattpocock.grill-with-docs
+name: Grill with docs
+description: User-invoked /grill-with-docs - a grilling session that also builds the domain model (GLOSSARY.md and ADRs) as decisions are made.
+version: 1.0.0
+kind: skill
+category: engineering.planning
+purpose: The upstream author's most-used entry point - one command that combines the grilling interview with domain modeling, so alignment before a change also leaves the project's language and decisions written down.
+status: curated
+provenance: upstream
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/engineering/grill-with-docs/SKILL.md
+    - skills/engineering/grill-with-docs/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/grill-with-docs/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: A 7-line user-invoked skill (disable-model-invocation; Codex policy.allow_implicit_invocation false) that calls the grilling and domain-modeling skills, which are declared dependencies. Costs no always-loaded context.
+applicability:
+  tags: [grill-with-docs, grilling, domain-modeling, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/grill-with-docs
+    dest: .claude/skills/grill-with-docs
+    merge: create_only
+  - platform: codex
+    source: codex/grill-with-docs
+    dest: .agents/skills/grill-with-docs
+    merge: create_only
+dependencies: [mattpocock.grilling, mattpocock.domain-modeling]
+equivalents:
+  - kind: skill
+    name_patterns: ["grill-with-docs"]
+    description: an existing grill-with-docs skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/grill-with-docs/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: ea03022347c54f241dad33c28bb3a40b18c38af458a85b8fab11516d22115282
+  pinned_at: "2026-10-20"

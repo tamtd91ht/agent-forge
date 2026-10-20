@@ -57,3 +57,19 @@ sources:
       - "Pure markdown: no scripts, hooks, MCP servers or network use."
       - "Repository was previously forrestchang/andrej-karpathy-skills; README install snippets still point there."
     redistribution_notes: "No LICENSE file in the repository; MIT is declared in README.md and in the SKILL.md `license:` frontmatter. Keep attribution to the author (forrestchang)."
+
+  - id: mattpocock
+    name: Matt Pocock's Skills For Real Engineers
+    url: https://github.com/mattpocock/skills
+    license: MIT
+    default_branch: main
+    pinned_revision: 24fe0ef7737efae15c87225755e9f6f5965e4888  # tag v1.3.1
+    trust: untrusted
+    homepage: https://github.com/mattpocock/skills
+    notes:
+      - "Pure-markdown Agent Skills (27 promoted in skills/engineering + skills/productivity); the Claude Code plugin manifest declares skills only (no hooks, no MCP)."
+      - "Cross-skill calls are written as `Call the Skill tool with \"X\"`; user-invoked skills set disable-model-invocation and agents/openai.yaml policy.allow_implicit_invocation: false."
+      - "setup-matt-pocock-skills writes an `## Agent skills` block into CLAUDE.md/AGENTS.md outside markers and runs `gh label create`; to-spec/to-tickets/triage/wayfinder/implement* depend on it: not curated."
+      - "scripts/link-skills.sh symlinks into ~/.claude/skills and ~/.agents/skills: never run."
+      - "Pinned to release tags; main carries unreleased changesets."
+    redistribution_notes: "MIT (c) 2026 Matt Pocock; keep LICENSE. skills/engineering/pr is adapted from humanlayer `show-me` (see pr/CREDITS.md); upstream licence unverified, not curated."

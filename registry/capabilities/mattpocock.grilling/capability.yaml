@@ -1,0 +1,53 @@
+schema_version: "1"
+id: mattpocock.grilling
+name: Grilling interview
+description: Interview the user relentlessly about a plan or design, one round per frontier of the decision tree, each question with a recommended answer.
+version: 1.0.0
+kind: skill
+category: engineering.planning
+purpose: Turns alignment before coding into a repeatable protocol - ask every question whose prerequisites are settled, recommend an answer for each, look facts up instead of asking for them, and act only once the design tree is fully resolved.
+status: curated
+provenance: upstream
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/productivity/grilling/SKILL.md
+    - skills/productivity/grilling/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/grilling/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 30 lines of markdown, verbatim, model-invoked. Mentions dispatching a sub-agent to look up facts; no tools, scripts or external services are assumed.
+applicability:
+  tags: [grilling, grill, planning, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/grilling
+    dest: .claude/skills/grilling
+    merge: create_only
+  - platform: codex
+    source: codex/grilling
+    dest: .agents/skills/grilling
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["grill"]
+    description: an existing grilling / interview skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/grilling/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 5f3dfde0e139de5b908e3aec9d8ebcb9dc6a6a3eea655cc1f34ba4b6316960ee
+  pinned_at: "2026-10-20"

@@ -10,7 +10,7 @@ commits made** (left for the maintainer to review and commit).
 | A — Discovery & design | done | `docs/discovery-report.md`, `docs/adr/0001-architecture-decisions.md`, platform conventions verified against official docs |
 | B — Python foundation | done | `pyproject.toml` (hatchling), `src/agent_forge` (~6.6k lines), schemas exported to `registry/schema/`, `agent-forge --help` works |
 | C — Read-only MVP | done | `init`, `sources list/clone/sync`, `catalog`, `scan`, `assign`, `upgrade` (plan only), `diff`, `plans`; plus `forge` (one-shot, still approval-first) |
-| D — Curation | done (initial) | 20 capabilities in `registry/capabilities/` (skills, rules, agents, instruction, 4 hooks, 2 MCP servers) with provenance SHAs; `docs/source-curation.md` lists inclusions and exclusions |
+| D — Curation | done (initial) | 33 capabilities in `registry/capabilities/` from 5 sources + workspace (skills, rules, agents, instructions, 5 hooks, 2 MCP servers) with provenance SHAs; `docs/source-curation.md` lists inclusions and exclusions |
 | E — Adapters | done | Claude Code (skill/rule/agent/instruction), Codex (skill/instruction); unsupported kinds reported |
 | F — Apply engine | done | `approve`, `apply`, `validate`, `status`, `rollback`, `reindex`; transactions + backups |
 | G — End-to-end verification | done | `tests/e2e/test_cli.py::test_full_cli_lifecycle` and a manual run on `…/af-smoke/my app ünïcode` (Next.js fixture): assign → diff → approve → apply → validate → user edit → rollback refused → `--partial` kept the edit and removed everything else |
@@ -20,7 +20,7 @@ commits made** (left for the maintainer to review and commit).
 
 ```
 ruff check src tests scripts   -> All checks passed
-pytest -q                      -> 127 passed, 2 skipped (symlink creation needs privilege;
+pytest -q                      -> 172 passed, 2 skipped (symlink creation needs privilege;
                                   Windows junction tests run and pass)
 agent-forge validate           -> 15 checks, 0 errors, 0 warnings (provenance verified)
 ```

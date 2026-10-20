@@ -25,6 +25,7 @@ my-app/
 │   ├── skills/security-review/          # because it is a backend
 │   ├── skills/error-handling/           # because it is Python
 │   ├── skills/tdd-workflow/
+│   ├── skills/diagnosing-bugs/          # feedback-loop-first debugging
 │   ├── skills/verification-loop/
 │   └── agents/planner.md
 └── .agent-forge/managed.json            # what Agent Forge installed: commit it with your project
@@ -148,7 +149,12 @@ and it hands you a proposed `sources.yaml` entry or ADR stub instead of writing 
 | Run without prompts (CI) | `agent-forge forge "my-app" --yes --shared-files --json` |
 
 Useful `--want` tags: `security`, `testing`, `tdd`, `review`, `planning`, `adr`, `git`,
-`ui`, `ux`, `e2e`, `docs`, `hooks`, `formatting`, `karpathy`.
+`ui`, `ux`, `e2e`, `docs`, `hooks`, `formatting`, `karpathy`, `grill-with-docs`, `grilling`,
+`domain-modeling`, `codebase-design`, `agent-docs`, `tdd-seams`, `git-guard`, `mattpocock`.
+
+The plan's `ctx` column is what each capability adds to the agent's context on every turn
+(descriptions, always-on rules, CLAUDE.md sections). A policy can cap it with
+`max_context_chars`.
 
 Rollback never overwrites files you edited after the install: it stops and tells you. Use
 `--partial` to undo everything else and keep your edits.
@@ -176,10 +182,11 @@ More: [troubleshooting](docs/troubleshooting.md) · `agent-forge doctor` checks 
 - Curating new content: [source curation](docs/source-curation.md) ·
   [maintenance](docs/maintenance.md) · [upgrade lifecycle](docs/upgrade-lifecycle.md)
 - Design decisions: [ADR-0001](docs/adr/0001-architecture-decisions.md) ·
-  [ADR-0002](docs/adr/0002-upgrade-roadmap.md) · status: [WORKSPACE_STATUS.md](WORKSPACE_STATUS.md)
+  [ADR-0002](docs/adr/0002-upgrade-roadmap.md) ·
+  [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) · status: [WORKSPACE_STATUS.md](WORKSPACE_STATUS.md)
 
-Content comes from reviewed upstream projects: Everything Claude Code, UI UX Pro Max, REA and
-andrej-karpathy-skills. Each item records its source commit and license.
+Content comes from reviewed upstream projects: Everything Claude Code, UI UX Pro Max, REA,
+andrej-karpathy-skills and Matt Pocock's skills. Each item records its source commit and license.
 
 ## Development
 

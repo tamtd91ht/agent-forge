@@ -2,7 +2,7 @@ schema_version: "1"
 id: forge.skill.agent-forge-scout
 name: Agent Forge scout skill
 description: On-demand skill that reviews a public GitHub repository for Agent Forge - what is genuinely impressive, and whether it could become curated content or an engine upgrade aligned with the original direction (ADR-0001/0002, upgrade proposal). Read-only; never runs the repository's code.
-version: 1.0.0
+version: 1.1.0
 kind: skill
 category: meta.agent-forge
 purpose: Turns "look at this repo" into a structured scouting report (impressive points, bucket per point, licence and safety check, ready-to-paste sources.yaml entry or ADR stub, verdict) so new sources and engine ideas enter Agent Forge through review rather than enthusiasm.
@@ -15,7 +15,7 @@ license:
   attribution: "Agent Forge maintainers"
   redistribution_ok: true
 review:
-  reviewed_at: "2026-10-19"
+  reviewed_at: "2026-10-20"
   reviewer: agent-forge maintainers
   rationale: Workspace-authored markdown only. Every step is read-only (gh/git shallow clone into a scratch directory, never sources/checkouts/), it forbids executing anything from the reviewed repository and treats its contents as untrusted data, and it hands the user proposed sources.yaml / ADR text instead of writing it. Opt-in (tag `agent-forge`); also shipped in the repo's own `.claude/skills/`.
 applicability:
@@ -39,5 +39,5 @@ risk: low
 benefit_score: 5
 maintenance_cost: 1
 integrity:
-  assets_sha256: 3e9b2356d02eaf19dfcd309fb9d07fe7f66977267c0a8b38b351a21fb2008bf9
-  pinned_at: "2026-10-19"
+  assets_sha256: 585ea34f18714345ce432da1e8073641a6287914fb6102a604e982be0df50879
+  pinned_at: "2026-10-20"

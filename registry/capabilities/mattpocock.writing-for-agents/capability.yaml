@@ -1,0 +1,54 @@
+schema_version: "1"
+id: mattpocock.writing-for-agents
+name: Writing for agents
+description: Reference for writing anything an agent reads - skills, CLAUDE.md / AGENTS.md, docs behind a pointer - context pointers, the two loads, completion criteria, leading words, pruning no-ops.
+version: 1.0.0
+kind: skill
+category: meta.agent-docs
+purpose: Makes instruction files and skills cheaper and more predictable - what belongs in always-loaded context versus behind a pointer, how to word triggers, how to write checkable completion criteria, and how to prune sediment and no-ops.
+status: curated
+provenance: upstream
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/productivity/writing-for-agents/SKILL.md
+    - skills/productivity/writing-for-agents/SKILL-MECHANICS.md
+    - skills/productivity/writing-for-agents/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/writing-for-agents/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 81-line SKILL.md plus SKILL-MECHANICS.md, verbatim, model-invoked when skills or CLAUDE.md / AGENTS.md are edited. Pure reference; also the yardstick Agent Forge curation uses for descriptions.
+applicability:
+  tags: [agent-docs, writing-for-agents, agent-forge, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/writing-for-agents
+    dest: .claude/skills/writing-for-agents
+    merge: create_only
+  - platform: codex
+    source: codex/writing-for-agents
+    dest: .agents/skills/writing-for-agents
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["writing-for-agents", "skill-writing", "writing-skills"]
+    description: an existing guide for writing agent instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/writing-for-agents/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: ea06b6a576e1ae75dc15a4c486f0af3ac4e9bb7c50fe4090db2bc8119122d47f
+  pinned_at: "2026-10-20"

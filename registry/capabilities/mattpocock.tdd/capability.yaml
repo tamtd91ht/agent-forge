@@ -1,0 +1,57 @@
+schema_version: "1"
+id: mattpocock.tdd
+name: TDD at pre-agreed seams
+description: Compact test-driven development reference - vertical red-green slices, tests only at seams agreed with the user, and anti-patterns (implementation-coupled, tautological, horizontal slicing).
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: A shorter alternative to ecc.tdd-workflow (38-line SKILL.md plus tests.md / mocking.md versus 583 lines with coverage targets) - agree the seams first so testing effort lands on critical paths, and keep refactoring in review.
+status: curated
+provenance: adapted
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/engineering/tdd/SKILL.md
+    - skills/engineering/tdd/tests.md
+    - skills/engineering/tdd/mocking.md
+    - skills/engineering/tdd/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/tdd/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Adapted in one line - the pointer to the upstream `code-review` skill names two-axis-review instead, which is installed only when requested. Calls the codebase-design skill, a declared dependency. Conflicts with ecc.tdd-workflow (two TDD skills would compete); an explicit request wins.
+applicability:
+  tags: [tdd-seams, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/tdd
+    dest: .claude/skills/tdd
+    merge: create_only
+  - platform: codex
+    source: codex/tdd
+    dest: .agents/skills/tdd
+    merge: create_only
+dependencies: [mattpocock.codebase-design]
+conflicts: [ecc.tdd-workflow]
+equivalents:
+  - kind: skill
+    name_patterns: ["^tdd", "test-driven", "test-first"]
+    description: an existing TDD / test-first skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/tdd/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 3778d37eb8414b653d54beb96cf6252db7c060b44e69a5b0f1eaf6a0de3600f3
+  pinned_at: "2026-10-20"

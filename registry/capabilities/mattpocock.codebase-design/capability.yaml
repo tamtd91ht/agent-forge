@@ -1,0 +1,55 @@
+schema_version: "1"
+id: mattpocock.codebase-design
+name: Codebase design (deep modules)
+description: Shared vocabulary for designing deep modules - module, interface, depth, seam, adapter, leverage, locality - with the deletion test and design-it-twice.
+version: 1.0.0
+kind: skill
+category: engineering.design
+purpose: Gives design and testing work one precise vocabulary (Ousterhout deep modules, Feathers seams) and two disclosed procedures - deepening a cluster given its dependencies, and exploring several radically different interfaces with parallel sub-agents.
+status: curated
+provenance: upstream
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/engineering/codebase-design/SKILL.md
+    - skills/engineering/codebase-design/DEEPENING.md
+    - skills/engineering/codebase-design/DESIGN-IT-TWICE.md
+    - skills/engineering/codebase-design/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/codebase-design/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 114-line SKILL.md plus two disclosed references, verbatim. Reference-only content; TypeScript examples are illustrative and apply to any language.
+applicability:
+  tags: [architecture, codebase-design, deep-modules, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/codebase-design
+    dest: .claude/skills/codebase-design
+    merge: create_only
+  - platform: codex
+    source: codex/codebase-design
+    dest: .agents/skills/codebase-design
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["codebase-design", "deep-module"]
+    description: an existing module-design skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/codebase-design/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: 23f007fd709637b94f86133e3a98743d0dc6748a6d4a3b41778d4aa0911a2cd5
+  pinned_at: "2026-10-20"

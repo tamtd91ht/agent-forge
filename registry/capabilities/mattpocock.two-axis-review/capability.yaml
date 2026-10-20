@@ -1,0 +1,53 @@
+schema_version: "1"
+id: mattpocock.two-axis-review
+name: Two-axis review (standards and spec)
+description: Review the diff since a fixed point on two separate axes run as parallel sub-agents - Standards (documented rules plus a Fowler smell baseline) and Spec (does it implement the originating issue/spec).
+version: 1.0.0
+kind: skill
+category: engineering.review
+purpose: Stops one kind of finding from masking the other - code can follow every standard and implement the wrong thing, or do exactly what was asked while breaking conventions. Repo standards override the smell baseline, and smells are always judgement calls.
+status: curated
+provenance: adapted
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/engineering/code-review/SKILL.md
+    - skills/engineering/code-review/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/two-axis-review/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Adapted from upstream code-review (89 lines). Renamed to two-axis-review because `code-review` collides with harness built-ins (Claude Code ships one). The precondition to run setup-matt-pocock-skills (not curated - writes CLAUDE.md outside markers, creates tracker labels) is replaced by the project's own issue-tracker docs; the agent uses git and, if present, gh/glab. Attribution footer added.
+applicability:
+  tags: [code-review, review, two-axis-review, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/two-axis-review
+    dest: .claude/skills/two-axis-review
+    merge: create_only
+  - platform: codex
+    source: codex/two-axis-review
+    dest: .agents/skills/two-axis-review
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["two-axis", "^code-review", "^review"]
+    description: an existing code-review skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/two-axis-review/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 6f39a37d17d8fd8b481fdba5c0214688c52e32e7cadd5a0ecb7455ba2470e7dc
+  pinned_at: "2026-10-20"

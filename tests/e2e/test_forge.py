@@ -155,3 +155,66 @@ def test_forge_karpathy_skill_on_request(real_workspace, make_project) -> None:
     skill = root / ".claude" / "skills" / "karpathy-guidelines"
     assert (skill / "SKILL.md").is_file()
     assert (skill / "LICENSE-KARPATHY.txt").is_file()
+
+
+def test_forge_grill_with_docs_pulls_its_skill_dependencies(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("mattpocock skills", kind="claude", files=BACKEND_FILES)
+    report = run_json(
+        "forge",
+        str(root),
+        "--workspace",
+        ws,
+        "--yes",
+        "--shared-files",
+        "--want",
+        "grill-with-docs",
+        "--json",
+    )
+    add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
+    for cid in ("mattpocock.grill-with-docs", "mattpocock.grilling", "mattpocock.domain-modeling"):
+        assert cid in add["selected"]
+    assert "mattpocock.diagnosing-bugs" in add["selected"]  # always-on
+    assert "mattpocock.tdd" not in add["selected"]  # tag-only alternative to ecc.tdd-workflow
+    skills = root / ".claude" / "skills"
+    assert "disable-model-invocation: true" in (skills / "grill-with-docs" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    assert (skills / "diagnosing-bugs" / "scripts" / "hitl-loop.template.sh").is_file()
+    assert (skills / "grilling" / "LICENSE-MATTPOCOCK.txt").is_file()
+
+
+def test_plan_reports_always_loaded_context(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("ctx", kind="claude", files=BACKEND_FILES)
+    plan = run_json("assign", str(root), "--workspace", ws, "--want", "grill-with-docs", "--json")
+    ctx = {s["capability_id"]: s["context_chars"] for s in plan["selected"]}
+    assert ctx["mattpocock.grill-with-docs"] == 0  # user-invoked: no description in context
+    assert ctx["mattpocock.grilling"] > 0
+    assert ctx["karpathy.principles"] > 1000  # a CLAUDE.md section is loaded in full
+
+
+def test_forge_git_guard_shares_settings_with_secret_guard(real_workspace, make_project) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("git guard", kind="claude", files=BACKEND_FILES)
+    report = run_json(
+        "forge",
+        str(root),
+        "--workspace",
+        ws,
+        "--yes",
+        "--shared-files",
+        "--hooks",
+        "--want",
+        "git-guard",
+        "--json",
+    )
+    add = {s["label"]: s for s in report["steps"]}["add recommended capabilities"]
+    assert {"forge.hook.guard-dangerous-git", "forge.hook.guard-secrets-python"} <= set(
+        add["selected"]
+    )
+    settings = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    commands = [h["command"] for g in settings["hooks"]["PreToolUse"] for h in g["hooks"]]
+    assert any("guard_git.py" in c for c in commands)
+    assert any("guard_secrets.py" in c for c in commands)
+    assert (root / ".claude" / "hooks" / "agent-forge" / "guard_git.py").is_file()

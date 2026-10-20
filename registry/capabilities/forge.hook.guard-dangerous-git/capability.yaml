@@ -1,0 +1,43 @@
+schema_version: "1"
+id: forge.hook.guard-dangerous-git
+name: Guard destructive git commands (Python hook)
+description: PreToolUse hook that blocks force-push, remote ref deletion, hard reset, clean -f, branch -D, wholesale checkout/restore and stash drop/clear; plain git push passes. Stdlib Python.
+version: 1.0.0
+kind: hook
+category: safety.hooks
+purpose: Stops the agent from destroying uncommitted work or rewriting shared history by mistake. Exit code 2 blocks the Bash call and tells the agent to ask the user to run the command by hand.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored, inspired by mattpocock/skills misc/git-guardrails-claude-code but not copied (upstream needs jq, offers a ~/.claude install and blocks every push). Stdlib script with no network, no writes and no file reads; it parses only the hook payload with shlex, splits on && || ; | and newlines, and fails open on malformed input. Opt-in (tag) because it needs `python` on PATH; when Python is missing the hook errors without blocking. Merged into .claude/settings.json as a JSON fragment; requires `approve --hooks`.
+  notes:
+    - "Matches git invocations, not aliases or wrapper scripts; it is a guard rail, not a sandbox."
+applicability:
+  tags: [git, git-guard, guard, hooks]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-guard-dangerous-git
+removal: delete_managed_files
+risk: medium
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: e65d84de6aa1ea67ee8fcc8a4b1630dcb98d330dd877a71e5e06ad53fb36582f
+  pinned_at: "2026-10-20"

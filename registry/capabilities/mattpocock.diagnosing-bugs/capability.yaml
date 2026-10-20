@@ -1,0 +1,57 @@
+schema_version: "1"
+id: mattpocock.diagnosing-bugs
+name: Diagnosing bugs (feedback-loop first)
+description: Disciplined diagnosis loop for hard bugs and performance regressions - build a red-capable feedback loop, minimise, rank falsifiable hypotheses, instrument, fix with a regression test, clean up.
+version: 1.0.0
+kind: skill
+category: engineering.debugging
+purpose: Stops the agent from jumping to a theory by reading code - Phase 1 is only complete when one command it has already run goes red on the user's exact symptom, deterministically and fast. Tagged debug logs and a cleanup checklist keep the fix tidy.
+status: curated
+provenance: upstream
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/engineering/diagnosing-bugs/SKILL.md
+    - skills/engineering/diagnosing-bugs/scripts/hitl-loop.template.sh
+    - skills/engineering/diagnosing-bugs/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/diagnosing-bugs/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 138 lines of markdown, verbatim, plus a bash template (scripts/hitl-loop.template.sh) that the agent copies and edits when a human must perform a step; Agent Forge never runs it. Reads GLOSSARY.md / ADRs only if present. No setup skill, hooks or MCP. Codex also gets the upstream agents/openai.yaml (display metadata only).
+  notes:
+    - "No equivalent in the registry - ecc.verification-loop checks finished work, this drives diagnosis."
+applicability:
+  always: true
+  tags: [debugging, diagnose, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/diagnosing-bugs
+    dest: .claude/skills/diagnosing-bugs
+    merge: create_only
+  - platform: codex
+    source: codex/diagnosing-bugs
+    dest: .agents/skills/diagnosing-bugs
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["^diagnos", "^debug"]
+    description: an existing debugging / diagnosis skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/diagnosing-bugs/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9f54fe06fee34525e94d82cd1235d09c2b6ccd5e21301777594b44c9abac18ed
+  pinned_at: "2026-10-20"

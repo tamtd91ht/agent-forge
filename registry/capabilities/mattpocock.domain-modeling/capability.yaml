@@ -1,0 +1,55 @@
+schema_version: "1"
+id: mattpocock.domain-modeling
+name: Domain modeling (glossary and ADRs)
+description: Build and sharpen a project's domain model while designing - challenge terms against GLOSSARY.md, stress-test with edge-case scenarios, write glossary entries and ADRs inline.
+version: 1.0.0
+kind: skill
+category: engineering.design
+purpose: Gives the project and the agent a shared ubiquitous language (GLOSSARY.md, created lazily) and records only decisions that are hard to reverse, surprising and the result of a real trade-off.
+status: curated
+provenance: upstream
+source:
+  source_id: mattpocock
+  repository: https://github.com/mattpocock/skills
+  revision: 24fe0ef7737efae15c87225755e9f6f5965e4888
+  paths:
+    - skills/engineering/domain-modeling/SKILL.md
+    - skills/engineering/domain-modeling/ADR-FORMAT.md
+    - skills/engineering/domain-modeling/GLOSSARY-FORMAT.md
+    - skills/engineering/domain-modeling/agents/openai.yaml
+license:
+  spdx: MIT
+  attribution: "Skills For Real Engineers (mattpocock/skills), Copyright (c) 2026 Matt Pocock"
+  notice_file: claude_code/domain-modeling/LICENSE-MATTPOCOCK.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-20"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 74-line SKILL.md plus two format references, verbatim. Writes GLOSSARY.md / docs/adr/ in the target only when the agent uses it, as ordinary project docs. Overlaps ecc.architecture-decision-records on ADR format but adds the glossary discipline; not declared a conflict.
+applicability:
+  tags: [domain-modeling, glossary, ddd, adr, mattpocock]
+platforms: [claude_code, codex]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/domain-modeling
+    dest: .claude/skills/domain-modeling
+    merge: create_only
+  - platform: codex
+    source: codex/domain-modeling
+    dest: .agents/skills/domain-modeling
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["domain-model", "glossary", "ubiquitous"]
+    description: an existing domain-modeling / glossary skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/domain-modeling/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: f1347ca8b03f9d6d9bf0d4a3b728443d5a7631ffc0905a72a97e1d3e76d252c1
+  pinned_at: "2026-10-20"

@@ -39,6 +39,7 @@ destinations:
     source: codex/tdd-workflow
     dest: .agents/skills/tdd-workflow
     merge: create_only
+conflicts: [mattpocock.tdd]
 equivalents:
   - kind: skill
     name_patterns: ["^tdd", "test-driven", "test-first"]

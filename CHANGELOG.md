@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Added (ADR-0003: context load, skill calls)
+- Plans report each capability's always-loaded context (`ctx` column, `context_chars` in
+  JSON) and the total: skill/agent descriptions (user-invoked skills cost none), unscoped
+  rules, CLAUDE.md/AGENTS.md sections. Policy `max_context_chars` makes anything above it
+  require an explicit request.
+- `validate`: a curated skill that calls another skill through the Skill tool must ship it in
+  its own capability or its dependencies, and the called skill must be model-invoked.
+- `scripts/curate.py`: exact-text `replacements` for adapted items; a passage missing upstream
+  stops the run instead of being skipped.
+- `forge.hook.guard-dangerous-git` (opt-in `--want git-guard`): PreToolUse hook blocking
+  force-push, remote ref deletion, `reset --hard`, `clean -f`, `branch -D`, wholesale
+  `checkout`/`restore` and `stash drop/clear`. Stdlib Python, fails open.
+- `docs/rejections/`: one record per rejected or deferred upstream item (replaces the table
+  in `docs/source-curation.md`); `agent-forge-scout` 1.1.0 reads it and ADR-0003.
+
+### Added (source: mattpocock/skills)
+- New source `mattpocock` (mattpocock/skills, tag v1.3.1 @ 24fe0ef7).
+- `mattpocock.diagnosing-bugs` (always), `mattpocock.grilling`, `mattpocock.domain-modeling`,
+  `mattpocock.codebase-design`, `mattpocock.grill-with-docs` (user-invoked, depends on
+  grilling + domain-modeling), `mattpocock.writing-for-agents`; verbatim, both platforms.
+- `mattpocock.two-axis-review` (adapted from `code-review`: renamed to avoid harness
+  built-ins, no setup-skill precondition) and `mattpocock.tdd` (adapted, depends on
+  codebase-design, conflicts with `ecc.tdd-workflow`), both tag-only.
+- Not curated: the setup-matt-pocock-skills chain, package-installing misc skills, `pr`
+  (licence of its humanlayer source unverified) — see `docs/rejections/`.
+
 ### Fixed
 - Matching: a dependency pulled in because it was "not applicable" skipped policy, so a
   policy-denied capability could enter a plan as a dependency. It is now policy-checked.

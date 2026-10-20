@@ -27,8 +27,11 @@ Read, from the Agent Forge checkout (`$AGENT_FORGE_HOME` or the current workspac
 - `AGENT_FORGE_UPGRADE_PROPOSAL.md` — the long-term picture: Capability / Governance /
   Runtime planes, evaluation, marketplace, telemetry; and its red lines (an LLM never decides
   whether something is safe).
-- `docs/source-curation.md` and `sources/sources.yaml` — what has been curated already and
-  what was rejected, so you do not propose duplicates.
+- `docs/adr/0003-context-load-and-skill-calls.md` — always-loaded context is a measured cost,
+  and skills that call other skills must ship with them.
+- `docs/source-curation.md`, `docs/rejections/` and `sources/sources.yaml` — what has been
+  curated, watched or rejected (one file per rejected item, with the reason), so you do not
+  propose duplicates or re-open a settled rejection without new facts.
 
 ## 1. Fetch the repository (read-only, untrusted)
 
@@ -73,7 +76,7 @@ For each point choose one bucket and justify it:
 
 | Bucket | Meaning | What to record |
 |---|---|---|
-| **Curate as content** | a skill / rule / agent / hook script / MCP template that could become a capability | candidate paths, licence, `install_strategy`, `applicability` (languages, frameworks, project types), `risk`, equivalents already in the registry, blockers (installer-only, network, global writes) |
+| **Curate as content** | a skill / rule / agent / hook script / MCP template that could become a capability | candidate paths, licence, `install_strategy`, `applicability` (languages, frameworks, project types), `risk`, equivalents already in the registry, always-loaded context cost (description, unscoped rule or section), skills it calls (they become `dependencies`), blockers (installer-only, network, global writes) |
 | **Engine upgrade** | a mechanism Agent Forge lacks | which plane (Capability / Governance / Runtime), which proposal section or ADR-0002 deferred item it corresponds to, the invariants it must keep, rough effort (S/M/L), first concrete step |
 | **Watch** | interesting but immature, unlicensed, or not aligned yet | what would have to change |
 | **Reject** | conflicts with the invariants | the exact conflict (e.g. runs installers, writes `~/.claude`, needs an LLM to make a safety decision, licence incompatible) |
