@@ -47,5 +47,5 @@ risk: low
 benefit_score: 5
 maintenance_cost: 1
 integrity:
-  assets_sha256: c0ed981e13e465ec0624959366d6af1be90c8eb63c08c3eaaf2ce854f667ad2e
+  assets_sha256: 0636bed837dc40ab35b92f6b6721c8aab76ec99d30755be9ac03dc73848ee7ec
   pinned_at: "2026-10-20"

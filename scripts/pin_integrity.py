@@ -30,6 +30,19 @@ def main() -> int:
     ap.add_argument("--registry", default=str(ROOT / "registry"))
     args = ap.parse_args()
     reg = load_registry(Path(args.registry), strict=True)
+    # .gitattributes stores text as LF, so a CRLF working copy (Windows) would pin bytes that
+    # no clone or release archive ever contains
+    crlf = [
+        p
+        for lc in reg.items.values()
+        for p in sorted((lc.directory / "assets").rglob("*"))
+        if p.is_file() and b"\r\n" in p.read_bytes()
+    ]
+    if crlf:
+        for p in crlf:
+            print(f"!! CRLF line endings: {p}")
+        print("normalize to LF first (git add --renormalize . && git checkout -- registry)")
+        return 1
     stale = 0
     changed = 0
     for cid, lc in sorted(reg.items.items()):
