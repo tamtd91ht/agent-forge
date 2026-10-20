@@ -1,0 +1,5 @@
+interface:
+  display_name: "Agent Forge upgrade"
+  short_description: "Review this project and install the capabilities that fit"
+policy:
+  allow_implicit_invocation: false

@@ -1,18 +1,15 @@
 # Getting started
 
-## Install (local, no global changes)
+The usual path is the one-line installer run in a project root, then `/agent-forge-upgrade`
+in Claude Code (see the [README](../README.md) and ADR-0004). This page is the CLI underneath,
+for reviewing plans by hand or scripting. `agent-forge` below means the launcher
+`~/.agent-forge/bin/agent-forge` (`agent-forge.cmd` in PowerShell / cmd), or the
+`.venv` entry point in a development checkout.
 
-```bash
-git clone <this repo> agent-forge && cd agent-forge
-python -m venv .venv
-# Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
-pip install -e ".[dev]"
-agent-forge --help
-```
+## Workspace
 
-Requires Python 3.11+ (tested on 3.14) and git on PATH.
-
-## Initialize the workspace
+The installer creates the workspace in `~/.agent-forge` (catalog, plans, backups, audit log).
+In a development checkout, the repository itself is a workspace:
 
 ```bash
 agent-forge init            # in the repo: verifies registry/, sources/, state/

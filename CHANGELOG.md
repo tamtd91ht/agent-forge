@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Changed (ADR-0004: install from the project root)
+- New entry point: run `install.ps1` (`irm … | iex`) or `install.sh` (`curl … | bash`) in a
+  project root. It installs or updates Agent Forge in `~/.agent-forge` (venv, launchers in
+  `bin/`, workspace) and adds `/agent-forge-upgrade` to the project; the agent there reviews
+  the project and drives Agent Forge. README rewritten around this flow.
+- `forge.skill.agent-forge-upgrade` 2.0.0: user-invoked (no always-loaded context), works on
+  the current directory, calls `~/.agent-forge/bin/agent-forge`, pre-approves only read-only
+  commands and `forge --dry-run`, weighs `context_chars`; also shipped for Codex.
+
+### Added
+- `agent-forge setup [PATH]`: plans, approves and applies only the entry skill; tracked in
+  `managed.json` like any install.
+
+### Fixed
+- `upgrade` (and `forge`'s upgrade step) ignored `--exclude`.
+- `init` copied the bytecode pip compiles inside an installed package's seed registry into the
+  workspace, which then failed planning ("not UTF-8 text") and integrity checks.
+
 ### Added (ADR-0003: context load, skill calls)
 - Plans report each capability's always-loaded context (`ctx` column, `context_chars` in
   JSON) and the total: skill/agent descriptions (user-invoked skills cost none), unscoped

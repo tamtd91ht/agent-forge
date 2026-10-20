@@ -12,6 +12,7 @@ non-ASCII characters are supported everywhere.
 | `catalog [--category --platform --project-type --status --source --kind]` | no | List capabilities. |
 | `catalog show ID` | no | Full metadata, provenance, destinations, equivalents, review rationale. |
 | `forge PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional] [--shared-files] [--hooks] [--mcp] [--yes] [--dry-run] [--show-diff]` | **yes** (after confirmation) | One-shot: scan → upgrade managed capabilities → add recommended ones → diff → one confirmation → approve + apply → validate. Only project-relevant capabilities are selected (a backend-only project gets no UI/UX items). Approval classes not granted (`--shared-files`, `--hooks`, `--mcp`) are asked for interactively, or left out of the plan with `--yes`; those capabilities are reported as `needs_approval`. `--dry-run` saves plans and writes nothing. |
+| `setup [PATH] [--platform]` | **yes** | Install or update only the `/agent-forge-upgrade` entry skill (`forge.skill.agent-forge-upgrade`) into the project (default: current directory) through a saved plan, an approval recorded as `agent-forge setup` and a transaction. Run by `install.ps1` / `install.sh` (ADR-0004); other managed capabilities are left untouched. |
 | `scan PATH [--report FILE]` | no | Read-only profile. Report goes to `state/reports/` unless `--report` (never inside the target). |
 | `assign PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional]` | no | Recommend and write a plan. |
 | `upgrade PATH [--platform]` | no | Compare managed capabilities with the registry; write a plan. |
@@ -54,4 +55,5 @@ non-ASCII characters are supported everywhere.
 - `init`: writes `agent-forge.yaml`, directories, `.gitignore` in the workspace only.
 - `sources clone/sync --update`: writes under `sources/checkouts/` and `state/cache/`.
 - `scan/assign/upgrade/diff/approve/validate/status`: write only under `state/`.
-- `apply/rollback`: write to the target (approved paths only) and under `state/transactions/`.
+- `apply/rollback/setup/forge`: write to the target (approved paths only) and under `state/transactions/`.
+- `install.ps1` / `install.sh`: write only under `~/.agent-forge/` (venv, launchers, workspace), then run `setup` in the current directory.

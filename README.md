@@ -1,204 +1,124 @@
 # Agent Forge
 
-**Set up Claude Code (or Codex) for a project in one command.** Agent Forge looks at your
-project, picks reviewed skills, rules and subagents that actually fit it, shows you exactly
-which files it will write, and installs them only after you say yes. Every install can be
-undone.
+Set up Claude Code (or Codex) for your project: reviewed skills, rules, subagents, hooks and
+MCP servers, chosen by the agent for your code and installed only after you say yes. Every
+install can be undone.
+
+## Install
+
+Requirement: Python 3.11+. Run this **in your project's root folder**:
+
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.ps1 | iex
+```
+
+**macOS / Linux**
 
 ```bash
-agent-forge forge "path/to/my-app"
+curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh | bash
 ```
 
-What it will **never** do: change your own text in `CLAUDE.md` / `AGENTS.md` (it only adds a
-clearly marked section, and only if you allow it), touch `~/.claude` or `~/.codex`, run
-third-party installers, or write anything before you confirm.
+## Use
 
-## What you get
+1. Open the project in Claude Code.
+2. Run:
 
-Real result for a small Python/FastAPI backend:
+   ```
+   /agent-forge-upgrade
+   ```
 
-```
-my-app/
-├── CLAUDE.md                            # + one marked section (only with --shared-files)
-├── .claude/
-│   ├── rules/ecc-common/                # always-on rules: style, testing, security, review
-│   ├── skills/security-review/          # because it is a backend
-│   ├── skills/error-handling/           # because it is Python
-│   ├── skills/tdd-workflow/
-│   ├── skills/diagnosing-bugs/          # feedback-loop-first debugging
-│   ├── skills/verification-loop/
-│   └── agents/planner.md
-└── .agent-forge/managed.json            # what Agent Forge installed: commit it with your project
-```
+   Optional focus: `/agent-forge-upgrade testing and code review only`.
+   In Codex, run the `agent-forge-upgrade` skill.
+3. Read the proposed table (what to add, what to skip, and why), then answer **yes** to install.
+4. Start a new session to load the new skills and rules. If MCP servers were added, accept
+   Claude Code's trust prompt.
+5. Commit the new files together with `.agent-forge/managed.json`.
 
-A React/Next.js app would also get UI/UX guidelines; a backend never does. Nothing is
-installed just because it exists in the catalog.
+The agent asks before adding anything that edits `CLAUDE.md` / `AGENTS.md`, adds hooks to
+`.claude/settings.json`, or adds MCP servers to `.mcp.json`.
 
-## Install (once)
+## Update
 
-Needs Python 3.11+ and git.
+Run the install command again in the project root, then `/agent-forge-upgrade`.
+
+Teammates who clone a project that already has `/agent-forge-upgrade` run the install command
+once on their machine.
+
+## Commands
+
+`AF` = `~/.agent-forge/bin/agent-forge` (Windows PowerShell / cmd:
+`~/.agent-forge/bin/agent-forge.cmd`). Run them in the project root.
+
+| I want to… | Command |
+|---|---|
+| See what is installed | `AF status .` |
+| See everything available | `AF catalog` |
+| Read about one capability | `AF catalog show ecc.security-review` |
+| Preview without the agent | `AF forge --dry-run .` |
+| See what I changed in installed files | `AF drift .` |
+| Undo an install | `AF status .` (copy the `tx-…` id), then `AF rollback tx-…` |
+| Remove one capability | `AF remove . <id>`, then `AF approve <plan-id>` and `AF apply <plan-id>` |
+| Limit what may ever be installed | create `.agent-forge/policy.yaml` ([example](docs/getting-started.md)) |
+
+Useful topics for `/agent-forge-upgrade <focus>` or `AF forge . --want <tag>`: `security`,
+`testing`, `tdd`, `review`, `planning`, `adr`, `git`, `ui`, `ux`, `e2e`, `docs`, `hooks`,
+`formatting`, `karpathy`, `grill-with-docs`, `grilling`, `domain-modeling`,
+`codebase-design`, `agent-docs`, `tdd-seams`, `git-guard`, `mattpocock`.
+
+## Uninstall
+
+1. Remove what was installed in a project: `AF status .`, then `AF rollback tx-…` for each
+   transaction (newest first).
+2. Remove Agent Forge from the machine: delete the `~/.agent-forge` folder.
+
+## Troubleshooting
+
+| Message | Fix |
+|---|---|
+| `/agent-forge-upgrade` is not listed | Start a new Claude Code session in the project root |
+| `Python 3.11 or newer is required` | Install Python from python.org, then re-run the install command |
+| `plan is stale` | The project changed after planning; run `/agent-forge-upgrade` again |
+| `destination exists and is user-owned` | You already have a file there; rename it or skip that capability |
+| MCP server installed but not working | Remove its name from `disabledMcpjsonServers` in `.claude/settings.local.json` |
+| `files changed independently after apply` | You edited installed files; use `AF rollback --partial tx-…` |
+
+More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
+
+## Docs
+
+- [Getting started](docs/getting-started.md) · [CLI reference](docs/cli-reference.md) ·
+  [Security model](docs/security.md) · [Architecture](docs/architecture.md) ·
+  [Capability model](docs/capability-model.md) · [Adapters](docs/adapters.md)
+- Curation: [source curation](docs/source-curation.md) · [rejections](docs/rejections/README.md) ·
+  [maintenance](docs/maintenance.md) · [upgrade lifecycle](docs/upgrade-lifecycle.md)
+- Decisions: [ADR-0001](docs/adr/0001-architecture-decisions.md) ·
+  [ADR-0002](docs/adr/0002-upgrade-roadmap.md) ·
+  [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) ·
+  [ADR-0004](docs/adr/0004-install-into-project.md) · [status](WORKSPACE_STATUS.md)
+
+Content comes from Everything Claude Code, UI UX Pro Max, REA, andrej-karpathy-skills and
+Matt Pocock's skills; each item records its source commit and license.
+
+## Developing Agent Forge
 
 ```bash
 git clone https://github.com/tamtd91ht/agent-forge.git
 cd agent-forge
 python -m venv .venv
-.venv\Scripts\Activate.ps1          # Windows PowerShell   (macOS/Linux: source .venv/bin/activate)
-pip install -e .
-agent-forge init
-```
-
-> **The cloned folder is your workspace, not your project.** It holds the capability
-> catalog and Agent Forge's own records (plans, backups, audit log). Your projects stay
-> separate: **do not run `agent-forge init` inside a project**.
-
-To run `agent-forge` from any directory, point it at the workspace:
-
-```bash
-setx AGENT_FORGE_HOME "D:\tools\agent-forge"      # Windows (new terminals)
-export AGENT_FORGE_HOME=~/tools/agent-forge       # macOS/Linux (add to your shell profile)
-```
-
-Without it, run the commands from inside the cloned folder.
-
-## Set up a project
-
-**1. Preview.** This writes nothing:
-
-```bash
-agent-forge forge "path/to/my-app" --dry-run
-```
-
-You get the detected stack, the list of **selected** capabilities with the reason for each,
-what was **not selected** and why, and every file that would be created.
-
-**2. Install.**
-
-```bash
-agent-forge forge "path/to/my-app"
-```
-
-It shows the same plan and asks once. If the plan wants to edit `CLAUDE.md`, add hooks or
-add MCP servers, it asks for each of those separately (see below).
-
-**3. Open the project in Claude Code.** New skills, rules and agents load in a new session.
-If MCP servers were added, Claude Code asks whether to trust them: answer **yes**, otherwise
-they stay installed but disabled.
-
-> Tip: commit your project first. Then `git diff` shows exactly what Agent Forge added.
-
-### The three extra permissions
-
-Plain files under `.claude/` only need your normal "yes". These need an explicit opt-in,
-because they change shared files or run things:
-
-| Flag | What it allows | Suggestion |
-|---|---|---|
-| `--shared-files` | A marked section in `CLAUDE.md` / `AGENTS.md` | Usually yes |
-| `--hooks` | Entries in `.claude/settings.json` that run commands on edits (secret-file guard, auto-format) | Yes if you use ruff / prettier (the format hook does nothing when they are missing) |
-| `--mcp` | Servers in `.mcp.json` (Context7 docs, Playwright browser); they start processes and use the network | Only if you want them; needs Node.js |
-
-Interactive runs ask for each one. With `--yes` (scripts/CI), anything not granted by a flag
-is simply left out.
-
-### Reading the "not selected" list
-
-| Category | Meaning | To include it anyway |
-|---|---|---|
-| `needs_approval` | Needs one of the flags above | add `--shared-files` / `--hooks` / `--mcp` |
-| `optional` | Higher risk or needs extra permissions (e.g. a subagent that can run shell commands) | `--request <id>` or `--include-optional` |
-| `not_applicable` | Does not fit the detected stack, or is opt-in only | `--want <tag>` or `--request <id>` |
-| `conflict` | Overlaps with something already selected or a file you own | `--exclude` the other one, or move your file |
-| `equivalent_exists` | Your project already has something similar | `--request <id>` |
-
-## Let Claude do the review
-
-Agent Forge matches on manifests and declared rules; it cannot read your code or judge
-whether a catalog item contradicts your own `.claude/rules`. The `agent-forge-upgrade` skill
-hands that review to Claude Code and keeps Agent Forge as the only writer:
-
-```
-/agent-forge-upgrade path/to/my-app
-```
-
-Claude scans with Agent Forge, reads the project's `CLAUDE.md`, rules, skills and tooling,
-proposes ADD / SKIP / UPGRADE / ASK per capability with the file it checked, runs the
-resulting `forge --dry-run`, and applies only after you say yes. It works out of the box when
-Claude Code is opened in the Agent Forge workspace; to use it from any project copy
-`.claude/skills/agent-forge-upgrade/` into `~/.claude/skills/`, or install it into a project
-with `--request forge.skill.agent-forge-upgrade`.
-
-Its sibling `/agent-forge-scout https://github.com/owner/repo` reviews a public repository for
-Agent Forge itself: what is genuinely impressive in it, and whether it could become curated
-content or an engine upgrade in line with the ADRs. Read-only, it never runs the repo's code,
-and it hands you a proposed `sources.yaml` entry or ADR stub instead of writing them.
-
-## Everyday tasks
-
-| I want to… | Command |
-|---|---|
-| See everything available | `agent-forge catalog` |
-| Read about one capability | `agent-forge catalog show ecc.security-review` |
-| Add a specific capability | `agent-forge forge "my-app" --request ecc.agent.code-reviewer` |
-| Add everything about a topic | `agent-forge forge "my-app" --want security` |
-| Never install something | `agent-forge forge "my-app" --exclude ecc.agent.planner` |
-| See what is installed | `agent-forge status "my-app"` |
-| Get updates | `git pull` in the workspace, then `agent-forge forge "my-app"` again (if your workspace is a separate folder, run `agent-forge init --refresh-registry` after the pull) |
-| See what I changed in installed files | `agent-forge drift "my-app"` |
-| Undo an install | `agent-forge status "my-app"` (copy the `tx-…` id), then `agent-forge rollback tx-…` |
-| Remove one capability | `agent-forge remove "my-app" <id>`, then `approve` + `apply` the printed plan |
-| Run without prompts (CI) | `agent-forge forge "my-app" --yes --shared-files --json` |
-
-Useful `--want` tags: `security`, `testing`, `tdd`, `review`, `planning`, `adr`, `git`,
-`ui`, `ux`, `e2e`, `docs`, `hooks`, `formatting`, `karpathy`, `grill-with-docs`, `grilling`,
-`domain-modeling`, `codebase-design`, `agent-docs`, `tdd-seams`, `git-guard`, `mattpocock`.
-
-The plan's `ctx` column is what each capability adds to the agent's context on every turn
-(descriptions, always-on rules, CLAUDE.md sections). A policy can cap it with
-`max_context_chars`.
-
-Rollback never overwrites files you edited after the install: it stops and tells you. Use
-`--partial` to undo everything else and keep your edits.
-
-## When something goes wrong
-
-| Message | Fix |
-|---|---|
-| `No Agent Forge workspace found` | Run from the cloned folder, or set `AGENT_FORGE_HOME` (see Install) |
-| `plan is stale` | The project changed after planning; just run `forge` again |
-| `destination exists and is user-owned` | You already have a file there. Rename it, or `--exclude` that capability |
-| MCP server installed but not working | Claude Code was told not to trust it. Remove its name from `disabledMcpjsonServers` in `.claude/settings.local.json` |
-| `files changed independently after apply` | You edited installed files; use `rollback --partial` |
-
-More: [troubleshooting](docs/troubleshooting.md) · `agent-forge doctor` checks your setup.
-
-## Going further
-
-- [Getting started](docs/getting-started.md): the step-by-step flow (`scan` → `assign` →
-  `diff` → `approve` → `apply`) for reviewing a plan before approving it, and project
-  policies (`.agent-forge/policy.yaml`) that restrict what may ever be installed
-- [CLI reference](docs/cli-reference.md): every command, flag and exit code
-- [Security model](docs/security.md) · [Architecture](docs/architecture.md) ·
-  [Capability model](docs/capability-model.md) · [Adapters](docs/adapters.md)
-- Curating new content: [source curation](docs/source-curation.md) ·
-  [maintenance](docs/maintenance.md) · [upgrade lifecycle](docs/upgrade-lifecycle.md)
-- Design decisions: [ADR-0001](docs/adr/0001-architecture-decisions.md) ·
-  [ADR-0002](docs/adr/0002-upgrade-roadmap.md) ·
-  [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) · status: [WORKSPACE_STATUS.md](WORKSPACE_STATUS.md)
-
-Content comes from reviewed upstream projects: Everything Claude Code, UI UX Pro Max, REA,
-andrej-karpathy-skills and Matt Pocock's skills. Each item records its source commit and license.
-
-## Development
-
-```bash
-pip install -e ".[dev]"
+.venv/Scripts/pip install -e ".[dev]"          # macOS/Linux: .venv/bin/pip
 .venv/Scripts/ruff check src tests scripts && .venv/Scripts/python -m pytest -q
-agent-forge validate
-python scripts/export_schemas.py     # after model changes
-python scripts/curate.py             # re-copy curated assets from pinned checkouts
+.venv/Scripts/agent-forge validate
 ```
 
-Agent rules for contributors: [AGENTS.md](AGENTS.md).
+- After model changes: `python scripts/export_schemas.py`.
+- Re-copy curated assets from pinned checkouts: `python scripts/curate.py`.
+- Review a GitHub repo for the catalog: `/agent-forge-scout https://github.com/owner/repo`
+  (Claude Code opened in this repository).
+- Test the installer against this checkout: set `AGENT_FORGE_SOURCE` to the checkout path
+  before running `install.ps1` / `install.sh`.
+- Agent rules for contributors: [AGENTS.md](AGENTS.md).
 
 License: MIT (see `LICENSE`). Curated upstream content keeps its own notices
 (`LICENSE-*.txt` next to installed files).

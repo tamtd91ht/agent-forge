@@ -517,6 +517,8 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
                 f"{rec.capability_id}: no longer in the registry; left untouched (remove manually or via rollback)"
             )
             continue
+        if rec.capability_id in ctx.excluded_ids:
+            continue
         lc = reg.get(rec.capability_id)
         cap = lc.capability
         if cap.status == CapabilityStatus.DEPRECATED:

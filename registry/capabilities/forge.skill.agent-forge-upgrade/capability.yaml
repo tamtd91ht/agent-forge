@@ -1,8 +1,8 @@
 schema_version: "1"
 id: forge.skill.agent-forge-upgrade
 name: Agent Forge upgrade skill
-description: On-demand skill that has the coding agent review a project (code, CLAUDE.md, rules, skills) and then drive `agent-forge` to install or upgrade only the capabilities that really fit, with the user approving every write.
-version: 1.0.0
+description: The project's entry point to Agent Forge - user-invoked /agent-forge-upgrade has the coding agent review the project (code, CLAUDE.md, rules, skills) and drive the locally installed `agent-forge` to install or upgrade only the capabilities that fit, with the user approving every write.
+version: 2.0.0
 kind: skill
 category: meta.agent-forge
 purpose: Closes the gap between Agent Forge's manifest-based matching and a real review of the project. The agent decides what fits and why; Agent Forge stays the only writer (plans, hashes, rollback); the user stays the approver.
@@ -15,17 +15,21 @@ license:
   attribution: "Agent Forge maintainers"
   redistribution_ok: true
 review:
-  reviewed_at: "2026-10-19"
+  reviewed_at: "2026-10-20"
   reviewer: agent-forge maintainers
-  rationale: Workspace-authored markdown only; every Agent Forge call it prescribes is read-only or `--dry-run` until the user says yes in the conversation, and it forbids hand-editing agent files outside Agent Forge. Opt-in (tag `agent-forge`) because it is a meta tool, not project guidance; also shipped in the repo's own `.claude/skills/` so it works from the workspace with a project path as argument.
+  rationale: Workspace-authored markdown only. Installed into a project by `agent-forge setup` (run by the one-line installer, ADR-0004) and otherwise opt-in (tag `agent-forge`). User-invoked (disable-model-invocation; Codex policy.allow_implicit_invocation false), so it costs no always-loaded context. It calls only `~/.agent-forge/bin/agent-forge`; allowed-tools pre-approves the read-only subcommands and `forge --dry-run`, so every write still needs the user's yes in the conversation and Claude Code's permission prompt. It forbids hand-editing agent files and reading the install directory.
 applicability:
   tags: [agent-forge, meta, upgrade, review]
-platforms: [claude_code]
+platforms: [claude_code, codex]
 install_strategy: file_copy
 destinations:
   - platform: claude_code
     source: claude_code/agent-forge-upgrade
     dest: .claude/skills/agent-forge-upgrade
+    merge: create_only
+  - platform: codex
+    source: codex/agent-forge-upgrade
+    dest: .agents/skills/agent-forge-upgrade
     merge: create_only
 equivalents:
   - kind: skill
@@ -39,5 +43,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: bb4a23430c65f9c311dc4cf01939d2ec007aea2aa23c234266d4dc311bfbbe7e
-  pinned_at: "2026-10-19"
+  assets_sha256: e728d2143d030d7653607b911fb4f33a5f3f4716ec6bcc3a48d877cadc1979af
+  pinned_at: "2026-10-20"

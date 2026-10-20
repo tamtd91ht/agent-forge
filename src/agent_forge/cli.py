@@ -275,10 +275,12 @@ def _seed(
             stale = ws.capabilities_dir / cap_dir.name
             if cap_dir.is_dir() and stale.is_dir():
                 shutil.rmtree(stale)
+    # pip byte-compiles the hook scripts inside the installed seed; those caches are not assets
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
     for sub in ("capabilities", "schema", "policies", "bundles"):
         s = src / sub
         if s.is_dir():
-            shutil.copytree(s, ws.registry_dir / sub, dirs_exist_ok=True)
+            shutil.copytree(s, ws.registry_dir / sub, dirs_exist_ok=True, ignore=ignore)
     if populated:
         refreshed.append(f"{ws.registry_dir} (from {src})")  # type: ignore[union-attr]
     else:
@@ -1413,6 +1415,101 @@ def forge(
         if as_json:
             _print_json(report)
         return exit_code
+
+    _run(body)
+
+
+ENTRY_CAPABILITY = "forge.skill.agent-forge-upgrade"
+
+
+@app.command()
+def setup(
+    path: Annotated[
+        Path | None, typer.Argument(help="Project directory (default: current).")
+    ] = None,
+    workspace: WorkspaceOpt = None,
+    platform: Annotated[
+        list[str] | None,
+        typer.Option("--platform", "-p", help="claude_code, codex (default: detected)."),
+    ] = None,
+    as_json: JsonOpt = False,
+) -> None:
+    """Install (or update) only the /agent-forge-upgrade entry skill into a project.
+
+    Run by the one-line installer in the project root. Nothing else is selected: the agent in
+    that project reviews it and proposes the rest. Writes go through a saved, approved plan and
+    a transaction like every other install, so `status`, `remove` and `rollback` work on it.
+    """
+
+    def body() -> None:
+        from agent_forge.apply.engine import apply_plan
+        from agent_forge.matching.rules import MatchContext, choose_platforms
+        from agent_forge.planner import build_assign_plan, build_upgrade_plan
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        store = _store(ws)
+        reg.get(ENTRY_CAPABILITY)  # fails loudly on a registry without the entry skill
+        target = path or Path.cwd()
+        profile = scan_project(target, limits=ws.scan_limits)
+        platforms, notes = choose_platforms(profile, _platform_list(platform))
+        ctx = MatchContext(
+            platforms=tuple(platforms),
+            requested_ids=frozenset({ENTRY_CAPABILITY}),
+            excluded_ids=frozenset(set(reg.items) - {ENTRY_CAPABILITY}),
+            allowed_classes=frozenset({"standard"}),
+            policy=_policies(ws, Path(profile.canonical_path)),
+        )
+        result: dict[str, Any] = {"target": profile.canonical_path, "steps": []}
+        builders = [build_upgrade_plan] if profile.managed else []
+        builders.append(lambda r, p, c: build_assign_plan(r, p, c)[0])
+        for build in builders:
+            plan = build(reg, profile, ctx)
+            if not plan.operations:
+                continue
+            store.save_plan(plan)
+            _approve_plan(store, reg, plan, shared_files=False, by="agent-forge setup")
+            tx = apply_plan(ws, store, reg, plan, confirm=None)
+            _audit(
+                store,
+                "TransactionCompleted",
+                transaction_id=tx.transaction_id,
+                plan_id=plan.plan_id,
+                target=tx.target_canonical_path,
+                status=tx.status.value,
+                capabilities=sorted(tx.capabilities),
+            )
+            result["steps"].append(
+                {
+                    "plan_id": plan.plan_id,
+                    "transaction_id": tx.transaction_id,
+                    "files": [o.path for o in plan.operations],
+                }
+            )
+            profile = scan_project(target, limits=ws.scan_limits)
+        installed = {m.capability_id: m for m in profile.managed}
+        if ENTRY_CAPABILITY not in installed:
+            rejected = [r for r in plan.rejected if r.capability_id == ENTRY_CAPABILITY]
+            why = "; ".join(rejected[0].reasons) if rejected else "not selected"
+            raise PlanError(f"could not install {ENTRY_CAPABILITY}: {why}")
+        result["installed_version"] = installed[ENTRY_CAPABILITY].version
+        result["platforms"] = [p.value for p in platforms]
+        if as_json:
+            _print_json(result)
+            return
+        for n in notes:
+            console.print(f"[dim]note:[/] {n}")
+        for step in result["steps"]:
+            for f in step["files"]:
+                console.print(f"  [green]wrote[/] {f}")
+            console.print(f"  [dim]transaction {step['transaction_id']}[/]")
+        if not result["steps"]:
+            console.print(f"{ENTRY_CAPABILITY} {result['installed_version']} is already up to date")
+        console.print(
+            "[green]ready.[/] Open this project in Claude Code (or Codex) and run "
+            "[bold]/agent-forge-upgrade[/]."
+        )
 
     _run(body)
 

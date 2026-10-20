@@ -227,6 +227,14 @@ def test_upgrade_plan_replaces_only_unmodified_managed_files(workspace, make_pro
     profile3 = scan_project(root)
     versions = {m.capability_id: m.version for m in profile3.managed}
     assert versions["t.always"] == "1.1.0" and versions["t.needs-always"] == "1.0.0"
+    # an excluded capability is never upgraded
+    write_capability(workspace.registry_dir, base_manifest("t.always", version="1.2.0"))
+    up2 = build_upgrade_plan(
+        load_registry(workspace.registry_dir),
+        profile3,
+        MatchContext(platforms=(Platform.CLAUDE_CODE,), excluded_ids=frozenset({"t.always"})),
+    )
+    assert not up2.selected and not up2.operations
 
 
 def test_codex_and_claude_both(workspace, make_project) -> None:

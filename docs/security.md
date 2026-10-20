@@ -11,7 +11,8 @@ read secrets, or write outside the approved scope.
 - Modify `~/.claude`, `~/.codex`, `~/.agents`, or any directory outside the target root and
   its own workspace.
 - Upload anything. The only network calls are `git clone/fetch` when you run
-  `sources clone` / `sources sync`.
+  `sources clone` / `sources sync`, and the installer's download of Agent Forge itself
+  (`pip install` of the GitHub archive into `~/.agent-forge/.venv`, ADR-0004).
 - Read files that look like secrets (`.env*`, `*.pem`, `id_rsa`, `credentials*`…); they are
   listed by name in the profile and never opened.
 

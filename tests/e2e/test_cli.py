@@ -182,3 +182,31 @@ def test_init_refresh_registry_recopies_seed_and_keeps_own_capabilities(tmp_path
     assert skill.read_text(encoding="utf-8") == fresh
     assert not stray.exists()
     assert (ws / "registry" / "capabilities" / "mine.local" / "capability.yaml").is_file()
+
+
+def test_init_does_not_copy_bytecode_from_an_installed_seed(tmp_path: Path, monkeypatch) -> None:
+    import shutil
+
+    import agent_forge.cli as cli
+    from tests.conftest import REAL_REGISTRY, REPO_ROOT
+
+    # an installed wheel's seed: pip byte-compiles the hook scripts it contains
+    pkg = tmp_path / "pkg"
+    shutil.copytree(REAL_REGISTRY, pkg / "_seed" / "registry")
+    (pkg / "_seed" / "sources").mkdir()
+    shutil.copyfile(
+        REPO_ROOT / "sources" / "sources.yaml", pkg / "_seed" / "sources" / "sources.yaml"
+    )
+    cache = (
+        pkg
+        / "_seed/registry/capabilities/forge.hook.guard-dangerous-git/assets/claude_code/scripts/__pycache__"
+    )
+    cache.mkdir()
+    (cache / "guard_git.cpython-314.pyc").write_bytes(b"\x00\xff")
+    monkeypatch.setattr(cli.resources, "files", lambda _pkg: pkg)
+
+    ws = tmp_path / "ws"
+    run("init", "--workspace", str(ws))
+    assert not list((ws / "registry").rglob("__pycache__"))
+    out = run("validate", "--workspace", str(ws)).stdout
+    assert "0 error(s)" in out
