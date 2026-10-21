@@ -1,0 +1,290 @@
+{
+  "$defs": {
+    "Citation": {
+      "additionalProperties": false,
+      "description": "A file in the project and, when a ground requires it, one line quoted from it.",
+      "properties": {
+        "path": {
+          "description": "Relative to the project root, POSIX separators",
+          "title": "Path",
+          "type": "string"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A substring that must occur in the file (newline-insensitive)",
+          "title": "Quote"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "Confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "Decision": {
+      "additionalProperties": false,
+      "properties": {
+        "always_on": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Always On"
+        },
+        "assessed_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assessed At"
+        },
+        "assessed_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assessed By"
+        },
+        "capability_id": {
+          "title": "Capability Id",
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "context_chars": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Copied from the catalog; verify checks it",
+          "title": "Context Chars"
+        },
+        "contradicts": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Contradicts",
+          "type": "array"
+        },
+        "covered_by": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Covered By",
+          "type": "array"
+        },
+        "evidence": {
+          "default": "not_measured",
+          "enum": [
+            "improved",
+            "no_evidence",
+            "worse",
+            "not_measured"
+          ],
+          "title": "Evidence",
+          "type": "string"
+        },
+        "gap": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the project visibly lacks (ADD)",
+          "title": "Gap"
+        },
+        "grounds": {
+          "items": {
+            "$ref": "#/$defs/Ground"
+          },
+          "title": "Grounds",
+          "type": "array"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "risk": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Risk",
+          "type": "array"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope",
+          "default": "install"
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict"
+        }
+      },
+      "required": [
+        "capability_id",
+        "verdict",
+        "confidence"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "Ground": {
+      "description": "Why a capability should not be installed. Each ground needs its own evidence.",
+      "enum": [
+        "covered",
+        "conflicts",
+        "security",
+        "context_cost",
+        "stack_mismatch",
+        "evidence_worse",
+        "duplicate_tool",
+        "unused"
+      ],
+      "title": "Ground",
+      "type": "string"
+    },
+    "Scope": {
+      "enum": [
+        "install",
+        "upgrade",
+        "remove"
+      ],
+      "title": "Scope",
+      "type": "string"
+    },
+    "Verdict": {
+      "enum": [
+        "ADD",
+        "SKIP",
+        "UPGRADE",
+        "REMOVE",
+        "ASK"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "$id": "https://agent-forge.local/schema/decisions.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One file per assessment: `<project>/.agent-forge/decisions/<plan-id>.json`.",
+  "properties": {
+    "assessed_at": {
+      "description": "ISO-8601 date or timestamp",
+      "title": "Assessed At",
+      "type": "string"
+    },
+    "assessed_by": {
+      "description": "Model name / version that produced the record",
+      "title": "Assessed By",
+      "type": "string"
+    },
+    "decisions": {
+      "items": {
+        "$ref": "#/$defs/Decision"
+      },
+      "title": "Decisions",
+      "type": "array"
+    },
+    "focus": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The user's focus argument, if any",
+      "title": "Focus"
+    },
+    "plan_id": {
+      "description": "The dry-run plan the assessment was made against",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "platform": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Platform the assessment is for",
+      "title": "Platform"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "target": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Project path as the agent saw it",
+      "title": "Target"
+    }
+  },
+  "required": [
+    "plan_id",
+    "assessed_by",
+    "assessed_at"
+  ],
+  "title": "DecisionRecord",
+  "type": "object"
+}

@@ -61,6 +61,23 @@ def lock_holder(ws: WorkspaceConfig, target: str) -> dict | None:
     return data
 
 
+def orphaned_locks(ws: WorkspaceConfig) -> list[Path]:
+    """Lock files whose owning process no longer exists (read-only; nothing is deleted)."""
+    lock_dir = ws.state_dir / "locks"
+    if not lock_dir.is_dir():
+        return []
+    out: list[Path] = []
+    for path in sorted(lock_dir.glob("*.lock")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            out.append(path)  # unreadable: no live holder can be proven
+            continue
+        if not isinstance(data, dict) or not pid_alive(int(data.get("pid", 0) or 0)):
+            out.append(path)
+    return out
+
+
 @contextlib.contextmanager
 def target_lock(ws: WorkspaceConfig, target: str, purpose: str) -> Iterator[None]:
     path = lock_path(ws, target)

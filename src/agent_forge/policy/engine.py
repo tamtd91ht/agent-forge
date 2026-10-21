@@ -48,6 +48,16 @@ class Decision(StrEnum):
 class CapabilityRules(BaseModel):
     model_config = ConfigDict(extra="forbid")
     deny: list[str] = Field(default_factory=list, description="id globs, e.g. 'rea.*'")
+    forbidden: list[str] = Field(
+        default_factory=list,
+        description="id globs; the same verdict as `deny` (the three-level vocabulary of "
+        "ADR-0007: required / recommended / forbidden)",
+    )
+    required: list[str] = Field(
+        default_factory=list,
+        description="id globs the project must have: always planned when installable, never "
+        "excludable by flag or by the agent's decision record, reported by `check` when missing",
+    )
     require_request: list[str] = Field(default_factory=list, description="id globs")
     allow_only: list[str] = Field(
         default_factory=list, description="if non-empty, everything not matching is denied"
@@ -142,6 +152,17 @@ class PolicySet:
         ]
         return min(values) if values else None
 
+    def is_required(self, capability_id: str) -> bool:
+        """True when any layer lists the id under `capabilities.required`."""
+        return any(
+            fnmatch.fnmatchcase(capability_id, g)
+            for _, pol in self.layers
+            for g in pol.capabilities.required
+        )
+
+    def required_patterns(self) -> list[str]:
+        return sorted({g for _, pol in self.layers for g in pol.capabilities.required})
+
     def class_allowed(self, klass: str) -> bool:
         return all(
             getattr(pol.classes, klass, "allow") == "allow"
@@ -186,6 +207,9 @@ def _evaluate_one(
     for g in rules.deny:
         if fnmatch.fnmatchcase(cap.id, g):
             tighten("deny", f"capability id matches deny pattern {g!r}")
+    for g in rules.forbidden:
+        if fnmatch.fnmatchcase(cap.id, g):
+            tighten("deny", f"capability id matches forbidden pattern {g!r}")
     for g in rules.require_request:
         if fnmatch.fnmatchcase(cap.id, g):
             tighten("require_request", f"capability id matches require_request pattern {g!r}")

@@ -21,6 +21,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from agent_forge.adapters import get_adapter
+from agent_forge.errors import UsageError
 from agent_forge.matching.conflicts import (
     declared_conflicts,
     destination_collisions,
@@ -106,10 +107,12 @@ def _applicability(
     """Return (applies, specificity, reasons)."""
     app = cap.applicability
     reasons: list[str] = []
-    requested = cap.id in ctx.requested_ids or bool(ctx.wanted_tags & set(app.tags))
+    requested = _is_requested(cap, ctx)
     if requested:
         reasons.append(
-            "explicitly requested"
+            "required by policy"
+            if _is_required(cap, ctx)
+            else "explicitly requested"
             if cap.id in ctx.requested_ids
             else "matches requested tag(s): " + ", ".join(sorted(ctx.wanted_tags & set(app.tags)))
         )
@@ -166,6 +169,13 @@ def _file_present(profile: ProjectProfile, rel: str) -> bool:
 
 
 def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> MatchResult:
+    if ctx.policy is not None:
+        blocked = sorted(cid for cid in ctx.excluded_ids if ctx.policy.is_required(cid))
+        if blocked:
+            raise UsageError(
+                "policy requires " + ", ".join(blocked) + "; it cannot be excluded",
+                hint="Change `capabilities.required` in the policy (a reviewed change), not the flags.",
+            )
     result = MatchResult(platforms=list(ctx.platforms))
     installed = {m.capability_id: m.version for m in profile.managed}
     selected_ids: set[str] = set()
@@ -309,8 +319,22 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
     return result
 
 
+def applies_to(cap: Capability, profile: ProjectProfile, ctx: MatchContext) -> bool:
+    """Public view of the applicability rule (used by `decisions verify` for `stack_mismatch`)."""
+    return _applicability(cap, profile, ctx)[0]
+
+
+def _is_required(cap: Capability, ctx: MatchContext) -> bool:
+    return ctx.policy is not None and ctx.policy.is_required(cap.id)
+
+
 def _is_requested(cap: Capability, ctx: MatchContext) -> bool:
-    return cap.id in ctx.requested_ids or bool(ctx.wanted_tags & set(cap.applicability.tags))
+    """Requested by id, by tag, or required by policy (ADR-0007: required is never optional)."""
+    return (
+        cap.id in ctx.requested_ids
+        or bool(ctx.wanted_tags & set(cap.applicability.tags))
+        or _is_required(cap, ctx)
+    )
 
 
 def _policy_block(

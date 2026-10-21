@@ -51,8 +51,12 @@ sources_app = typer.Typer(
 catalog_app = typer.Typer(
     help="Browse the curated capability registry.", invoke_without_command=True
 )
+decisions_app = typer.Typer(
+    help="Read, verify and summarise the agent's decision records (ADR-0007). Read-only."
+)
 app.add_typer(sources_app, name="sources")
 app.add_typer(catalog_app, name="catalog")
+app.add_typer(decisions_app, name="decisions")
 
 console = Console()
 err_console = Console(stderr=True)
@@ -1361,6 +1365,15 @@ def forge(
             "committed file; a plan that goes beyond it is refused (exit 14) and nothing is written.",
         ),
     ] = None,
+    decisions: Annotated[
+        Path | None,
+        typer.Option(
+            "--decisions",
+            help="Decision record written by /agent-forge-upgrade: verified first; effective "
+            "SKIP/REMOVE become exclusions, ADD become requests, unresolved ASK stop a real run "
+            "(--exclude/--request override per id). The record's digest is bound to the plan.",
+        ),
+    ] = None,
     as_json: JsonOpt = False,
 ) -> None:
     """One-shot upgrade: scan the project, upgrade what Agent Forge already manages, add the
@@ -1430,14 +1443,70 @@ def forge(
             ):
                 if klass not in granted and typer.confirm(f"Allow {what}? [{flag}]", default=False):
                     granted.add(klass)
+        policy_set = _policies(ws, Path(profile.canonical_path))
+        requested_ids = set(request or [])
+        excluded_ids = set(exclude or [])
+        decisions_digest: str | None = None
+        decision_notes: list[str] = []
+        if decisions is not None:
+            from agent_forge.decisions import load_record, verify_record
+            from agent_forge.decisions.usage import usage_summary
+            from agent_forge.models.decision import Verdict
+
+            record = load_record(decisions)
+            vrep = verify_record(
+                record,
+                reg,
+                profile,
+                policy=policy_set,
+                platform=platforms[0],
+                usage=usage_summary(profile),
+                path=decisions,
+            )
+            report["decisions"] = vrep.to_dict()
+            if not as_json:
+                _print_verify_report(vrep, out)
+            # flags resolve a decision per id; otherwise the effective verdict decides
+            for cid in vrep.effective(Verdict.SKIP) + vrep.effective(Verdict.REMOVE):
+                if cid not in requested_ids:
+                    excluded_ids.add(cid)
+            for cid in vrep.effective(Verdict.ADD):
+                if cid not in excluded_ids:
+                    requested_ids.add(cid)
+            unresolved = [
+                cid
+                for cid in vrep.effective(Verdict.ASK)
+                if cid not in requested_ids and cid not in excluded_ids
+            ]
+            removals = vrep.effective(Verdict.REMOVE)
+            if removals:
+                decision_notes.append(
+                    "REMOVE verdicts are not applied by forge; run `agent-forge remove PATH "
+                    + " ".join(removals)
+                    + "`"
+                )
+            if unresolved:
+                decision_notes.append("ASK, not resolved: " + ", ".join(unresolved))
+                if not dry_run:
+                    raise PlanError(
+                        f"{len(unresolved)} decision(s) need the user: " + ", ".join(unresolved),
+                        hint="Answer each one with --exclude <id> or --request <id> (or amend the "
+                        "record), or use --dry-run to preview. Downgraded SKIPs are listed above.",
+                    )
+            decisions_digest = record.digest()
+            decision_notes.insert(
+                0,
+                f"decisions: {decisions} digest {decisions_digest[:12]} "
+                f"({len(vrep.downgraded)} downgraded to ASK)",
+            )
         base_ctx = MatchContext(
             platforms=tuple(platforms),
             wanted_tags=frozenset(want or []),
-            requested_ids=frozenset(request or []),
-            excluded_ids=frozenset(exclude or []),
+            requested_ids=frozenset(requested_ids),
+            excluded_ids=frozenset(excluded_ids),
             include_optional=include_optional,
             allowed_classes=frozenset(granted),
-            policy=_policies(ws, Path(profile.canonical_path)),
+            policy=policy_set,
         )
         report["approval_classes"] = sorted(granted)
 
@@ -1532,14 +1601,16 @@ def forge(
         # 2. upgrade what is already managed
         if profile.managed:
             up = build_upgrade_plan(reg, profile, base_ctx)
-            up.notes = [*notes, *up.notes]
+            up.notes = [*notes, *decision_notes, *up.notes]
+            up.decisions_digest = decisions_digest
             report["steps"].append(execute(up, "upgrade managed capabilities"))
             if report["steps"][-1]["status"] == "applied":
                 profile = scan_project(path, limits=ws.scan_limits)
 
         # 3. add what fits
         plan, _ = build_assign_plan(reg, profile, base_ctx)
-        plan.notes = [*notes, *plan.notes]
+        plan.notes = [*notes, *decision_notes, *plan.notes]
+        plan.decisions_digest = decisions_digest
         report["steps"].append(execute(plan, "add recommended capabilities"))
 
         # 4. validate
@@ -1745,21 +1816,34 @@ def drift(
     """Compare every managed file / section / merged entry with what was installed (read-only)."""
 
     def body() -> int:
+        from agent_forge.decisions import evidence_drift, latest_record_path, load_record
         from agent_forge.planner.maintenance import drift_report
         from agent_forge.scanner.project_profile import scan_project
 
         ws = _ws(workspace)
         profile = scan_project(path, limits=ws.scan_limits)
         rep = drift_report(profile)
+        root = Path(profile.canonical_path)
+        basis: list = []
+        record_file = latest_record_path(root)
+        if record_file is not None:
+            basis = evidence_drift(load_record(record_file), root)
         if as_json:
             _print_json(
                 {
                     "target": rep.target,
                     "items": [i.__dict__ for i in rep.items],
                     "drifted": len(rep.drifted),
+                    "decision_record": str(record_file) if record_file else None,
+                    "decision_basis": [b.to_dict() for b in basis],
                 }
             )
             return 0
+        for b in basis:
+            console.print(
+                f"[yellow]decision basis {b.state}[/] {b.capability_id} ({b.verdict}): {b.detail}"
+                " -> review it with /agent-forge-upgrade"
+            )
         if not rep.items:
             console.print("no managed capabilities")
             return 0
@@ -1839,9 +1923,52 @@ def repair(
 # ---- doctor / policy / audit -------------------------------------------------------------
 
 
+INSTALLER_REPO = "tamtd91ht/agent-forge"
+
+
+def _installed_release(root: Path) -> dict[str, str] | None:
+    """The `VERSION` file the installer writes next to the workspace (ref, verified, date)."""
+    path = root / "VERSION"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    out: dict[str, str] = {}
+    for line in text.splitlines():
+        key, sep, value = line.partition("=")
+        if sep:
+            out[key.strip()] = value.strip()
+    return out or None
+
+
+def _latest_release_tag(timeout: float = 5.0) -> str | None:
+    import urllib.error
+    import urllib.request
+
+    url = f"https://api.github.com/repos/{INSTALLER_REPO}/releases/latest"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, OSError, ValueError):
+        return None
+    tag = data.get("tag_name") if isinstance(data, dict) else None
+    return tag if isinstance(tag, str) and tag else None
+
+
 @app.command()
-def doctor(workspace: WorkspaceOpt = None, as_json: JsonOpt = False) -> int:
-    """Check the local environment and workspace: tools on PATH, registry, policy, state dirs."""
+def doctor(
+    workspace: WorkspaceOpt = None,
+    check_latest: Annotated[
+        bool,
+        typer.Option(
+            "--check-latest",
+            help="Also ask api.github.com for the latest release and compare (network).",
+        ),
+    ] = False,
+    as_json: JsonOpt = False,
+) -> int:
+    """Check the local environment and workspace: tools on PATH, registry, policy, state dirs,
+    orphaned locks, and which release the installer put here."""
 
     def body() -> int:
         import shutil
@@ -1938,6 +2065,48 @@ def doctor(workspace: WorkspaceOpt = None, as_json: JsonOpt = False) -> int:
                 True,
                 str(ws.audit_path) + (" (present)" if ws.audit_path.exists() else " (empty)"),
             )
+            # Orphaned locks: a lock file whose process is gone. Reported here (doctor is
+            # read-only); apply/rollback take such a lock over themselves.
+            from agent_forge.storage.locks import orphaned_locks
+
+            orphans = orphaned_locks(ws)
+            add(
+                "orphaned locks",
+                not orphans,
+                "; ".join(str(p) for p in orphans) or "none",
+                level="warning",
+            )
+            # What the installer put here (ref, how it was verified), compared with the latest
+            # release only when asked: doctor never touches the network by default.
+            installed = _installed_release(ws.root)
+            if installed is None:
+                add("installed release", True, "not installed by install.sh / install.ps1")
+            else:
+                add(
+                    "installed release",
+                    installed.get("verified", "none") != "none" or installed.get("ref") == "source",
+                    f"{installed.get('ref', '?')} (verified: {installed.get('verified', 'none')}, "
+                    f"installed {installed.get('installed_at', '?')})",
+                    level="warning",
+                )
+            if check_latest:
+                latest = _latest_release_tag()
+                if latest is None:
+                    add("latest release", False, "could not reach api.github.com", level="warning")
+                else:
+                    current = (installed or {}).get("ref")
+                    add(
+                        "latest release",
+                        current == latest,
+                        f"{latest}"
+                        + (
+                            ""
+                            if current == latest
+                            else f" (installed: {current or 'unknown'}; "
+                            "re-run the install command to update)"
+                        ),
+                        level="warning",
+                    )
         except AgentForgeError as exc:
             add("workspace", False, exc.message)
         if as_json:
@@ -1974,11 +2143,18 @@ def policy(
         for cap in reg.capabilities():
             for plat in cap.platforms:
                 d, why = ps.evaluate(cap, plat, context_chars(reg.get(cap.id), plat))
-                verdicts.setdefault(cap.id, {})[plat.value] = {"decision": d.value, "reasons": why}
+                verdicts.setdefault(cap.id, {})[plat.value] = {
+                    "decision": d.value,
+                    "required": ps.is_required(cap.id),
+                    "reasons": why,
+                }
+        required = sorted(cid for cid in verdicts if ps.is_required(cid))
         if as_json:
-            _print_json({"layers": describe(ps), "verdicts": verdicts})
+            _print_json({"layers": describe(ps), "required": required, "verdicts": verdicts})
             return
         console.print("layers: " + " -> ".join(ps.names))
+        if required:
+            console.print("required by policy: " + ", ".join(required))
         t = Table(title="policy verdicts")
         for col in ("capability", "platform", "decision", "reasons"):
             t.add_column(col, overflow="fold")
@@ -1987,7 +2163,10 @@ def policy(
                 color = {"allow": "green", "require_request": "yellow", "deny": "red"}[
                     v["decision"]
                 ]
-                t.add_row(cid, plat, f"[{color}]{v['decision']}[/]", "\n".join(v["reasons"]) or "-")
+                label = f"[{color}]{v['decision']}[/]" + (
+                    " [bold](required)[/]" if v["required"] else ""
+                )
+                t.add_row(cid, plat, label, "\n".join(v["reasons"]) or "-")
         console.print(t)
 
     _run(body)
@@ -2166,6 +2345,7 @@ def status(
         txs = store.list_transactions(profile.canonical_path, limit=10)
         plans_ = [p for p in store.list_plans(profile.canonical_path)][:10]
         unfinished = store.transactions_needing_recovery(profile.canonical_path)
+        absent, usage = _status_decisions(profile)
         if as_json:
             _print_json(
                 {
@@ -2176,6 +2356,8 @@ def status(
                     "needs_recovery": [{"transaction_id": t, "reason": r} for t, r in unfinished],
                     "plans": plans_,
                     "platforms": [p.platform.value for p in profile.platforms],
+                    "decisions": absent,
+                    "usage": usage,
                 }
             )
             return
@@ -2248,6 +2430,26 @@ def status(
                 console.print(
                     f"[{color}]{r['status']}:[/] {r['capability']} is {r['status']} in the registry{instead} "
                     f"(docs/deprecation-policy.md; `agent-forge remove . {r['capability']}`)"
+                )
+        if absent:
+            t = Table(title="absent by decision (/agent-forge-upgrade)")
+            for col in ("capability", "verdict", "grounds", "basis", "assessed"):
+                t.add_column(col, overflow="fold")
+            for d in absent:
+                t.add_row(
+                    d["capability_id"],
+                    d["verdict"],
+                    ", ".join(d["grounds"]) or "-",
+                    "\n".join(d["basis"]) or "-",
+                    d["assessed_at"] or "-",
+                )
+            console.print(t)
+        if usage and usage.get("log_present"):
+            for cid in usage["unused"]:
+                row = next(r for r in usage["by_capability"] if r["capability"] == cid)
+                console.print(
+                    f"[yellow]unused:[/] {cid} installed {row['days_installed']} day(s), "
+                    f"0 invocations in {usage['window_days']} days -> `agent-forge remove PATH {cid}`?"
                 )
 
     _run(body)
@@ -2377,6 +2579,11 @@ def check(
             if m.capability_id in reg.items
             and reg.items[m.capability_id].capability.version != m.version
         ]
+        required_missing = _required_missing(
+            reg, profile, _policies(ws, Path(profile.canonical_path))
+        )
+        for cid, why in required_missing:
+            failures.append(f"policy: {cid} is required but {why}")
         ok = not failures
         result = {
             "target": profile.canonical_path,
@@ -2386,6 +2593,7 @@ def check(
             "warnings": warnings,
             "outdated": outdated,
             "drifted": len(drift.drifted),
+            "required_missing": [cid for cid, _ in required_missing],
         }
         if as_json:
             _print_json(result)
@@ -2405,6 +2613,11 @@ def check(
                 console.print(
                     "fix: [bold]agent-forge sync PATH[/] restores managed files; "
                     "[bold]repair --strategy unmanage[/] keeps local edits"
+                    + (
+                        "; [bold]forge PATH --request <id>[/] installs a required capability"
+                        if required_missing
+                        else ""
+                    )
                 )
         return 0 if ok else ValidationFailed.exit_code
 
@@ -2588,6 +2801,468 @@ def stats(
             console.print(t)
         if data["events"]:
             console.print("events: " + ", ".join(f"{k} {v}" for k, v in data["events"].items()))
+
+    _run(body)
+
+
+# ---- decision layer helpers (ADR-0007) -----------------------------------------------------
+
+
+def _print_verify_report(vrep, out) -> None:
+    t = Table(title=f"decision record {vrep.record.plan_id} ({vrep.record.assessed_by})")
+    for col in ("capability", "verdict", "effective", "grounds", "conf", "findings"):
+        t.add_column(col, overflow="fold")
+    for item in vrep.items:
+        d = item.decision
+        color = "red" if item.downgraded else ("yellow" if not item.verified else "green")
+        t.add_row(
+            d.capability_id,
+            d.verdict.value,
+            f"[{color}]{item.effective.value}[/]",
+            ", ".join(g.value for g in d.grounds) or "-",
+            d.confidence.value,
+            "\n".join(f"{f.level}: {f.message}" for f in item.findings) or "-",
+        )
+    out.print(t)
+    for item in vrep.downgraded:
+        out.print(
+            f"[yellow]{item.decision.capability_id}[/]: the agent wanted {item.decision.verdict.value} "
+            f"but could not prove it -> {item.effective.value}"
+        )
+    for note in vrep.notes:
+        out.print(f"[dim]note:[/] {note}")
+
+
+def _required_missing(reg, profile, policies) -> list[tuple[str, str]]:
+    """Required capability ids that are not installed, with the reason it counts as missing."""
+    from agent_forge.policy.engine import Decision as PolicyDecision
+    from agent_forge.registry.context_load import context_chars
+
+    installed = {m.capability_id for m in profile.managed}
+    platforms = [p.platform for p in profile.platforms] or [Platform.CLAUDE_CODE]
+    out: list[tuple[str, str]] = []
+    for cid in sorted(reg.items):
+        if not policies.is_required(cid) or cid in installed:
+            continue
+        cap = reg.items[cid].capability
+        usable = [pl for pl in platforms if pl in cap.platforms]
+        if not usable:
+            out.append((cid, "not available for the detected platforms"))
+            continue
+        verdicts = {
+            pl: policies.evaluate(cap, pl, context_chars(reg.items[cid], pl))[0] for pl in usable
+        }
+        if all(v == PolicyDecision.DENY for v in verdicts.values()):
+            out.append((cid, "also denied by policy (fix the policy)"))
+        else:
+            out.append((cid, "not installed"))
+    return out
+
+
+def _status_decisions(profile) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """Latest decision record (why capabilities are absent) and the local usage summary."""
+    from agent_forge.decisions import latest_record_path, load_record
+    from agent_forge.decisions.usage import USAGE_LOG, usage_summary
+    from agent_forge.models.decision import Verdict
+
+    root = Path(profile.canonical_path)
+    absent: list[dict[str, Any]] = []
+    record_file = latest_record_path(root)
+    if record_file is not None:
+        try:
+            record = load_record(record_file)
+        except PlanError:
+            record = None
+        if record is not None:
+            for d in record.decisions:
+                if d.verdict in (Verdict.SKIP, Verdict.REMOVE, Verdict.ASK):
+                    absent.append(
+                        {
+                            "capability_id": d.capability_id,
+                            "verdict": d.verdict.value,
+                            "grounds": [g.value for g in d.grounds],
+                            "basis": [c.path for c in d.citations],
+                            "reason": d.reason,
+                            "assessed_at": record.assessed_at,
+                            "record": record_file.name,
+                        }
+                    )
+    usage = usage_summary(profile) if (root / USAGE_LOG).is_file() else None
+    return absent, usage
+
+
+# ---- lint ----------------------------------------------------------------------------------
+
+
+@app.command()
+def lint(
+    path: Annotated[Path, typer.Argument(help="Project directory.")],
+    max_context: Annotated[
+        int | None,
+        typer.Option(
+            "--max-context",
+            help="Fail (exit 12) when the always-loaded context exceeds this many characters.",
+            min=0,
+        ),
+    ] = None,
+    as_json: JsonOpt = False,
+) -> int:
+    """Score the agent configuration a project already has: always-loaded context per file,
+    duplicate rules, credentials in agent files, hooks that run flagged commands, MCP servers
+    defined but disabled. Read-only, no workspace or catalog needed, proposes nothing."""
+
+    def body() -> int:
+        from agent_forge.lint import lint_project
+
+        rep = lint_project(path, max_context=max_context)
+        if as_json:
+            _print_json(rep.to_dict())
+            return 0 if rep.ok else ValidationFailed.exit_code
+        console.print(
+            f"[bold]{rep.target}[/]  platforms: {', '.join(rep.platforms) or 'none'}  "
+            f"assets: {rep.counts.get('assets', 0)} ({rep.counts.get('managed', 0)} managed)  "
+            f"hooks: {rep.counts.get('hooks', 0)}  mcp: {rep.counts.get('mcp_servers', 0)}"
+        )
+        t = Table(
+            title=f"always-loaded context: {rep.always_on_total} chars (~{rep.always_on_total // 4} tokens)"
+        )
+        for col in ("chars", "file", "why"):
+            t.add_column(col, overflow="fold")
+        for f in rep.files:
+            if f.chars:
+                t.add_row(str(f.chars), f.path, f.reason)
+        console.print(t)
+        for f in rep.findings:
+            color = {"error": "red", "warning": "yellow", "info": "dim"}[f.level]
+            console.print(f"[{color}]{f.level:7}[/] [{f.check}] {f.path}: {f.message}")
+        console.print(
+            f"{len(rep.errors)} error(s), {len(rep.findings) - len(rep.errors)} warning(s): "
+            + ("[green]OK[/]" if rep.ok else "[red]FAILED[/]")
+        )
+        return 0 if rep.ok else ValidationFailed.exit_code
+
+    _run(body)
+    return 0
+
+
+# ---- usage ---------------------------------------------------------------------------------
+
+
+@app.command()
+def usage(
+    path: Annotated[Path, typer.Argument(help="Project directory.")],
+    workspace: WorkspaceOpt = None,
+    since: Annotated[int, typer.Option("--since", help="Window in days.", min=1)] = 30,
+    as_json: JsonOpt = False,
+) -> None:
+    """Invocations per installed skill / subagent from the project's local usage log
+    (`forge.hook.usage-log`, opt-in). Nothing is sent anywhere; rules are never "invoked"."""
+
+    def body() -> None:
+        from agent_forge.decisions.usage import usage_summary
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        profile = scan_project(path, limits=ws.scan_limits)
+        data = usage_summary(profile, since_days=since)
+        if as_json:
+            _print_json(data)
+            return
+        if not data["log_present"]:
+            console.print(
+                f"no usage log ({data['log_path']}); enable it with "
+                "`agent-forge forge PATH --want usage --hooks` (forge.hook.usage-log)"
+            )
+            return
+        console.print(
+            f"{data['entries_in_window']} invocation(s) in the last {since} day(s); "
+            f"log covers {data['observed_days']} day(s), {data['entries']} record(s)"
+        )
+        t = Table(title="installed capabilities")
+        for col in (
+            "capability",
+            "kind",
+            "invocations",
+            "sessions",
+            "last used",
+            "installed",
+            "verdict",
+        ):
+            t.add_column(col, overflow="fold")
+        for r in data["by_capability"]:
+            verdict = (
+                "[yellow]unused[/]"
+                if r["unused"]
+                else "-"
+                if not r["invocable"]
+                else "[green]used[/]"
+                if r["invocations"]
+                else "no data yet"
+            )
+            t.add_row(
+                r["capability"],
+                ", ".join(r["kinds"]) or "always-on",
+                str(r["invocations"]),
+                str(r["sessions"]),
+                (r["last_used"] or "-")[:10],
+                f"{r['days_installed']} d" if r["days_installed"] is not None else "-",
+                verdict,
+            )
+        console.print(t)
+        if data["unmanaged"]:
+            console.print(
+                "not managed by Agent Forge: "
+                + ", ".join(f"{k} ({n})" for k, n in data["unmanaged"].items())
+            )
+
+    _run(body)
+
+
+# ---- decisions -----------------------------------------------------------------------------
+
+
+@decisions_app.callback()
+def _decisions(ctx: typer.Context) -> None:
+    """Read, verify and summarise the agent's decision records (ADR-0007). Read-only."""
+    if ctx.invoked_subcommand:
+        _COMMAND.append(ctx.invoked_subcommand)
+
+
+def _record_for(path: Path, plan: str | None, file: Path | None) -> Path:
+    from agent_forge.decisions import latest_record_path
+    from agent_forge.decisions.verify import record_path
+
+    root = path.resolve()
+    if file is not None:
+        return file
+    if plan is not None:
+        return record_path(root, plan)
+    found = latest_record_path(root)
+    if found is None:
+        raise PlanError(
+            f"no decision record under {root / '.agent-forge' / 'decisions'}",
+            hint="Run /agent-forge-upgrade; the skill writes <plan-id>.json there.",
+        )
+    return found
+
+
+@decisions_app.command("verify")
+def decisions_verify(
+    path: Annotated[Path, typer.Argument(help="Project directory.")],
+    workspace: WorkspaceOpt = None,
+    plan: Annotated[str | None, typer.Option("--plan", help="Plan id of the record.")] = None,
+    file: Annotated[Path | None, typer.Option("--file", help="Record file to verify.")] = None,
+    platform: Annotated[
+        str | None, typer.Option("--platform", "-p", help="Platform to assess for.")
+    ] = None,
+    as_json: JsonOpt = False,
+) -> int:
+    """Check every claim in a decision record that a program can check: paths exist, quotes
+    are real, numbers match the catalog, each ground carries its evidence, policy is respected.
+    A SKIP / REMOVE that fails becomes ASK. Exit 12 when anything failed."""
+
+    def body() -> int:
+        from agent_forge.decisions import load_record, verify_record
+        from agent_forge.decisions.usage import usage_summary
+        from agent_forge.matching.rules import choose_platforms
+        from agent_forge.scanner.project_profile import scan_project
+
+        ws = _ws(workspace)
+        reg = _registry(ws)
+        profile = scan_project(path, limits=ws.scan_limits)
+        record_file = _record_for(path, plan, file)
+        record = load_record(record_file)
+        platforms, _notes = choose_platforms(
+            profile, _platform_list([platform] if platform else None)
+        )
+        vrep = verify_record(
+            record,
+            reg,
+            profile,
+            policy=_policies(ws, Path(profile.canonical_path)),
+            platform=platforms[0],
+            usage=usage_summary(profile),
+            path=record_file,
+        )
+        if as_json:
+            _print_json(vrep.to_dict())
+        else:
+            _print_verify_report(vrep, console)
+            console.print(
+                f"{len(vrep.items)} decision(s), {len(vrep.errors)} failed check(s), "
+                f"{len(vrep.downgraded)} downgraded: "
+                + ("[green]OK[/]" if vrep.ok else "[red]FAILED[/]")
+            )
+        return 0 if vrep.ok else ValidationFailed.exit_code
+
+    _run(body)
+    return 0
+
+
+@decisions_app.command("diff")
+def decisions_diff(
+    path: Annotated[Path, typer.Argument(help="Project directory.")],
+    old: Annotated[
+        Path | None, typer.Option("--old", help="Older record (default: second newest).")
+    ] = None,
+    new: Annotated[
+        Path | None, typer.Option("--new", help="Newer record (default: newest).")
+    ] = None,
+    as_json: JsonOpt = False,
+) -> None:
+    """Only the decisions that changed between two records, with the old and the new reason.
+    A changed verdict on an unchanged project is a reason to look, not to apply."""
+
+    def body() -> None:
+        from agent_forge.decisions import diff_records, load_record
+        from agent_forge.decisions.verify import DECISIONS_DIR
+
+        root = path.resolve()
+        files = [old, new]
+        if old is None or new is None:
+            directory = root / DECISIONS_DIR
+            candidates = sorted(
+                (p for p in directory.glob("*.json") if p.is_file() and not p.is_symlink())
+                if directory.is_dir()
+                else [],
+                key=lambda p: (load_record(p).assessed_at, p.name),
+            )
+            if len(candidates) < 2:
+                raise PlanError(
+                    f"need two records under {directory} (found {len(candidates)})",
+                    hint="Pass --old and --new explicitly.",
+                )
+            files = [old or candidates[-2], new or candidates[-1]]
+        a, b = load_record(files[0]), load_record(files[1])
+        changes = diff_records(a, b)
+        if as_json:
+            _print_json(
+                {
+                    "old": {
+                        "path": str(files[0]),
+                        "plan_id": a.plan_id,
+                        "assessed_at": a.assessed_at,
+                    },
+                    "new": {
+                        "path": str(files[1]),
+                        "plan_id": b.plan_id,
+                        "assessed_at": b.assessed_at,
+                    },
+                    "changes": changes,
+                }
+            )
+            return
+        console.print(f"{a.plan_id} ({a.assessed_at}) -> {b.plan_id} ({b.assessed_at})")
+        if not changes:
+            console.print("[green]no decision changed[/]")
+            return
+        t = Table(title=f"{len(changes)} changed decision(s)")
+        for col in ("capability", "change", "old", "new"):
+            t.add_column(col, overflow="fold")
+        for c in changes:
+            t.add_row(
+                c["capability_id"],
+                c["change"],
+                _brief_decision(c["old"]),
+                _brief_decision(c["new"]),
+            )
+        console.print(t)
+
+    _run(body)
+
+
+def _brief_decision(d: dict[str, Any] | None) -> str:
+    if d is None:
+        return "-"
+    grounds = ", ".join(d["grounds"]) or "-"
+    return f"{d['verdict']} [{grounds}] {d['reason']}".strip()
+
+
+@decisions_app.command("explain")
+def decisions_explain(
+    path: Annotated[Path, typer.Argument(help="Project directory.")],
+    capability_id: Annotated[str, typer.Argument(help="Capability id.")],
+    as_json: JsonOpt = False,
+) -> None:
+    """Why this capability is (or is not) in the project, from the latest decision record."""
+
+    def body() -> None:
+        from agent_forge.decisions import load_record
+
+        record_file = _record_for(path, None, None)
+        record = load_record(record_file)
+        d = record.by_id().get(capability_id)
+        if d is None:
+            raise PlanError(
+                f"{capability_id} was not assessed in {record_file.name}",
+                hint="`agent-forge catalog show <id>` describes it; /agent-forge-upgrade assesses it.",
+            )
+        if as_json:
+            _print_json(
+                {
+                    "record": str(record_file),
+                    "plan_id": record.plan_id,
+                    "assessed_by": record.assessed_by,
+                    "assessed_at": record.assessed_at,
+                    "decision": d.model_dump(mode="json"),
+                }
+            )
+            return
+        console.print(
+            Panel.fit(
+                f"[bold]{d.verdict.value}[/] ({d.confidence.value} confidence)\n"
+                f"grounds: {', '.join(g.value for g in d.grounds) or '-'}\n"
+                f"covered by: {', '.join(c.path for c in d.covered_by) or '-'}\n"
+                f"contradicts: {', '.join(c.path for c in d.contradicts) or '-'}\n"
+                f"gap: {d.gap or '-'}\n"
+                f"context: {d.context_chars if d.context_chars is not None else '?'} chars, "
+                f"{'always-on' if d.always_on else 'on-demand'}; evidence: {d.evidence}\n"
+                f"reason: {d.reason or '-'}\n"
+                f"[dim]{record.assessed_by}, {record.assessed_at}, {record_file.name}[/]",
+                title=capability_id,
+            )
+        )
+
+    _run(body)
+
+
+@decisions_app.command("report")
+def decisions_report(
+    directories: Annotated[list[Path], typer.Argument(help="Directories holding repositories.")],
+    as_json: JsonOpt = False,
+) -> None:
+    """Organisation-wide table: capability x verdict x ground across every repository's latest
+    decision record, with threshold-based suggestions for the catalog review (ADR-0008)."""
+
+    def body() -> None:
+        from agent_forge.decisions.report import org_report
+
+        data = org_report([d.resolve() for d in directories])
+        if as_json:
+            _print_json(data)
+            return
+        console.print(
+            f"{data['records']} repositor{'y' if data['records'] == 1 else 'ies'} with a decision record"
+        )
+        for pr in data["problems"]:
+            console.print(f"[yellow]skipped:[/] {pr}")
+        t = Table(title="capability x verdict x ground")
+        for col in ("capability", "repos", "verdicts", "grounds"):
+            t.add_column(col, overflow="fold")
+        for row in data["capabilities"]:
+            t.add_row(
+                row["capability"],
+                str(row["repos"]),
+                ", ".join(f"{k} {v}" for k, v in row["verdicts"].items()),
+                ", ".join(f"{k} {v}" for k, v in row["grounds"].items()) or "-",
+            )
+        console.print(t)
+        for sg in data["suggestions"]:
+            console.print(f"[bold]{sg['capability']}[/]: {sg['suggestion']} ({sg['why']})")
+        if not data["suggestions"]:
+            console.print(
+                f"[dim]no suggestion: thresholds need >= {data['thresholds']['min_repos']} repositories per capability[/]"
+            )
 
     _run(body)
 

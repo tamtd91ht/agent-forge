@@ -39,6 +39,26 @@ def test_every_json_command_uses_the_envelope(real_workspace, make_project) -> N
     ws = str(real_workspace.root)
     root = make_project("env", kind="claude", files=BACKEND)
     w = ["--workspace", ws, "--json"]
+    decisions = root / ".agent-forge" / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "plan-1.json").write_text(
+        json.dumps(
+            {
+                "plan_id": "plan-1",
+                "assessed_by": "pytest",
+                "assessed_at": "2026-10-21",
+                "decisions": [
+                    {
+                        "capability_id": "ecc.tdd-workflow",
+                        "verdict": "ADD",
+                        "confidence": "high",
+                        "gap": "x",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     cases: list[tuple[list[str], str, type]] = [
         (["catalog", *w], "agent-forge catalog", list),
@@ -57,6 +77,15 @@ def test_every_json_command_uses_the_envelope(real_workspace, make_project) -> N
         (["impact", "ecc.tdd-workflow", *w], "agent-forge impact", dict),
         (["validate", *w, "--no-provenance"], "agent-forge validate", dict),
         (["sources", "list", *w], "agent-forge sources list", list),
+        (["lint", str(root), "--json"], "agent-forge lint", dict),
+        (["usage", str(root), *w], "agent-forge usage", dict),
+        (["decisions", "verify", str(root), *w], "agent-forge decisions verify", dict),
+        (
+            ["decisions", "explain", str(root), "ecc.tdd-workflow", "--json"],
+            "agent-forge decisions explain",
+            dict,
+        ),
+        (["decisions", "report", str(root.parent), "--json"], "agent-forge decisions report", dict),
     ]
     for args, command, kind in cases:
         doc = _env(args)

@@ -1,4 +1,4 @@
-"""Export JSON Schemas for capability manifests, plans and transactions into registry/schema/.
+"""Export JSON Schemas (capability, plan, transaction, profile, envelope, decisions) into registry/schema/.
 
 Run:  python scripts/export_schemas.py           write changed schemas
       python scripts/export_schemas.py --check   exit 1 if any schema is out of date (CI)
@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agent_forge.models.capability import Capability  # noqa: E402
+from agent_forge.models.decision import DecisionRecord  # noqa: E402
 from agent_forge.models.envelope import Envelope  # noqa: E402
 from agent_forge.models.plan import Plan  # noqa: E402
 from agent_forge.models.project import ProjectProfile  # noqa: E402
@@ -26,6 +27,7 @@ SCHEMAS = {
     "transaction.schema.json": Transaction,
     "project-profile.schema.json": ProjectProfile,
     "envelope.schema.json": Envelope,
+    "decisions.schema.json": DecisionRecord,
 }
 
 

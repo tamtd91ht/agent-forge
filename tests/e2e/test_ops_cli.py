@@ -35,6 +35,36 @@ def test_doctor_reports_environment(real_workspace) -> None:
     assert {"python", "git", "workspace", "registry", "policy layers", "integrity pins"} <= names
     reg = next(c for c in checks if c["name"] == "registry")
     assert reg["ok"]
+    by_name = {c["name"]: c for c in checks}
+    assert by_name["orphaned locks"]["ok"] and by_name["orphaned locks"]["detail"] == "none"
+    assert "not installed by" in by_name["installed release"]["detail"]
+
+
+def test_doctor_reads_the_installer_version_file_and_orphaned_locks(real_workspace) -> None:
+    ws = real_workspace.root
+    (ws / "VERSION").write_text(
+        "ref=v0.3.0\nverified=sha256\ninstalled_at=2026-10-21T00:00:00Z\nversion=0.3.0\n",
+        encoding="utf-8",
+    )
+    real_workspace.ensure_state_dirs()
+    lock_dir = real_workspace.state_dir / "locks"
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    (lock_dir / "deadbeef.lock").write_text(
+        '{"pid": 999999999, "purpose": "apply"}', encoding="utf-8"
+    )
+    checks = {c["name"]: c for c in run_json("doctor", "--workspace", str(ws), "--json")}
+    assert checks["installed release"]["ok"]
+    assert "v0.3.0" in checks["installed release"]["detail"]
+    assert "sha256" in checks["installed release"]["detail"]
+    assert (
+        not checks["orphaned locks"]["ok"] and "deadbeef.lock" in checks["orphaned locks"]["detail"]
+    )
+    # an unverified development install is a warning, not an error
+    (ws / "VERSION").write_text("ref=main\nverified=none\n", encoding="utf-8")
+    checks = {c["name"]: c for c in run_json("doctor", "--workspace", str(ws), "--json")}
+    assert (
+        not checks["installed release"]["ok"] and checks["installed release"]["level"] == "warning"
+    )
 
 
 def test_policy_command_and_project_layer(real_workspace, make_project) -> None:

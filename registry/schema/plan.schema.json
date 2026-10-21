@@ -463,6 +463,19 @@
       "title": "Created At",
       "type": "string"
     },
+    "decisions_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Digest of the verified decision record (`forge --decisions`) the plan was built from (ADR-0007); part of the content digest when present",
+      "title": "Decisions Digest"
+    },
     "dependency_order": {
       "items": {
         "type": "string"

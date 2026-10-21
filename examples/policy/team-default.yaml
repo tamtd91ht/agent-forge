@@ -13,6 +13,10 @@ max_risk: medium
 require_request_from_risk: medium
 
 capabilities:
+  # Three levels (ADR-0007): required (always installed, `check` fails without it),
+  # recommended (the default: the developer decides), forbidden (never planned).
+  required: []          # e.g. ["forge.hook.guard-secrets-python"] once the team agreed on it
+  forbidden: []         # same verdict as `deny`
   # Native-runtime reverse engineering tools stay opt-in per project.
   require_request: ["rea.*", "uiux.full-toolkit"]
   deny: []
@@ -35,3 +39,7 @@ require_signoff: false # set true once the catalog entries your team uses are si
 # Always-loaded context budget per capability (characters of skill/agent descriptions,
 # unscoped rules and CLAUDE.md sections). Above it a capability needs an explicit request.
 max_context_chars: 4000
+
+# Budget for the always-loaded context a whole plan adds; exceeding it is a decision line
+# for the approver, not a block. Start at 6000-8000 and adjust after measuring with `lint`.
+max_total_context_chars: 8000

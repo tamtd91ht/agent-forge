@@ -1,0 +1,48 @@
+schema_version: "1"
+id: forge.hook.usage-log
+name: Local usage log for installed skills and subagents (Python hook)
+description: PostToolUse hook that appends one line per Skill / Agent invocation (id, kind, timestamp, short session id) to .agent-forge/usage.jsonl in the project. Opt-in, local, offline; feeds `agent-forge usage`, the `unused` hint in `status` and the `unused` ground of /agent-forge-upgrade.
+version: 1.0.0
+kind: hook
+category: meta.agent-forge
+purpose: Turns "fewer is better" into a number. After a few weeks the project can see which installed skills and subagents were never invoked and propose removing them, instead of guessing. No content of prompts or files is recorded and nothing leaves the machine.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-21"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored stdlib script. Reads only the hook payload, writes one JSON line (tool kind, skill / subagent name, ISO timestamp, the first 8 characters of the session id) to `.agent-forge/usage.jsonl` and creates `.agent-forge/.gitignore` for it once; never blocks the tool (always exit 0), never reads project files, no network. Opt-in by tag (`usage`) and gated by `approve --hooks`. The log is the first cheap evidence of value a pilot can collect (ADR-0007), long before an evaluation run.
+  risk_rationale: "Runs after every Skill / Agent call and writes inside the project (.agent-forge/usage.jsonl, .agent-forge/.gitignore). Payload only, no network, fails open; gated by approve --hooks and opt-in."
+  notes:
+    - "Rules and CLAUDE.md sections are always-on and never appear in the log; `unused` applies to skills and subagents only."
+    - "Keep usage.jsonl out of git (the hook adds a nested .gitignore); the data is per machine."
+applicability:
+  tags: [usage, usage-log, feedback, hooks, agent-forge]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-usage-log
+removal: delete_managed_files
+grants:
+  process_execute: true
+  filesystem_write: [".agent-forge/usage.jsonl", ".agent-forge/.gitignore"]
+risk: medium
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: 911c140fd9446ab0624da8ed057c6fd898daa5baa56ce4647c9fc0163dcc1226
+  pinned_at: "2026-10-21"

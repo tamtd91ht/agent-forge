@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Skill|Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-forge/usage_log.py\"",
+            "timeout": 5,
+            "statusMessage": "agent-forge: recording usage"
+          }
+        ]
+      }
+    ]
+  }
+}

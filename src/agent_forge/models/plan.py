@@ -138,6 +138,11 @@ class Plan(BaseModel):
     expires_at: str | None = Field(
         default=None, description="Approve/apply refuse the plan after this time (created_at + TTL)"
     )
+    decisions_digest: str | None = Field(
+        default=None,
+        description="Digest of the verified decision record (`forge --decisions`) the plan "
+        "was built from (ADR-0007); part of the content digest when present",
+    )
     selected: list[SelectedCapability] = Field(default_factory=list)
     rejected: list[RejectedCapability] = Field(default_factory=list)
     dependency_order: list[str] = Field(default_factory=list)
@@ -177,6 +182,8 @@ class Plan(BaseModel):
             "selected": [s.model_dump(mode="json") for s in self.selected],
             "operations": [o.model_dump(mode="json") for o in self.operations],
         }
+        if self.decisions_digest is not None:
+            payload["decisions_digest"] = self.decisions_digest
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
     @property
