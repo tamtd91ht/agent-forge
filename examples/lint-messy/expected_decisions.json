@@ -1,0 +1,48 @@
+{
+  "reviewed": "2026-10-21",
+  "notes": "Golden decisions for the trap fixture (ADR-0007, scripts/decision_report.py). A correct assessment must SKIP what the project already covers and cite the real file, must not be fooled by a rule whose name matches, must ASK for hooks and MCP servers, and must notice that a ruff-format hook already exists. `SKIP|ASK` accepts either verdict where the rubric allows a judgement call. Reviewed by the maintainers against the rubric, not against a model run; the first real runs replace the `|` alternatives with what a careful reviewer accepted.",
+  "decisions": {
+    "ecc.tdd-workflow": {
+      "verdict": "SKIP",
+      "grounds": ["covered"],
+      "basis": [".claude/rules/testing.md"]
+    },
+    "ecc.security-review": {
+      "verdict": "SKIP",
+      "grounds": ["covered"],
+      "basis": ["CLAUDE.md"]
+    },
+    "ecc.verification-loop": {
+      "verdict": "SKIP|ASK",
+      "basis": ["CLAUDE.md"]
+    },
+    "forge.hook.python-ruff-format": {
+      "verdict": "SKIP|ASK",
+      "basis": [".claude/settings.json"]
+    },
+    "forge.hook.guard-secrets-python": {
+      "verdict": "ASK"
+    },
+    "mcp.context7": {
+      "verdict": "ASK"
+    },
+    "forge.managed-notice": {
+      "verdict": "ASK"
+    },
+    "karpathy.principles": {
+      "verdict": "ASK"
+    },
+    "mattpocock.diagnosing-bugs": {
+      "verdict": "ADD"
+    },
+    "ecc.error-handling": {
+      "verdict": "ADD|SKIP"
+    },
+    "ecc.agent.planner": {
+      "verdict": "ADD|SKIP"
+    },
+    "ecc.coding-standards": {
+      "verdict": "ADD|SKIP"
+    }
+  }
+}

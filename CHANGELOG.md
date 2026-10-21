@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+- `check` gates on decision records: a SKIP / REMOVE that no longer verifies against the
+  project (basis disappeared) and an applied plan whose `decisions_digest` matches no
+  committed record are failures (`decisions/gate.py`).
+- `scripts/decision_report.py` + `examples/lint-messy/expected_decisions.json`: golden
+  decisions for the trap fixture, compared cell by cell; `--run` executes the skill with
+  `claude -p` / `codex exec` on a fixture copy (never in CI). The entry skill's own context
+  budget is recorded in its manifest and pinned by `tests/unit/test_entry_skill_budget.py`
+  (0 always-on, < 16k on demand).
+
 ### Changed
 - Pre-flight problems are data: `Problem(code, message, op_id, path)` with a `ProblemCode`
   enum; the code picks the exit code (stale 7 > approval 8 > apply 10) instead of substring

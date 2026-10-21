@@ -171,9 +171,12 @@ def check(
     as_json: JsonOpt = False,
 ) -> int:
     """CI gate (read-only): one exit code for drift, revoked or missing capabilities, an
-    invalid managed.json, unfinished transactions and config syntax. 0 = clean, 12 = problems."""
+    invalid managed.json, unfinished transactions, config syntax, a missing policy-required
+    capability, and decision records whose SKIPs no longer verify or whose applied plans lost
+    their record. 0 = clean, 12 = problems."""
 
     def body() -> int:
+        from agent_forge.decisions.gate import decision_gate
         from agent_forge.planner.maintenance import drift_report
         from agent_forge.scanner.project_profile import scan_project
         from agent_forge.validation.engine import validate_target
@@ -207,11 +210,13 @@ def check(
             if m.capability_id in reg.items
             and reg.items[m.capability_id].capability.version != m.version
         ]
-        required_missing = _required_missing(
-            reg, profile, _policies(ws, Path(profile.canonical_path))
-        )
+        policies = _policies(ws, Path(profile.canonical_path))
+        required_missing = _required_missing(reg, profile, policies)
         for cid, why in required_missing:
             failures.append(f"policy: {cid} is required but {why}")
+        gate = decision_gate(reg, profile, store, policy=policies)
+        failures.extend(gate.failures)
+        warnings.extend(gate.warnings)
         ok = not failures
         result = {
             "target": profile.canonical_path,
@@ -222,6 +227,7 @@ def check(
             "outdated": outdated,
             "drifted": len(drift.drifted),
             "required_missing": [cid for cid, _ in required_missing],
+            "decisions": gate.to_dict(),
         }
         if as_json:
             _print_json(result)

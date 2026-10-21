@@ -36,6 +36,21 @@ the plan: ≥ 20 corpus projects, thresholds in CI. The corpus is kept outside t
 own output when the fixtures were created, so 1.00 there means "no regression from a reviewed
 baseline". Only the corpus measures agreement with an independent ground truth.
 
+## 1b. Golden decisions (the agent's assessments, measured for drift)
+
+The third thing to measure is the entry skill itself: given the same project, does the
+model keep making the same, provable decisions? `examples/lint-messy/expected_decisions.json`
+is the reviewed golden file for the trap fixture (duplicate rules, a name-match that is not
+coverage, hooks that must be asked about, a ruff hook that already exists).
+`scripts/decision_report.py` compares a decision record with it cell by cell (verdict,
+grounds, cited basis) and prints the drift table; `--run` first produces the record by
+running the coding tool in print mode (`claude -p /agent-forge-upgrade`) on a copy of the
+fixture. Runs cost model time and are never part of CI: run it when `SKILL.md` changes, when
+the default model changes, and before a release, and commit the output under
+`docs/evaluation/decisions/`. `agent-forge decisions verify` is the deterministic half of the
+same question (did the model cite real evidence); the golden file is the judgement half (did
+it reach the reviewed verdict).
+
 ## 2. Capability value (harness implemented; measurements pending)
 
 [`tools/agent-forge-eval`](https://github.com/tamtd91ht/agent-forge/blob/main/tools/agent-forge-eval/README.md) runs the experiment designed

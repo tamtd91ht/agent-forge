@@ -18,6 +18,8 @@ review:
   reviewed_at: "2026-10-21"
   reviewer: agent-forge maintainers
   rationale: Workspace-authored markdown only. Installed into a project by `agent-forge setup` (run by the one-line installer, ADR-0004) and otherwise opt-in (tag `agent-forge`). User-invoked (disable-model-invocation; Codex policy.allow_implicit_invocation false), so it costs no always-loaded context. It calls only `~/.agent-forge/bin/agent-forge`; allowed-tools pre-approves the read-only subcommands (incl. `lint`, `usage`, `decisions`) and `forge --dry-run`, so every write still needs the user's yes in the conversation and Claude Code's permission prompt. Version 2.1 assesses on the negative-first rubric of ADR-0007 and writes a decision record (`.agent-forge/decisions/<plan-id>.json`, the one file the skill writes) that `decisions verify` checks before `forge --decisions` uses it. It forbids hand-editing agent files and reading the install directory.
+  notes:
+    - "Context budget of the skill itself: 13,019 characters of SKILL.md loaded on demand (2.0.1 was 6,519); 0 always-loaded because it is user-invoked. tests/unit/test_entry_skill_budget.py keeps it at 0 always-on and under 16,000 on demand."
   acknowledged_findings:
     - rule: pipe-to-shell
       path: "*/agent-forge-upgrade/SKILL.md"

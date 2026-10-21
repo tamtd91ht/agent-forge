@@ -288,3 +288,40 @@ def test_usage_command_reads_the_local_log(real_workspace, make_project) -> None
     st = run_json("status", str(root), "--workspace", ws, "--json")
     assert st["usage"]["unused"] == data["unused"]
     assert "unused:" in run("status", str(root), "--workspace", ws).output
+
+
+def test_check_gates_on_decisions_that_stopped_verifying_and_on_lost_records(
+    real_workspace, make_project
+) -> None:
+    ws = str(real_workspace.root)
+    root = make_project("gate", kind="claude", files=BACKEND)
+    rec = _write_record(root, "plan-1", [SKIP_SECURITY, ADD_BUGS])
+    run_json("check", str(root), "--workspace", ws, "--json")  # a verifying record passes
+    done = run_json(
+        "forge", str(root), "--workspace", ws, "--yes", "--decisions", str(rec), "--json"
+    )
+    assert any(s["status"] == "applied" for s in done["steps"])
+    out = run_json("check", str(root), "--workspace", ws, "--json")
+    assert out["ok"] and out["decisions"]["plans_checked"] >= 1
+    assert out["decisions"]["plans_unbound"] == [] and out["decisions"]["downgraded"] == []
+
+    # the basis of the SKIP disappears -> the decision no longer verifies -> exit 12
+    (root / ".claude" / "rules" / "security.md").unlink()
+    out = run_json("check", str(root), "--workspace", ws, "--json", expect=12)
+    assert out["decisions"]["downgraded"] == ["ecc.security-review"]
+    assert any("no longer verifies" in f for f in out["failures"])
+    text = run("check", str(root), "--workspace", ws, expect=12).output
+    assert "run /agent-forge-upgrade again" in " ".join(text.split())  # Rich wraps lines
+
+    # the record the applied plan was built from is edited afterwards -> exit 12
+    (root / ".claude" / "rules" / "security.md").write_text(
+        BACKEND[".claude/rules/security.md"], encoding="utf-8"
+    )
+    run_json("check", str(root), "--workspace", ws, "--json")  # back to green
+    doc = json.loads(rec.read_text(encoding="utf-8"))
+    doc["decisions"][1]["reason"] = "edited after the fact"
+    rec.write_text(json.dumps(doc), encoding="utf-8")
+    out = run_json("check", str(root), "--workspace", ws, "--json", expect=12)
+    assert out["decisions"]["plans_unbound"] and any(
+        "edited afterwards" in f for f in out["failures"]
+    )
