@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from agent_forge.apply.engine import apply_plan, preflight
+from agent_forge.apply.engine import ProblemCode, apply_plan, preflight
 from agent_forge.errors import (
     ApplyError,
     ApprovalError,
@@ -79,7 +79,10 @@ def test_apply_requires_valid_approval(workspace, make_project) -> None:
         apply_plan(workspace, store, reg, plan)
     _approve(workspace, plan, shared=False)  # shared-file op not approved
     rep = preflight(plan, reg)
-    assert not rep.ok and any("shared-file" in p for p in rep.problems)
+    assert not rep.ok and any(
+        p.code == ProblemCode.EXTRA_APPROVAL_REQUIRED and "shared-files" in p.message
+        for p in rep.problems
+    )
     _approve(workspace, plan, shared=True)
     plan.operations[0].content = "tampered"
     plan.operations[0].content_sha256 = "0" * 64

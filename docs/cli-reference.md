@@ -66,6 +66,29 @@ non-ASCII characters are supported everywhere.
 
 Exit codes 2–15 are each produced by a real CLI path in `tests/e2e/test_exit_codes.py` (15 with a stubbed tool).
 
+### Pre-flight problem codes (`apply`, `forge`, `sync`)
+
+Before any write, `apply` re-checks the approved plan. Each finding is a `Problem` with a
+code (`apply/engine.py`, `ProblemCode`); the code picks the exception and the exit code, and
+the message is for people. Stale beats approval beats everything else, so a plan that is both
+outdated and unapproved says "re-plan" first.
+
+| Code | Meaning | Exit | What to do |
+|---|---|---|---|
+| `expired` | past `expires_at` (7 days) | 7 | re-plan |
+| `policy_changed` | effective policy digest differs | 7 | re-plan under the new policy |
+| `registry_changed` | registry digest differs (assets edited, Agent Forge upgraded) | 7 | re-plan |
+| `file_changed` | a destination differs from what the plan expected | 7 | re-plan (or `drift` / `sync` first) |
+| `not_approved` | plan status is not `approved` | 8 | `approve` |
+| `approval_mismatch` | approval digest != plan content (plan edited) | 8 | `approve --revoke`, re-plan |
+| `approval_not_recorded` | this workspace never recorded the approval | 8 | `approve` here |
+| `extra_approval_required` | shared-file / hook / MCP class not granted | 8 | `approve --shared-files` / `--hooks` / `--mcp` |
+| `target_missing` | project directory is gone | 10 | restore the project |
+| `unsafe_path` | destination fails the path safety checks | 10 | report it; nothing is written |
+| `projection_failed` | section or JSON merge cannot be computed on the current file | 10 | fix or restore the file, re-plan |
+| `outside_managed_roots` | destination outside the adapter's roots | 10 | plan corrupted; re-plan |
+| `content_hash_mismatch` | operation content != its recorded hash | 10 | plan corrupted; re-plan |
+
 ## JSON output
 
 `--json` prints machine-readable output on stdout (human messages go to stderr), always as

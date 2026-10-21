@@ -16,6 +16,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 
 from agent_forge import __version__
@@ -45,12 +46,89 @@ from agent_forge.util import (
 )
 
 
+class ProblemCode(StrEnum):
+    """Why an approved plan cannot be applied. The code, not the message, picks the exit code."""
+
+    NOT_APPROVED = "not_approved"  # plan status is not `approved`
+    APPROVAL_MISMATCH = "approval_mismatch"  # approval digest != plan content (plan edited)
+    APPROVAL_NOT_RECORDED = "approval_not_recorded"  # workspace has no matching approval
+    EXTRA_APPROVAL_REQUIRED = (
+        "extra_approval_required"  # shared-file / hook / MCP class not granted
+    )
+    EXPIRED = "expired"
+    POLICY_CHANGED = "policy_changed"
+    REGISTRY_CHANGED = "registry_changed"
+    FILE_CHANGED = "file_changed"  # destination differs from what the plan expected
+    TARGET_MISSING = "target_missing"
+    UNSAFE_PATH = "unsafe_path"
+    PROJECTION_FAILED = "projection_failed"  # section / JSON merge cannot be computed
+    OUTSIDE_MANAGED_ROOTS = "outside_managed_roots"
+    CONTENT_HASH_MISMATCH = "content_hash_mismatch"  # plan file corrupted
+
+
+# Which error (and exit code) a code maps to. Stale beats approval beats everything else, so a
+# plan that is both outdated and unapproved tells the user to re-plan first.
+STALE_CODES = frozenset(
+    {
+        ProblemCode.EXPIRED,
+        ProblemCode.POLICY_CHANGED,
+        ProblemCode.REGISTRY_CHANGED,
+        ProblemCode.FILE_CHANGED,
+    }
+)
+APPROVAL_CODES = frozenset(
+    {
+        ProblemCode.NOT_APPROVED,
+        ProblemCode.APPROVAL_MISMATCH,
+        ProblemCode.APPROVAL_NOT_RECORDED,
+        ProblemCode.EXTRA_APPROVAL_REQUIRED,
+    }
+)
+
+
+@dataclass(frozen=True)
+class Problem:
+    code: ProblemCode
+    message: str
+    op_id: str | None = None
+    path: str | None = None
+
+    def __str__(self) -> str:
+        prefix = " ".join(x for x in (self.op_id, self.path) if x)
+        return f"{prefix}: {self.message}" if prefix else self.message
+
+    def to_dict(self) -> dict[str, str | None]:
+        return {
+            "code": self.code.value,
+            "op_id": self.op_id,
+            "path": self.path,
+            "message": self.message,
+        }
+
+
+def error_for(problems: list[Problem]) -> type[ApplyError]:
+    """The exception class (hence exit code) for a failed pre-flight."""
+    codes = {p.code for p in problems}
+    if codes & STALE_CODES:
+        return StalePlanError
+    if codes & APPROVAL_CODES:
+        return ApprovalError
+    return ApplyError
+
+
 @dataclass
 class PreflightReport:
     ok: bool
-    problems: list[str] = field(default_factory=list)
+    problems: list[Problem] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     summary: list[str] = field(default_factory=list)
+
+    @property
+    def messages(self) -> list[str]:
+        return [str(p) for p in self.problems]
+
+    def codes(self) -> list[str]:
+        return sorted({p.code.value for p in self.problems})
 
 
 def _current_bytes(root: Path, rel: str) -> bytes | None:
@@ -73,31 +151,51 @@ def preflight(
     the digest of the policy in force now; `apply_plan` always supplies both.
     """
     rep = PreflightReport(ok=True)
+    problem = rep.problems.append
     if plan.status != PlanStatus.APPROVED:
-        rep.problems.append(
-            f"plan status is {plan.status.value}; only approved plans can be applied"
+        problem(
+            Problem(
+                ProblemCode.NOT_APPROVED,
+                f"plan status is {plan.status.value}; only approved plans can be applied",
+            )
         )
     if not plan.is_approved:
-        rep.problems.append(
-            "approval digest does not match the plan content (plan edited after approval?)"
+        problem(
+            Problem(
+                ProblemCode.APPROVAL_MISMATCH,
+                "approval digest does not match the plan content (plan edited after approval?)",
+            )
         )
     elif recorded_digest != plan.content_digest():
-        rep.problems.append(
-            "approval is not recorded in this workspace for this plan content "
-            "(plan edited or copied in after approval?)"
+        problem(
+            Problem(
+                ProblemCode.APPROVAL_NOT_RECORDED,
+                "approval is not recorded in this workspace for this plan content "
+                "(plan edited or copied in after approval?)",
+            )
         )
     if plan.is_expired(datetime.now(UTC)):
-        rep.problems.append(f"plan expired at {plan.expires_at} (stale); create a new plan")
+        problem(
+            Problem(
+                ProblemCode.EXPIRED,
+                f"plan expired at {plan.expires_at} (stale); create a new plan",
+            )
+        )
     if plan.policy_digest is not None and policy_digest != plan.policy_digest:
-        rep.problems.append("policy changed since the plan was created (stale)")
+        problem(
+            Problem(ProblemCode.POLICY_CHANGED, "policy changed since the plan was created (stale)")
+        )
     root = Path(plan.target.canonical_path)
     if not root.is_dir():
-        rep.problems.append(f"target no longer exists: {root}")
+        problem(Problem(ProblemCode.TARGET_MISSING, f"target no longer exists: {root}"))
         rep.ok = False
         return rep
     if plan.registry_digest != reg.digest:
-        msg = "registry changed since the plan was created"
-        (rep.problems if require_registry_match else rep.warnings).append(msg)
+        msg = "registry changed since the plan was created (stale)"
+        if require_registry_match:
+            problem(Problem(ProblemCode.REGISTRY_CHANGED, msg))
+        else:
+            rep.warnings.append(msg)
     extra_ok = set(plan.approval.extra_approvals)
     # Operations on the same path are applied in order, so each one is checked against the
     # *projected* content left by the previous one, not against the file on disk.
@@ -107,7 +205,7 @@ def preflight(
             try:
                 current = _current_bytes(root, op.path)
             except SafetyViolation as exc:
-                rep.problems.append(f"{op.op_id} {op.path}: {exc.message}")
+                problem(Problem(ProblemCode.UNSAFE_PATH, exc.message, op.op_id, op.path))
                 continue
             running[op.path] = (
                 normalize_newlines(current.decode("utf-8", errors="replace"))
@@ -117,27 +215,63 @@ def preflight(
         current_text = running[op.path]
         current_hash = sha256_text(current_text) if current_text is not None else None
         if current_hash != op.before_sha256:
-            rep.problems.append(f"{op.op_id} {op.path}: file changed since planning (stale)")
+            problem(
+                Problem(
+                    ProblemCode.FILE_CHANGED,
+                    "file changed since planning (stale)",
+                    op.op_id,
+                    op.path,
+                )
+            )
         else:
             try:
                 running[op.path] = projected_content(op, current_text)
             except (ApplyError, ValueError) as exc:
-                rep.problems.append(f"{op.op_id} {op.path}: cannot project content: {exc}")
+                problem(
+                    Problem(
+                        ProblemCode.PROJECTION_FAILED,
+                        f"cannot project content: {exc}",
+                        op.op_id,
+                        op.path,
+                    )
+                )
         if op.platform is not None and not get_adapter(op.platform).path_allowed(op.path):
-            rep.problems.append(
-                f"{op.op_id} {op.path}: outside managed roots for {op.platform.value}"
+            problem(
+                Problem(
+                    ProblemCode.OUTSIDE_MANAGED_ROOTS,
+                    f"outside managed roots for {op.platform.value}",
+                    op.op_id,
+                    op.path,
+                )
             )
         if op.platform is None and not op.path.startswith(".agent-forge/"):
-            rep.problems.append(
-                f"{op.op_id} {op.path}: operation without platform may only touch .agent-forge/"
+            problem(
+                Problem(
+                    ProblemCode.OUTSIDE_MANAGED_ROOTS,
+                    "operation without platform may only touch .agent-forge/",
+                    op.op_id,
+                    op.path,
+                )
             )
         if op.requires_extra_approval and op.op_id not in extra_ok:
-            rep.problems.append(
-                f"{op.op_id} {op.path}: {op.approval_class} change needs explicit approval "
-                f"(`approve --{op.approval_class.replace('_file', '-files').replace('_', '-')}`)"
+            flag = "--" + op.approval_class.replace("_file", "-files").replace("_", "-")
+            problem(
+                Problem(
+                    ProblemCode.EXTRA_APPROVAL_REQUIRED,
+                    f"{op.approval_class} change needs explicit approval (`approve {flag}`)",
+                    op.op_id,
+                    op.path,
+                )
             )
         if op.content is not None and op.content_sha256 != sha256_text(op.content):
-            rep.problems.append(f"{op.op_id}: content hash mismatch (plan corrupted)")
+            problem(
+                Problem(
+                    ProblemCode.CONTENT_HASH_MISMATCH,
+                    "content hash mismatch (plan corrupted)",
+                    op.op_id,
+                    op.path,
+                )
+            )
         rep.summary.append(f"{op.kind.value:14} {op.path}")
     rep.ok = not rep.problems
     return rep
@@ -176,11 +310,8 @@ def _apply_locked(
         policy_digest=policies.digest,
     )
     if not rep.ok:
-        stale = any("stale" in p or "registry changed" in p for p in rep.problems)
-        approval = any("approval" in p for p in rep.problems)
-        exc_cls = StalePlanError if stale else ApprovalError if approval else ApplyError
-        raise exc_cls(
-            "pre-flight failed:\n  - " + "\n  - ".join(rep.problems),
+        raise error_for(rep.problems)(
+            "pre-flight failed:\n  - " + "\n  - ".join(rep.messages),
             hint="Re-run `assign`/`upgrade` to create a fresh plan, then `approve` it.",
         )
     if confirm is not None and not confirm(rep):
