@@ -2,6 +2,55 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-10-21
+
+### The decision layer (ADR-0007; tracked checklist in docs/roadmap-decision-layer.md)
+- **Decision records.** `/agent-forge-upgrade` 2.1.0 assesses every capability on a fixed,
+  negative-first rubric (grounds to skip with their evidence, then the gap, then cost / risk /
+  evidence from the catalog) and writes `.agent-forge/decisions/<plan-id>.json`
+  (`registry/schema/decisions.schema.json`). It is the one file the skill writes.
+- `agent-forge decisions verify`: cited paths must exist inside the project, quotes must be
+  real substrings, `context_chars` / `evidence` must match the catalog, every ground must
+  carry its evidence, policy wins. An unprovable SKIP / REMOVE becomes ASK; exit 12 when any
+  check failed. `decisions diff` (only changed verdicts, old and new reason),
+  `decisions explain PATH ID`, `decisions report DIR...` (organisation-wide capability ×
+  verdict × ground with threshold suggestions).
+- `forge --decisions FILE`: verifies, turns effective SKIP / REMOVE into exclusions and
+  effective ADD into requests, refuses a real run while an ASK is unanswered (exit 6;
+  `--exclude` / `--request` answer per id), binds the record's digest to the plan
+  (`Plan.decisions_digest`, part of the content digest when present). `status` lists what
+  is absent by decision; `drift` reports a decision whose cited file or line disappeared.
+- **Policy `required` / `forbidden`.** `capabilities.required` ids are always planned when
+  installable, cannot be excluded (exit 2) or skipped by the agent, and `check` fails when
+  one is missing (`required_missing`). `forbidden` is an alias of `deny`. `policy` shows both.
+- **`agent-forge lint PATH`** (no workspace, no catalog, no LLM): always-loaded context per
+  file and in total, duplicate paragraphs and near-duplicate rule files, credentials in agent
+  files and MCP configs, hooks whose commands trip the content-safety rules, MCP servers
+  defined but disabled; `--max-context N` as a CI gate (exit 12). Proposes nothing.
+- **Usage log.** `forge.hook.usage-log` (opt-in, Claude Code `PostToolUse` on Skill / Agent)
+  appends id, kind, timestamp and a short session id to `.agent-forge/usage.jsonl`, offline;
+  `agent-forge usage PATH` and the `unused` hint in `status` read it; the `unused` ground of a
+  decision record is verified against it (≥ 14 observed days).
+- `doctor`: orphaned locks (dead pid) reported; installed release and verification method
+  from `~/.agent-forge/VERSION`; `--check-latest` compares with the newest GitHub Release.
+- Docs: ADR-0007 (accepted), ADR-0008 default-catalog criteria (proposed),
+  `roadmap-decision-layer.md`, policy and CLI reference, pilots guide (enable the usage log on
+  day one), team policy template with `required` / `forbidden` / `max_total_context_chars`.
+
+### Installer and release safety (checklist P0)
+- `install.sh` / `install.ps1` install a GitHub Release wheel only after its SHA-256 matches
+  the release's `SHA256SUMS`, verify the Sigstore bundle when `cosign` is on PATH (a warning
+  otherwise), write `~/.agent-forge/VERSION`, and **never fall back to `main`**: when no
+  release can be resolved they stop with exit 1 and the pin hint. `AGENT_FORGE_REF=<branch>`
+  installs an unverified archive for development and says so.
+- CI: `registry-integrity` job (no CRLF in `registry/`, `pin_integrity.py --check`,
+  `validate`) independent of the test suite; the installer job runs `validate` and `doctor`
+  on the installed catalog on Windows, Linux and macOS and proves that an unverifiable
+  release installs nothing.
+- `contributing-capabilities.md`: line-ending rule (`core.autocrlf false`, never pin from
+  a CRLF working copy). The `v0.2.0` tag predates the CRLF re-pin and its release never
+  published; `v0.3.0` is the first release the installers can resolve.
+
 ### Opening up (6-month plan, phase 4)
 - **Breaking for automation:** every `--json` command prints JSON envelope v1
   (`{envelope: 1, command, agent_forge, generated_at, ok, data}`); the previous document is

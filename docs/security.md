@@ -145,6 +145,16 @@ Agent Forge decides what is written into a project and records it. It does not s
 coding agent afterwards: what an installed hook, MCP server or the agent itself may execute
 is governed by Claude Code / Codex permissions, the operating system or a container.
 
+## Local data, no telemetry
+
+`lint`, `usage`, `decisions` and `stats` read only the project and the workspace; nothing
+is sent anywhere. The usage log (`forge.hook.usage-log`, opt-in) records skill / subagent
+ids, timestamps and a short session id, never prompts, file contents or paths. A decision
+record is the agent's own file; `decisions verify` reads cited files only through
+`filesystem_safety`, so a citation cannot make the engine read outside the project. The
+installer contacts GitHub only to resolve and download a release; `doctor` does so only with
+`--check-latest`.
+
 ## Known gaps
 
 - Symlink tests skip on Windows without the symlink privilege (junction tests run instead).

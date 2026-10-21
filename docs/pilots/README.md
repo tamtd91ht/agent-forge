@@ -26,21 +26,31 @@ How to measure:
 ## During the pilot (weekly, 5 minutes)
 
 ```bash
-agent-forge status .          # installed, drift, outdated
-agent-forge check .           # what CI sees
+agent-forge status .          # installed, drift, outdated, absent by decision, unused hints
+agent-forge check .           # what CI sees (incl. missing `required` capabilities)
+agent-forge usage .           # invocations per installed skill / subagent (needs the hook below)
 agent-forge stats --since 7   # installs / rollbacks this week (local audit log)
 ```
+
+On day one of each pilot enable the local usage log so the 30-day window starts early:
+`agent-forge forge . --want usage --hooks` installs `forge.hook.usage-log` (opt-in, offline,
+ids and timestamps only). Commit every `.agent-forge/decisions/<plan-id>.json` the skill
+writes: they are the first real data for the rubric (ADR-0007) and for
+`agent-forge decisions report` across the pilots.
 
 Record in the pilot file: what was rolled back and why, every manual edit to a managed
 file, every `needs_approval` the owner declined, time spent on Agent Forge itself.
 
 ## Retrospective (end of week 6)
 
-Two pages, numbers first, then the decision recorded as an ADR (`docs/adr/0007-pilot-decision.md`):
+Two pages, numbers first, then the decision recorded as an ADR (`docs/adr/0009-pilot-decision.md`;
+0007 and 0008 were taken by the decision layer and the catalog criteria):
 
 1. Baseline vs. after for each KPI in the table above.
 2. Rollbacks that failed in practice (target: 0) and why.
-3. Capabilities nobody used (candidates for removal) and capabilities people asked for.
+3. Capabilities nobody used (`agent-forge usage`, candidates for removal) and capabilities
+   people asked for; the share of SKIPs that `decisions verify` downgraded to ASK (how often
+   the model claimed coverage it could not prove).
 4. Keep / drop / standardise: what becomes the team default policy, what goes in the team
    registry, what is removed from the catalog.
 5. Go / no-go for the rest of the team, with the conditions.

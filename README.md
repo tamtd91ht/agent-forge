@@ -24,10 +24,21 @@ irm https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.ps1 | i
 curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh | bash
 ```
 
-The installer picks the latest release. To pin one (or to roll back), set
-`AGENT_FORGE_VERSION=v0.2.0` before the command; checksums and Sigstore signatures are on
-the [release page](https://github.com/tamtd91ht/agent-forge/releases/latest)
-([how to verify](docs/operations.md#verifying-a-release)).
+The installer installs the latest [release](https://github.com/tamtd91ht/agent-forge/releases/latest)
+and verifies its SHA-256 (and its Sigstore signature when `cosign` is installed) before
+anything is written; it never falls back to an unpinned branch. To pin a release (or roll
+back), set the version first:
+
+```bash
+AGENT_FORGE_VERSION=v0.3.0 bash -c "$(curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh)"
+```
+
+```powershell
+$env:AGENT_FORGE_VERSION = 'v0.3.0'; irm https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.ps1 | iex
+```
+
+`AF doctor` shows which release is installed and how it was verified
+(`--check-latest` compares with the newest release). [How to verify a release by hand](docs/operations.md#verifying-a-release).
 
 Five-minute quickstarts: [Node / TypeScript](docs/quickstart/node.md) ·
 [Python](docs/quickstart/python.md) · [Go](docs/quickstart/go.md) · [Java](docs/quickstart/java.md).
@@ -43,7 +54,9 @@ Five-minute quickstarts: [Node / TypeScript](docs/quickstart/node.md) ·
 
    Optional focus: `/agent-forge-upgrade testing and code review only`.
    In Codex, run the `agent-forge-upgrade` skill.
-3. Read the proposed table (what to add, what to skip, and why), then answer **yes** to install.
+3. Read the assessment table (what to add, what to skip, and the file or number that proves
+   it; Agent Forge verifies every cited path and quote and turns an unprovable skip into a
+   question), answer the open questions, then answer **yes** to install.
 4. Start a new session to load the new skills and rules. If MCP servers were added, accept
    Claude Code's trust prompt.
 5. Commit the new files together with `.agent-forge/managed.json`.
@@ -57,8 +70,8 @@ Teams that do not want a Python environment of their own can run a release throu
 [uv](https://docs.astral.sh/uv/) or pipx; both create an isolated environment:
 
 ```bash
-uvx --from "git+https://github.com/tamtd91ht/agent-forge@v0.2.0" agent-forge --version
-pipx install "git+https://github.com/tamtd91ht/agent-forge@v0.2.0"
+uvx --from "git+https://github.com/tamtd91ht/agent-forge@v0.3.0" agent-forge --version
+pipx install "git+https://github.com/tamtd91ht/agent-forge@v0.3.0"
 ```
 
 Then `agent-forge init --workspace ~/.agent-forge` once, and `agent-forge setup` in a
@@ -84,6 +97,9 @@ once on their machine.
 | Read about one capability | `AF catalog show ecc.security-review` |
 | Preview without the agent | `AF forge --dry-run .` |
 | See what I changed in installed files | `AF drift .` |
+| Score the config I already have, without installing anything | `AF lint .` |
+| See why the agent skipped a capability | `AF decisions explain . <id>` |
+| See which installed skills are never used (opt-in hook) | `AF usage .` after `AF forge . --want usage --hooks` |
 | Bring a fresh clone to the committed state | `AF sync .` |
 | Fail CI when installed files drifted | `AF check .` ([GitHub Action](docs/team-workflow.md#the-flow)) |
 | Undo an install | `AF status .` (copy the `tx-…` id), then `AF rollback tx-…` |
@@ -133,7 +149,10 @@ More: [troubleshooting](docs/troubleshooting.md) · `AF doctor`.
   [ADR-0002](docs/adr/0002-upgrade-roadmap.md) ·
   [ADR-0003](docs/adr/0003-context-load-and-skill-calls.md) ·
   [ADR-0004](docs/adr/0004-install-into-project.md) ·
-  [ADR-0005](docs/adr/0005-production-hardening.md)
+  [ADR-0005](docs/adr/0005-production-hardening.md) ·
+  [ADR-0006](docs/adr/0006-canonical-format-and-adapters.md) ·
+  [ADR-0007](docs/adr/0007-decision-layer.md) ·
+  [ADR-0008](docs/adr/0008-default-catalog-criteria.md) (proposed)
 - Value: [evaluation](docs/evaluation.md) · [agent-forge-eval](tools/agent-forge-eval/README.md) ·
   [results](docs/evaluation/README.md)
 - Teams: [team workflow](docs/team-workflow.md) · [pilots](docs/pilots/README.md) ·

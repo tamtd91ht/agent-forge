@@ -13,7 +13,7 @@ Status: ✅ done in the repo · 🟡 done in the repo, needs a human action to c
 | # | Item | Status | Evidence / what is left |
 |---|---|---|---|
 | 0.1 | Tag the first release, one-page release process | 🟡 | version 0.2.0, `CHANGELOG.md` section, `release.yml` (tag check, build, SHA256SUMS, SBOM, Sigstore, Release notes), `operations.md#release-process`. **Left:** `git tag -a v0.2.0 && git push origin v0.2.0` by a maintainer. (0.1.0 was the untagged initial build; the first tag is 0.2.0.) |
-| 0.2 | Installers pinned to a tag, not `main` | ✅ | `install.sh` / `install.ps1` resolve the latest Release; `AGENT_FORGE_VERSION` pins; `main` only as a stated fallback; checksums + signatures attached by `release.yml` |
+| 0.2 | Installers pinned to a tag, not `main` | ✅ | `install.sh` / `install.ps1` install the latest Release after verifying the wheel against `SHA256SUMS` (and Sigstore with `cosign`); `AGENT_FORGE_VERSION` pins; **no fallback to `main`** (ADR-0007); `AGENT_FORGE_REF` is an announced, unverified development path |
 | 0.3 | Dependency lock, CI from the lock | ✅ | `uv.lock` (cross-platform), `uv sync --locked` in CI on 3 OS, pip-audit on the locked set |
 | 0.4 | macOS installer smoke test | ✅ | `ci.yml` installer matrix includes macos-latest |
 | 0.5 | Clean the repo root | ✅ | `docs/history/` with a header line in each file; references updated |
@@ -31,9 +31,9 @@ Status: ✅ done in the repo · 🟡 done in the repo, needs a human action to c
 | 1.5 | `check` as the CI gate + official Action | ✅ | `agent-forge check` (exit 0/12), `.github/actions/check` |
 | 1.6 | `sync` for a fresh clone | ✅ | restores files and sections at the pinned versions; `team-workflow.md` target < 10 min |
 | 1.7 | Distribution without manual Python: uvx/pipx, trial binary | 🟡 | uvx/pipx documented (README, operations). **Left:** a PyInstaller binary was deliberately not shipped (launcher/workspace layout needs a second code path); revisit after pilot feedback |
-| 1.8 | Local usage log and feedback channel (opt-in, offline) | ✅ | `agent-forge stats [--since]` from the audit log; feedback template in `docs/pilots/` |
+| 1.8 | Local usage log and feedback channel (opt-in, offline) | ✅ | `agent-forge stats [--since]` from the audit log; `forge.hook.usage-log` + `agent-forge usage` for per-skill invocations in a project (ADR-0007); feedback template in `docs/pilots/` |
 | 1.9 | "Agent Forge in team X" process page | ✅ | `docs/team-workflow.md` (roles, flow diagram, CLAUDE.md conflicts). **Left:** pilot tech leads review it |
-| 1.10 | Pilot retrospective, go / no-go ADR | 👤 | retrospective outline in `docs/pilots/README.md`; ADR number reserved (0007) |
+| 1.10 | Pilot retrospective, go / no-go ADR | 👤 | retrospective outline in `docs/pilots/README.md`; ADR number reserved (0009) |
 
 ## Phase 2 · Every coding tool, not only Claude Code (weeks 7–12)
 
@@ -82,7 +82,8 @@ Status: ✅ done in the repo · 🟡 done in the repo, needs a human action to c
 | Team projects using Agent Forge | 0 | `docs/pilots/` |
 | Fully supported platforms | 5 adapters (Claude Code, Codex, Cursor, Copilot, Gemini CLI) | `tests/conformance` |
 | Onboarding time into a repo with AF | not measured | pilot template, target < 10 min with `sync` |
-| Capabilities with evaluation evidence | 0 of 33 | `catalog show`, `review.evidence` |
+| Capabilities with evaluation evidence | 0 of 34 | `catalog show`, `review.evidence` |
+| Decision records verified / SKIPs downgraded to ASK | 0 / 0 | `agent-forge decisions verify`, pilot files (ADR-0007) |
 | Failed rollbacks in practice | not measured | pilot weekly log |
 | Maintainers with release rights | 1 | `MAINTAINERS.md` |
 

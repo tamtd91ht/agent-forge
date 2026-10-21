@@ -11,7 +11,9 @@ that `rollback` can undo.
 - **Teams:** `sync` for fresh clones, `check` as a CI gate, committed approval files, a team
   registry and policy ([team workflow](team-workflow.md)).
 - **Platforms:** one canonical content, rendered per tool ([adapters](adapters.md),
-  [ADR-0006](adr/0006-canonical-format-and-adapters.md)).
+  [ADR-0006](adr/0006-canonical-format-and-adapters.md),
+  [ADR-0007](adr/0007-decision-layer.md); [ADR-0008](adr/0008-default-catalog-criteria.md) is proposed).
+  The decision layer's tracked checklist: [roadmap-decision-layer.md](roadmap-decision-layer.md).
 - **Evidence:** the opt-in evaluation harness and what has (not yet) been measured
   ([evaluation](evaluation.md)).
 - **Direction:** the [6-month plan](roadmap-2026h2.md) and its status.

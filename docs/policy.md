@@ -29,7 +29,8 @@ only `curated` capabilities whose pinned digest still matches.
 |---|---|
 | `max_risk` | capabilities above it are denied |
 | `require_request_from_risk` | at/above it a capability needs `--request` / `--want` |
-| `capabilities.deny` / `require_request` / `allow_only` | capability id globs (`rea.*`) |
+| `capabilities.required` | id globs the project must have (ADR-0007): always planned when installable, `--exclude` refused (exit 2), the agent's decision record cannot skip them, `check` fails when one is missing |
+| `capabilities.deny` / `forbidden` / `require_request` / `allow_only` | capability id globs (`rea.*`); `forbidden` is the same verdict as `deny` (the three levels: required / recommended by default / forbidden) |
 | `capabilities.deny_tags` | deny anything carrying the tag |
 | `grants.process_execute` / `network_access` / `secrets_read` | verdict for capabilities with that grant |
 | `classes.shared_file` / `hook` / `mcp` | `deny` switches the approval class off entirely |
@@ -66,9 +67,14 @@ Repository policy (`<project>/.agent-forge/policy.yaml`):
 ```yaml
 version: 1
 capabilities:
-  deny: ["rea.*", "uiux.*"]
+  required: ["forge.hook.guard-secrets-python"]
+  forbidden: ["rea.*", "uiux.*"]
   require_request: ["ecc.agent.*"]
 ```
+
+A `required` entry is a reviewed decision: it leaves the policy through a pull request, not
+through a conversation with the agent. A required id that another layer denies is reported
+by `check` as "required but also denied" so the contradiction is fixed in the policy.
 
 Inspect the result: `agent-forge policy <project>` shows the layers and each verdict with
 the layer that produced it.
