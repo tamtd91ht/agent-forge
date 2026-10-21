@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-### Added (stack curation, towards 0.4.0)
+## 0.4.0 — 2026-10-21
+
+The catalog serves every detected stack, and review becomes a first-class capability.
+
+### Added
 - **89 stack-specific ECC capabilities**, so a project is served in its own stack instead of
   only by the generic TypeScript-flavoured skills: 21 path-scoped rule packs
   (`ecc.rules.<language|framework>`, 0 always-loaded context, `hooks.md` excluded) and 68
