@@ -1,6 +1,6 @@
 {
   "reviewed": "2026-10-21",
-  "notes": "FastAPI service with ruff. Python hooks (secret guard, ruff format); no UI items. 0.4.0: stack-specific ECC content reviewed in: +ecc.fastapi-patterns, ecc.python-patterns, ecc.python-testing, ecc.rules.python; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts).",
+  "notes": "FastAPI service with ruff. Python hooks (secret guard, ruff format); no UI items. 0.4.0: stack-specific ECC content reviewed in: +ecc.fastapi-patterns, ecc.python-patterns, ecc.python-testing, ecc.rules.python; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts). +forge.agent.backend-reviewer (review subagents for the detected parts).",
   "languages": [
     "python"
   ],
@@ -26,6 +26,7 @@
     "ecc.security-review",
     "ecc.tdd-workflow",
     "ecc.verification-loop",
+    "forge.agent.backend-reviewer",
     "forge.hook.guard-secrets-python",
     "forge.hook.python-ruff-format",
     "forge.managed-notice",

@@ -1,6 +1,6 @@
 {
   "reviewed": "2026-10-21",
-  "notes": "Deliberately untidy FastAPI service for `agent-forge lint` (duplicate rules, a rule that contradicts CLAUDE.md, a pipe-to-shell hook, a disabled MCP server) and the trap fixture for golden decisions. Resolver expectations reviewed against the python-fastapi set; the existing hook/MCP config does not change what is recommended. 0.4.0: stack-specific ECC content reviewed in: +ecc.fastapi-patterns, ecc.python-patterns, ecc.python-testing, ecc.rules.python; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts).",
+  "notes": "Deliberately untidy FastAPI service for `agent-forge lint` (duplicate rules, a rule that contradicts CLAUDE.md, a pipe-to-shell hook, a disabled MCP server) and the trap fixture for golden decisions. Resolver expectations reviewed against the python-fastapi set; the existing hook/MCP config does not change what is recommended. 0.4.0: stack-specific ECC content reviewed in: +ecc.fastapi-patterns, ecc.python-patterns, ecc.python-testing, ecc.rules.python; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts). +forge.agent.backend-reviewer (review subagents for the detected parts).",
   "languages": [
     "python"
   ],
@@ -25,6 +25,7 @@
     "ecc.security-review",
     "ecc.tdd-workflow",
     "ecc.verification-loop",
+    "forge.agent.backend-reviewer",
     "forge.hook.guard-secrets-python",
     "forge.hook.python-ruff-format",
     "forge.managed-notice",

@@ -70,6 +70,22 @@ language, review process, forbidden tools, mandatory steps, how tests are run.
 If the project has hand-written agent config that no capability manages, do not propose
 rewriting it; it is the user's and it counts as coverage below.
 
+**Review coverage.** Code review is how the team learns whether the code is going in the
+right direction, is safe, and will hold under traffic, so check it explicitly. List the
+project's reviewer subagents (`.claude/agents/*.md` whose name or description says review;
+`scan` lists them). For each part the project has (backend / service, web or mobile client)
+compare the existing reviewer against the dimensions of `forge.agent.backend-reviewer`
+(security, money and transactions, data integrity, readiness for traffic, API contract,
+clarity) or `forge.agent.frontend-reviewer` (backend contract, how the view loads its data,
+state, client security, performance, resilience, clarity). Three outcomes, reported in the
+table like any other decision:
+
+- no reviewer for that part → the Agent Forge reviewer is a gap to fill (ADD);
+- a reviewer exists and covers the dimensions → SKIP as `covered`, cite the file and the line;
+- a reviewer exists but misses dimensions → ASK: name the missing dimensions and let the user
+  choose between installing the Agent Forge reviewer next to theirs or extending their own
+  file (which you never edit).
+
 ## 3. Assess, capability by capability
 
 Assess every capability the baseline plan selected, every rejected one whose category is

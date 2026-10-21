@@ -1,0 +1,48 @@
+schema_version: "1"
+id: forge.agent.backend-reviewer
+name: Backend reviewer subagent
+description: Read-only subagent that reviews backend changes in any language on six fixed dimensions - security, money and transaction safety, data integrity and concurrency, readiness for high traffic, API contract, correctness and clarity - and reports evidence-backed findings with severity, a verdict and what it could not check.
+version: 1.0.0
+kind: agent
+category: agents.review
+purpose: Answers "is this change safe, correct and ready for traffic" for a backend service with the same checklist every time, so the main agent (or the developer) can delegate a review that is independent of the code's author and comparable across changes.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-21"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, stack-neutral review checklist for services and APIs (security, idempotent money flows and transactions, constraints and migrations, N+1 / caching / timeouts / backpressure, contract, clarity). Frontmatter uses documented fields only (name, description, tools "Read, Grep, Glob"); read-only, no Bash, so it needs no permission flag. Applies to backend, fullstack and service projects. Declares an existing reviewer subagent as an equivalent, so /agent-forge-upgrade opens the project's own reviewer and judges coverage instead of adding a second one blindly (see the skill's review-coverage step).
+  notes:
+    - "Complements ecc.agent.code-reviewer (generic quality, has Bash) and the stack-specific security skills (springboot-security, django-security, …); this one is the domain checklist for backends regardless of stack."
+applicability:
+  project_types: [backend, fullstack, service]
+  tags: [review, backend, security, transactions, performance, agents]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/backend-reviewer.md
+    dest: .claude/agents/backend-reviewer.md
+    merge: create_only
+equivalents:
+  - kind: agent
+    name_patterns: ["backend.*review", "api.*review", "service.*review", "review.*backend", "security.*review"]
+    content_patterns: ["idempoten", "transaction", "N\\+1", "rate limit"]
+    description: an existing backend / API reviewer subagent
+validation:
+  - type: frontmatter
+    path: .claude/agents/backend-reviewer.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 8828d83a4fd4b7fef2fbaeddf23c95aa0f09aa390ca29f90578d81a2ae62c6be
+  pinned_at: "2026-10-21"

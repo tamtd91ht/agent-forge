@@ -1,6 +1,6 @@
 {
   "reviewed": "2026-10-21",
-  "notes": "Next.js + TypeScript + Tailwind. Frontend/fullstack -> uiux.guidelines; Node hooks (secret guard, prettier). Playwright MCP and the shell-capable code-reviewer agent stay optional (permissions). No backend items beyond security-review (fullstack). 0.4.0: stack-specific ECC content reviewed in: +ecc.frontend-a11y, ecc.frontend-patterns, ecc.nextjs-turbopack, ecc.react-patterns, ecc.react-performance, ecc.react-testing, ecc.rules.react, ecc.rules.typescript, ecc.rules.web; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts). +forge.skill.view-data-loading (workspace skill for web/mobile views).",
+  "notes": "Next.js + TypeScript + Tailwind. Frontend/fullstack -> uiux.guidelines; Node hooks (secret guard, prettier). Playwright MCP and the shell-capable code-reviewer agent stay optional (permissions). No backend items beyond security-review (fullstack). 0.4.0: stack-specific ECC content reviewed in: +ecc.frontend-a11y, ecc.frontend-patterns, ecc.nextjs-turbopack, ecc.react-patterns, ecc.react-performance, ecc.react-testing, ecc.rules.react, ecc.rules.typescript, ecc.rules.web; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts). +forge.skill.view-data-loading (workspace skill for web/mobile views). +forge.agent.backend-reviewer, forge.agent.frontend-reviewer (review subagents for the detected parts).",
   "languages": [
     "javascript",
     "typescript"
@@ -36,6 +36,8 @@
     "ecc.security-review",
     "ecc.tdd-workflow",
     "ecc.verification-loop",
+    "forge.agent.backend-reviewer",
+    "forge.agent.frontend-reviewer",
     "forge.hook.guard-secrets-node",
     "forge.hook.node-prettier-format",
     "forge.managed-notice",

@@ -3,7 +3,7 @@
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (124)
+## Curated (126)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -37,6 +37,8 @@ overwritten by a re-run.
 
 | Capability | Decision | Why |
 |---|---|---|
+| `forge.agent.backend-reviewer` | subagent (Claude Code), `project_types` backend / fullstack / service, read-only (Read, Grep, Glob) | six fixed dimensions: security, money and transactions (idempotency, atomicity, ledger), data integrity and concurrency, readiness for traffic (N+1, caching, timeouts, backpressure), API contract, clarity; evidence-backed findings with severity and "not checked" |
+| `forge.agent.frontend-reviewer` | subagent (Claude Code), `project_types` frontend / fullstack / mobile-or-desktop, read-only | seven dimensions: backend contract, how the view loads its data (request map), state and races, client security, performance, resilience and a11y, clarity; declares existing reviewer agents as equivalents so the skill's review-coverage step judges before adding |
 | `forge.skill.view-data-loading` | skill, both platforms, `project_types` frontend / fullstack / mobile-or-desktop | request discipline for a screen: request map (first paint vs enhancement vs on interaction), one request per resource, parallel independent calls, nothing secondary blocking the first render, fetch on need, dedupe / cache / cancel; written from a recurring client-project finding |
 
 ### Initial catalog (34)

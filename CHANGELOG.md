@@ -22,6 +22,13 @@
   resource, independent requests in parallel, nothing secondary blocking the first render,
   fetch on need, dedupe / cache / cancel. Applies to frontend, fullstack and mobile-or-desktop
   projects, so `/agent-forge-upgrade` proposes it whenever a web part is detected.
+- **Review subagents** `forge.agent.backend-reviewer` (security, money and transactions, data
+  integrity, readiness for traffic, API contract, clarity) and `forge.agent.frontend-reviewer`
+  (backend contract, view data loading, state, client security, performance, resilience,
+  clarity): read-only, stack-neutral, one per detected part. The entry skill (2.2.0) gains a
+  review-coverage step: it lists the project's own reviewer subagents and decides ADD / SKIP
+  covered / ASK (missing dimensions) instead of adding a second reviewer blindly; the
+  capabilities declare existing reviewers as equivalents.
 - `scripts/curate.py`: `rewrite_links` (relative links to sibling skills become names) and
   `frozen` items (hand-adapted assets such as `ecc.rules.common` are never overwritten by a
   re-run).

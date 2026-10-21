@@ -2,7 +2,7 @@ schema_version: "1"
 id: forge.skill.agent-forge-upgrade
 name: Agent Forge upgrade skill
 description: The project's entry point to Agent Forge - user-invoked /agent-forge-upgrade has the coding agent review the project (code, CLAUDE.md, rules, skills) and drive the locally installed `agent-forge` to install or upgrade only the capabilities that fit, with the user approving every write.
-version: 2.1.0
+version: 2.2.0
 kind: skill
 category: meta.agent-forge
 purpose: Closes the gap between Agent Forge's manifest-based matching and a real review of the project. The agent decides what fits and why; Agent Forge stays the only writer (plans, hashes, rollback); the user stays the approver.
@@ -17,9 +17,10 @@ license:
 review:
   reviewed_at: "2026-10-21"
   reviewer: agent-forge maintainers
-  rationale: Workspace-authored markdown only. Installed into a project by `agent-forge setup` (run by the one-line installer, ADR-0004) and otherwise opt-in (tag `agent-forge`). User-invoked (disable-model-invocation; Codex policy.allow_implicit_invocation false), so it costs no always-loaded context. It calls only `~/.agent-forge/bin/agent-forge`; allowed-tools pre-approves the read-only subcommands (incl. `lint`, `usage`, `decisions`) and `forge --dry-run`, so every write still needs the user's yes in the conversation and Claude Code's permission prompt. Version 2.1 assesses on the negative-first rubric of ADR-0007 and writes a decision record (`.agent-forge/decisions/<plan-id>.json`, the one file the skill writes) that `decisions verify` checks before `forge --decisions` uses it. It forbids hand-editing agent files and reading the install directory.
+  rationale: >-
+    Workspace-authored markdown only. Installed into a project by `agent-forge setup` (run by the one-line installer, ADR-0004) and otherwise opt-in (tag `agent-forge`). User-invoked (disable-model-invocation; Codex policy.allow_implicit_invocation false), so it costs no always-loaded context. It calls only `~/.agent-forge/bin/agent-forge`; allowed-tools pre-approves the read-only subcommands (incl. `lint`, `usage`, `decisions`) and `forge --dry-run`, so every write still needs the user's yes in the conversation and Claude Code's permission prompt. Version 2.1 assesses on the negative-first rubric of ADR-0007 and writes a decision record (`.agent-forge/decisions/<plan-id>.json`, the one file the skill writes) that `decisions verify` checks before `forge --decisions` uses it. Version 2.2 adds the review-coverage step: it looks for the project's reviewer subagents and decides per part (backend, client) between ADD / SKIP covered / ASK for forge.agent.backend-reviewer and forge.agent.frontend-reviewer. It forbids hand-editing agent files and reading the install directory.
   notes:
-    - "Context budget of the skill itself: 13,019 characters of SKILL.md loaded on demand (2.0.1 was 6,519); 0 always-loaded because it is user-invoked. tests/unit/test_entry_skill_budget.py keeps it at 0 always-on and under 16,000 on demand."
+    - "Context budget of the skill itself: 14,160 characters of SKILL.md loaded on demand (2.0.1 was 6,519; 2.1.0 13,019); 0 always-loaded because it is user-invoked. tests/unit/test_entry_skill_budget.py keeps it at 0 always-on and under 16,000 on demand."
   acknowledged_findings:
     - rule: pipe-to-shell
       path: "*/agent-forge-upgrade/SKILL.md"
@@ -57,5 +58,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: b13ee78d72541046d8e91e521ace68ff44d359230cb2f9bd945b6bb3a252c75b
+  assets_sha256: ed8dca223446de9d6f97fca04f9d438f32c55e7c779fe278956a20311e741697
   pinned_at: "2026-10-21"
