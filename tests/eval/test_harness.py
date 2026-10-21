@@ -14,10 +14,23 @@ from agent_forge_eval.stats import compare, summarise, to_markdown, wilson
 from tests.conftest import REPO_ROOT, unwrap
 
 EXAMPLES = REPO_ROOT / "examples"
-FIXTURES = sorted(p for p in EXAMPLES.iterdir() if (p / "project").is_dir())
+# Evaluation fixtures ship a reviewed task set; `examples/lint-messy` is a lint / golden-decision
+# fixture without tasks and is deliberately not one of them.
+FIXTURES = sorted(
+    p for p in EXAMPLES.iterdir() if (p / "project").is_dir() and (p / "tasks").is_dir()
+)
+EVAL_FIXTURE_NAMES = {
+    "dotnet-webapi",
+    "go-gin",
+    "java-spring",
+    "mixed-monorepo",
+    "nextjs-ts",
+    "python-fastapi",
+}
 
 
 def test_every_fixture_ships_reviewed_tasks() -> None:
+    assert {f.name for f in FIXTURES} == EVAL_FIXTURE_NAMES
     for fixture in FIXTURES:
         tasks = load_tasks(fixture)
         assert len(tasks) >= 5, f"{fixture.name}: {len(tasks)} task(s), need 5"

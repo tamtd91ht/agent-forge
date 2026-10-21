@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed
+- Pre-flight problems are data: `Problem(code, message, op_id, path)` with a `ProblemCode`
+  enum; the code picks the exit code (stale 7 > approval 8 > apply 10) instead of substring
+  matching on messages. Table in `docs/cli-reference.md`.
+- `examples/lint-messy`: a deliberately untidy fixture with reviewed `expected_lint.json`
+  (duplicate rules, pipe-to-shell hook, disabled MCP server; a contradicting rule and a
+  `${API_KEY}` placeholder that must not be flagged). Also the trap fixture for golden decisions.
+- `agent_forge.cli` is a package (one module per command group, none above 600 lines);
+  `agent_forge.cli:main` and `from agent_forge.cli import app` are unchanged. The
+  `--decisions` wiring moved from the CLI into `decisions/plan_input.py`.
+
 ## 0.3.1 — 2026-10-21
 
 ### Fixed

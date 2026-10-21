@@ -1,0 +1,60 @@
+{
+  "reviewed": "2026-10-21",
+  "notes": "Every finding below was checked by a person. The rule `.claude/rules/no-tests.md` contradicts CLAUDE.md on purpose and must NOT appear here: contradictions need judgement and belong to the skill's `conflicts` ground, not to lint. `${API_KEY}` placeholders and the `ruff format` hook must not be flagged either.",
+  "always_on_total": 2564,
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "chars": 2022
+    },
+    {
+      "path": ".claude/rules/testing.md",
+      "chars": 192
+    },
+    {
+      "path": ".claude/rules/tests-copy.md",
+      "chars": 190
+    },
+    {
+      "path": ".claude/rules/no-tests.md",
+      "chars": 101
+    },
+    {
+      "path": ".claude/skills/deploy/SKILL.md",
+      "chars": 59
+    }
+  ],
+  "counts": {
+    "assets": 8,
+    "managed": 0,
+    "hand_written": 9,
+    "hooks": 2,
+    "mcp_servers": 2
+  },
+  "findings": [
+    {
+      "level": "error",
+      "check": "hook",
+      "path": ".claude/settings.json"
+    },
+    {
+      "level": "warning",
+      "check": "duplicate",
+      "path": ".claude/rules/tests-copy.md"
+    },
+    {
+      "level": "warning",
+      "check": "mcp",
+      "path": ".mcp.json"
+    },
+    {
+      "level": "warning",
+      "check": "duplicate",
+      "path": "CLAUDE.md"
+    }
+  ],
+  "never_flagged": [
+    ".claude/rules/no-tests.md",
+    ".claude/skills/deploy/SKILL.md"
+  ]
+}

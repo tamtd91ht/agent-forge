@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "unused-db": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/db-mcp"
+      ],
+      "env": {
+        "DB_URL": "postgres://localhost/messy"
+      }
+    },
+    "docs": {
+      "type": "http",
+      "url": "https://docs.example.invalid/mcp",
+      "headers": {
+        "Authorization": "Bearer ${API_KEY}"
+      }
+    }
+  }
+}

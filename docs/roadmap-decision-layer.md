@@ -23,8 +23,8 @@ Status: ✅ done in the repo · 🟡 done in the repo, needs a human action · �
 
 | # | Item | Status | Evidence / what is left |
 |---|---|---|---|
-| 1.1 | Split `cli.py` (now ~3,100 lines) into `cli/` | ⏳ | Deferred on purpose: every feature of this round touches `forge`, `status`, `drift`, `check`; the split is a separate mechanical PR with `test_json_envelope.py` as the unchanged gate. |
-| 1.2 | Errors as data (`Problem` codes) | ⏳ | `apply/engine.py` still classifies pre-flight problems by substring. Next PR with 1.1. |
+| 1.1 | Split `cli.py` into `cli/` | ✅ | `agent_forge/cli/` package: `_app`, `_common`, `_envelope`, `_tables` + `registry`, `plans`, `forge`, `ops`, `doctor`, `team`, `decisions`, `lint`; largest file 553 lines; `test_json_envelope.py` unchanged. The decisions-to-plan wiring moved out of the CLI into `decisions/plan_input.py`. |
+| 1.2 | Errors as data (`Problem` codes) | ✅ | `apply/engine.py`: `Problem(code, message, op_id, path)`, `ProblemCode` enum, `error_for()` picks the exception / exit code (stale > approval > apply); `grep '"stale" in' src/` is empty; table in `cli-reference.md`; `tests/unit/test_preflight_problems.py`. |
 | 1.3 | Property tests for apply/rollback on sections and JSON merges | ⏳ | hypothesis is already a dev dependency; `tests/unit/test_sections.py` has one property test. |
 | 1.4 | Locks: wait instead of refuse; doctor cleans orphans | 🟡 | `doctor` reports orphaned locks (pid dead); apply/rollback already take them over. Waiting instead of refusing is a behaviour change left out: an immediate, explicit refusal is safer for an approval-first tool. |
 | 1.5 | Audit log with a per-command schema | ✖ | The audit log is JSONL with domain events and `stats` reads it; a per-command line for read-only commands was judged noise. Re-open if a pilot needs durations. |
@@ -62,7 +62,7 @@ Content-safety rules for base64 blobs and hidden network calls in scripts: ⏳.
 
 | # | Item | Status | Evidence / what is left |
 |---|---|---|---|
-| 5.1 | `agent-forge lint .` ⭐ | ✅ | read-only, no workspace, < 2 s on this repository: context per file and total, duplicate paragraphs / near-duplicate files, credentials, flagged hook commands, disabled MCP servers; `--max-context` as a CI gate (exit 12); proposes nothing. Contradictions stay with the skill (`conflicts`). **Left:** run on five public repositories and record the findings. |
+| 5.1 | `agent-forge lint .` ⭐ | ✅ | read-only, no workspace, < 2 s on this repository: context per file and total, duplicate paragraphs / near-duplicate files, credentials, flagged hook commands, disabled MCP servers; `--max-context` as a CI gate (exit 12); proposes nothing. Contradictions stay with the skill (`conflicts`). Fixture `examples/lint-messy` with reviewed `expected_lint.json` (every finding expected, no false positive; also the trap fixture for golden decisions). **Left:** run on five public repositories and record the findings. |
 | 5.2 | Dead config: usage log ⭐ | ✅ | `forge.hook.usage-log` (opt-in, local, id + kind + timestamp + short session), `agent-forge usage`, `unused` hint in `status`, `unused` ground verified against the log (≥ 14 observed days). |
 | 5.3 | `agent-forge import .` | ⏳ | design: wrap hand-written config as `<project>.local` in a project-level registry layer; needs a decision on where that layer lives. |
 | 5.4 | Organisation-wide decision report | ✅ | `decisions report DIR...`: capability × verdict × ground, suggestions at 70% / 90% thresholds (≥ 3 repos). |

@@ -12,7 +12,9 @@ an automatic gate.
 ## 1. Resolver quality (implemented)
 
 `examples/<name>/project/` holds small representative projects (Java/Spring, Go/Gin,
-Next.js/TypeScript, Python/FastAPI, ASP.NET Core, and a mixed monorepo). Each
+Next.js/TypeScript, Python/FastAPI, ASP.NET Core, a mixed monorepo, and `lint-messy`: a
+FastAPI service with a deliberately untidy agent configuration for `agent-forge lint` and the
+golden-decision trap). Each
 `expected.json` records the reviewed profile and the reviewed recommended and optional sets.
 
 ```bash
