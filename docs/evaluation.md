@@ -36,7 +36,7 @@ baseline". Only the corpus measures agreement with an independent ground truth.
 
 ## 2. Capability value (harness implemented; measurements pending)
 
-[`tools/agent-forge-eval`](../tools/agent-forge-eval/README.md) runs the experiment designed
+[`tools/agent-forge-eval`](https://github.com/tamtd91ht/agent-forge/blob/main/tools/agent-forge-eval/README.md) runs the experiment designed
 here; the design is unchanged:
 
 1. **Task set:** `examples/<name>/tasks/*.yaml`, five per fixture today (feature, bugfix,

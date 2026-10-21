@@ -43,16 +43,22 @@ jobs:
         run: uv run python scripts/matching_report.py
 
   registry-integrity:
-    # Independent of the test suite: the pinned digests must match the bytes git ships (LF),
-    # or every installer on Linux/macOS rejects the entry skill as an integrity mismatch.
-    name: registry integrity (LF, pins)
-    runs-on: ubuntu-latest
+    # Independent of the test suite and run on every OS: the pinned digests must match the
+    # bytes git ships (LF) *and* be computed the same way everywhere (0.3.1: Path ordering
+    # differed between Windows and POSIX), or the installer rejects the entry skill.
+    name: registry integrity (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
       - name: No CRLF in the registry (index or working tree)
+        shell: bash
         run: |
           bad="$(git ls-files --eol registry | grep -E 'i/crlf|w/crlf|i/mixed|w/mixed' || true)"
           if [ -n "$bad" ]; then echo "$bad"; echo "normalize to LF: git add --renormalize . && git checkout -- registry"; exit 1; fi
@@ -141,6 +147,7 @@ jobs:
           python-version: "3.12"
       - name: Export the locked runtime requirements
         run: uv export --no-dev --no-emit-project --format requirements-txt -o requirements-locked.txt
-      - run: uv pip install --system pip-audit
       - name: Known vulnerabilities in the locked runtime dependencies
-        run: pip-audit --strict --desc -r requirements-locked.txt
+        # `uv pip install --system` fails on the runner's externally managed Python (0.3.1);
+        # uvx runs pip-audit in its own environment instead.
+        run: uvx pip-audit --strict --desc -r requirements-locked.txt

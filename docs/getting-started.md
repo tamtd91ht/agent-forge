@@ -1,7 +1,7 @@
 # Getting started
 
 The usual path is the one-line installer run in a project root, then `/agent-forge-upgrade`
-in Claude Code (see the [README](../README.md) and ADR-0004). This page is the CLI underneath,
+in Claude Code (see the [README](https://github.com/tamtd91ht/agent-forge/blob/main/README.md) and ADR-0004). This page is the CLI underneath,
 for reviewing plans by hand or scripting. `agent-forge` below means the launcher
 `~/.agent-forge/bin/agent-forge` (`agent-forge.cmd` in PowerShell / cmd), or the
 `.venv` entry point in a development checkout.

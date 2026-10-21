@@ -53,7 +53,7 @@ copy this page, replace the roles with names, and link it from their repository.
 
 ## Policy
 
-Start from [`examples/policy/team-default.yaml`](../examples/policy/team-default.yaml):
+Start from [`examples/policy/team-default.yaml`](https://github.com/tamtd91ht/agent-forge/blob/main/examples/policy/team-default.yaml):
 medium risk at most, MCP servers off until security reviewed them, a context budget per
 capability. Put it in the workspace (`~/.agent-forge/policy.yaml`) for a team-wide baseline
 and in `.agent-forge/policy.yaml` for per-repository tightening. A project can never loosen
