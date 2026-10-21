@@ -44,15 +44,21 @@ def sha256_file(path: Path, chunk: int = 1 << 20) -> str:
 
 
 def sha256_tree(root: Path) -> str:
-    """Deterministic digest of a directory tree (relative paths + file hashes)."""
+    """Deterministic digest of a directory tree (relative paths + file hashes).
+
+    Files are visited in code-point order of their POSIX relative path, never in `Path`
+    order: `WindowsPath` compares case-insensitively and `PosixPath` does not, so sorting
+    Path objects gave a different digest on Windows than on Linux/macOS for any tree with
+    an upper-case file next to a lower-case one (the v0.2.0-v0.3.0 pins).
+    """
     h = hashlib.sha256()
-    for p in sorted(root.rglob("*")):
-        if p.is_file() and not p.is_symlink():
-            rel = p.relative_to(root).as_posix()
-            h.update(rel.encode("utf-8"))
-            h.update(b"\0")
-            h.update(sha256_file(p).encode("ascii"))
-            h.update(b"\n")
+    files = [p for p in root.rglob("*") if p.is_file() and not p.is_symlink()]
+    for p in sorted(files, key=lambda q: q.relative_to(root).as_posix()):
+        rel = p.relative_to(root).as_posix()
+        h.update(rel.encode("utf-8"))
+        h.update(b"\0")
+        h.update(sha256_file(p).encode("ascii"))
+        h.update(b"\n")
     return h.hexdigest()
 
 
