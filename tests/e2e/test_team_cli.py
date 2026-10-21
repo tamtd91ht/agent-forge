@@ -39,6 +39,16 @@ def _forge(ws: str, root: Path) -> dict:
     return run_json("forge", str(root), "--workspace", ws, "--yes", "--shared-files", "--json")
 
 
+def _project_files(root: Path) -> list[str]:
+    # `.git/` is excluded: git's background maintenance can create and remove lock files
+    # between two snapshots (seen on macOS CI), and the engine never writes there anyway.
+    return sorted(
+        p.relative_to(root).as_posix()
+        for p in root.rglob("*")
+        if p.is_file() and ".git" not in p.relative_to(root).parts
+    )
+
+
 def _managed_skill(root: Path) -> Path:
     manifest = unwrap((root / ".agent-forge" / "managed.json").read_text(encoding="utf-8"))
     for rec in manifest["capabilities"]:
@@ -225,10 +235,10 @@ def test_approval_file_gates_approve_and_forge(
     other = make_project(
         "ci-other", kind="claude", files={**BACKEND, "package.json": '{"name":"x"}'}
     )
-    before = sorted(p.as_posix() for p in other.rglob("*") if p.is_file())
+    before = _project_files(other)
     res = run("forge", str(other), "--workspace", ws, "--approval-file", str(partial), expect=14)
     assert "not covered by" in _flat(res.output)
-    assert sorted(p.as_posix() for p in other.rglob("*") if p.is_file()) == before
+    assert _project_files(other) == before
 
     bad = tmp_path / "bad.yaml"
     bad.write_text("version: 2\napproved_by: x\n", encoding="utf-8")
