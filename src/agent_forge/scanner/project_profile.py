@@ -107,6 +107,61 @@ _RUST_FRAMEWORKS: dict[str, tuple[str, ...]] = {
     "rocket": ("rocket",),
     "clap": ("clap",),
 }
+# Integrations (data stores, brokers, build tools) recorded as frameworks so that stack-specific
+# capabilities (redis-patterns, postgres-patterns, prisma-patterns, …) apply only when the
+# dependency is really there. One table per ecosystem; the key is the framework name.
+_NODE_INTEGRATIONS: dict[str, tuple[str, ...]] = {
+    "redis": ("ioredis", "redis", "@upstash/redis"),
+    "kafka": ("kafkajs", "node-rdkafka", "@confluentinc/kafka-javascript"),
+    "postgres": ("pg", "postgres", "pg-promise"),
+    "mysql": ("mysql", "mysql2"),
+    "mongodb": ("mongodb", "mongoose"),
+    "prisma": ("prisma", "@prisma/client"),
+    "vite": ("vite",),
+}
+_PY_INTEGRATIONS: dict[str, tuple[str, ...]] = {
+    "redis": ("redis", "aioredis"),
+    "kafka": ("kafka-python", "confluent-kafka", "aiokafka", "faust-streaming"),
+    "postgres": ("psycopg", "psycopg2", "psycopg2-binary", "asyncpg"),
+    "mysql": ("mysqlclient", "pymysql", "mysql-connector-python", "aiomysql"),
+    "mongodb": ("pymongo", "motor"),
+    "celery": ("celery",),
+}
+_JVM_INTEGRATIONS: dict[str, tuple[str, ...]] = {
+    "redis": ("spring-boot-starter-data-redis", "redis.clients", "io.lettuce"),
+    "kafka": ("spring-kafka", "org.apache.kafka", "kafka-clients"),
+    "postgres": ("org.postgresql",),
+    "mysql": ("mysql-connector", "com.mysql", "mariadb-java-client"),
+    "mongodb": ("spring-boot-starter-data-mongodb", "mongodb-driver"),
+    "ktor": ("io.ktor",),
+    "exposed": ("org.jetbrains.exposed",),
+}
+_GO_INTEGRATIONS: dict[str, tuple[str, ...]] = {
+    "redis": ("github.com/redis/go-redis", "github.com/go-redis/redis"),
+    "kafka": (
+        "github.com/segmentio/kafka-go",
+        "github.com/IBM/sarama",
+        "github.com/Shopify/sarama",
+        "github.com/confluentinc/confluent-kafka-go",
+    ),
+    "postgres": ("github.com/jackc/pgx", "github.com/lib/pq"),
+    "mysql": ("github.com/go-sql-driver/mysql",),
+    "mongodb": ("go.mongodb.org/mongo-driver",),
+}
+_RUST_INTEGRATIONS: dict[str, tuple[str, ...]] = {
+    "redis": ("redis",),
+    "kafka": ("rdkafka",),
+    "postgres": ("tokio-postgres", "postgres"),
+    "mysql": ("mysql_async",),
+}
+_DOCKER_FILES = (
+    "Dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "compose.yaml",
+    "compose.yml",
+)
+
 _BACKEND_FRAMEWORKS = {
     "express", "fastify", "nestjs", "django", "fastapi", "flask", "spring", "quarkus",
     "micronaut", "gin", "echo", "fiber", "chi", "grpc", "aspnetcore", "axum", "actix-web",
@@ -190,6 +245,9 @@ def _detect_node(
         for fw, names in _NODE_FRAMEWORKS.items():
             if any(n in deps for n in names):
                 _add(frameworks, fw, 0.9, entry.rel, "dependency")
+        for fw, names in _NODE_INTEGRATIONS.items():
+            if any(n in deps for n in names):
+                _add(frameworks, fw, 0.85, entry.rel, "dependency")
         for tool in _NODE_TEST_TOOLS:
             if tool in deps:
                 _add(frameworks, f"test:{tool}", 0.8, entry.rel, "test tool")
@@ -252,6 +310,9 @@ def _detect_python(
         for fw, pkgs in _PY_FRAMEWORKS.items():
             if any(p in names for p in pkgs):
                 _add(frameworks, fw, 0.9, entry.rel, "dependency")
+        for fw, pkgs in _PY_INTEGRATIONS.items():
+            if any(p in names for p in pkgs):
+                _add(frameworks, fw, 0.85, entry.rel, "dependency")
         agent_deps |= {dep for dep in _AGENT_DEPS if dep in names}
         if "pytest" in names or isinstance(tool.get("pytest"), dict):
             _add(frameworks, "test:pytest", 0.8, entry.rel, "test tool")
@@ -268,6 +329,9 @@ def _detect_python(
             if line.strip() and not line.startswith("#")
         }
         for fw, pkgs in _PY_FRAMEWORKS.items():
+            if any(p in names for p in pkgs):
+                _add(frameworks, fw, 0.8, entry.rel, "dependency")
+        for fw, pkgs in _PY_INTEGRATIONS.items():
             if any(p in names for p in pkgs):
                 _add(frameworks, fw, 0.8, entry.rel, "dependency")
         agent_deps |= {dep for dep in _AGENT_DEPS if dep in names}
@@ -301,6 +365,7 @@ def _detect_jvm_go_rust_dotnet(
     for name in ("pom.xml", "build.gradle", "build.gradle.kts"):
         for entry in walker.find_by_name(name, max_depth=_MANIFEST_DEPTH):
             _scan_markers(walker, entry.rel, _JVM_FRAMEWORKS, frameworks, "build dependency")
+            _scan_markers(walker, entry.rel, _JVM_INTEGRATIONS, frameworks, "build dependency")
             here = entry.rel.rsplit("/", 1)[0] + "/" if "/" in entry.rel else ""
             if name == "pom.xml":
                 runner = "./mvnw" if walker.exists(f"{here}mvnw") else "mvn"
@@ -309,9 +374,11 @@ def _detect_jvm_go_rust_dotnet(
             tests.append(f"{_cd(entry.rel)}{runner} test")
     for entry in walker.find_by_name("go.mod", max_depth=_MANIFEST_DEPTH):
         _scan_markers(walker, entry.rel, _GO_FRAMEWORKS, frameworks, "go.mod require")
+        _scan_markers(walker, entry.rel, _GO_INTEGRATIONS, frameworks, "go.mod require")
         tests.append(f"{_cd(entry.rel)}go test ./...")
     for entry in walker.find_by_name("Cargo.toml", max_depth=_MANIFEST_DEPTH):
         _scan_markers(walker, entry.rel, _RUST_FRAMEWORKS, frameworks, "Cargo dependency")
+        _scan_markers(walker, entry.rel, _RUST_INTEGRATIONS, frameworks, "Cargo dependency")
         tests.append(f"{_cd(entry.rel)}cargo test")
     projects = [
         e
@@ -327,6 +394,9 @@ def _detect_jvm_go_rust_dotnet(
     gemfile = walker.read_text("Gemfile") or ""
     if re.search(r"""gem ['"]rails['"]""", gemfile):
         _add(frameworks, "rails", 0.9, "Gemfile", "dependency")
+    for f in _DOCKER_FILES:
+        if walker.exists(f):
+            _add(frameworks, "docker", 0.9, f, "file present")
     composer = walker.read_text("composer.json") or ""
     if '"laravel/framework"' in composer:
         _add(frameworks, "laravel", 0.9, "composer.json", "dependency")
