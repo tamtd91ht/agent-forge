@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.java-coding-standards
+name: Java Coding Standards
+description: 'Java coding standards for Spring Boot and Quarkus services: naming, immutability, Optional usage, streams, exceptions, generics, CDI, reactive patterns, and project layout. Automatically applies framework-specific conventions. Use when writing or reviewing Java in a Spring Boot or Quarkus service.'
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: 'Java coding standards for Spring Boot and Quarkus services: naming, immutability, Optional usage, streams, exceptions, generics, CDI, reactive patterns, and project layout.'
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/java-coding-standards/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/java-coding-standards/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (385 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages java. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Java/Spring/Quarkus counterpart of ecc.coding-standards (TypeScript-flavoured); the two conflict so a Java project gets one.
+applicability:
+  languages:
+  - java
+  tags:
+  - java
+  - standards
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/java-coding-standards
+  dest: .claude/skills/java-coding-standards
+  merge: create_only
+- platform: codex
+  source: codex/java-coding-standards
+  dest: .agents/skills/java-coding-standards
+  merge: create_only
+- platform: copilot
+  source: claude_code/java-coding-standards
+  dest: .github/skills/java-coding-standards
+  merge: create_only
+- platform: gemini
+  source: claude_code/java-coding-standards
+  dest: .gemini/skills/java-coding-standards
+  merge: create_only
+conflicts:
+- ecc.coding-standards
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^java\-coding\-standards$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/java-coding-standards/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 1868eabd4638c1db41eb23f510e64e32d83ff82ef6de41b6d8ceb66cfe806c08
+  pinned_at: "2026-10-21"

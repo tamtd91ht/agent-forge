@@ -1,0 +1,106 @@
+schema_version: '1'
+id: ecc.rules.python
+name: Python rules (path-scoped)
+description: 'Path-scoped Claude Code rules for Python: coding-style, patterns, security, testing, fastapi. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a Python project the stack-specific half of ECC''s rules without paying for it in every session: 4,375 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/python/coding-style.md
+  - rules/python/patterns.md
+  - rules/python/security.md
+  - rules/python/testing.md
+  - rules/python/fastapi.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-python/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/python/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-python/ next to ecc-common/. Applies to languages python; no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  languages:
+  - python
+  tags:
+  - python
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-python
+  dest: .claude/rules/ecc-python
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-python/coding-style.md
+  dest: .cursor/rules/ecc-python/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-python/coding-style.md
+  dest: .github/instructions/ecc-python-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-python/patterns.md
+  dest: .cursor/rules/ecc-python/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-python/patterns.md
+  dest: .github/instructions/ecc-python-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-python/security.md
+  dest: .cursor/rules/ecc-python/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-python/security.md
+  dest: .github/instructions/ecc-python-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-python/testing.md
+  dest: .cursor/rules/ecc-python/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-python/testing.md
+  dest: .github/instructions/ecc-python-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-python/fastapi.md
+  dest: .cursor/rules/ecc-python/fastapi.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-python/fastapi.md
+  dest: .github/instructions/ecc-python-fastapi.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-python/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-python/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-python/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-python/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^python[-/]
+  description: Python rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9c938da5c1077f294bb16d14e3bb2069f73d1f694e2b26f4e8c8db20ba0f6168
+  pinned_at: "2026-10-21"

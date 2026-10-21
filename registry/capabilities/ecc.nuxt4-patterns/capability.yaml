@@ -1,0 +1,72 @@
+schema_version: '1'
+id: ecc.nuxt4-patterns
+name: Nuxt 4 Patterns
+description: Nuxt 4 app patterns for hydration safety, performance, route rules, lazy loading, and SSR-safe data fetching with useFetch and useAsyncData. Use when building or reviewing a Nuxt 4 app, or debugging hydration mismatches and SSR-safe data fetching.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Nuxt 4 app patterns for hydration safety, performance, route rules, lazy loading, and SSR-safe data fetching with useFetch and useAsyncData.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/nuxt4-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/nuxt4-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (102 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks nuxt. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - nuxt
+  tags:
+  - nuxt
+  - vue
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/nuxt4-patterns
+  dest: .claude/skills/nuxt4-patterns
+  merge: create_only
+- platform: codex
+  source: codex/nuxt4-patterns
+  dest: .agents/skills/nuxt4-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/nuxt4-patterns
+  dest: .github/skills/nuxt4-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/nuxt4-patterns
+  dest: .gemini/skills/nuxt4-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^nuxt4\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/nuxt4-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 6b63485e960da19567b89a385b8291c64cad93e121db4e972d6ba3e4e6fd7612
+  pinned_at: "2026-10-21"

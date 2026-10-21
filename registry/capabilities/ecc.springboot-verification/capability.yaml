@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.springboot-verification
+name: Spring Boot Verification
+description: 'Run the full Spring Boot verification loop — Maven or Gradle build, SpotBugs, PMD, and Checkstyle static analysis, unit and Testcontainers integration tests with JaCoCo coverage, OWASP dependency and secret scans, and diff review — producing a pass/fail readiness report. Use when preparing a Spring '
+version: 1.0.0
+kind: skill
+category: engineering.verification
+purpose: Run the full Spring Boot verification loop — Maven or Gradle build, SpotBugs, PMD, and Checkstyle static analysis, unit and Testcontainers integration tests with JaCoCo coverage, OWASP dependency and secret scans, and diff review — producin.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/springboot-verification/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/springboot-verification/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (233 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks spring. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Maven/Gradle, SpotBugs, PMD, Checkstyle, JaCoCo loop; conflicts with the generic ecc.verification-loop.
+applicability:
+  frameworks:
+  - spring
+  tags:
+  - spring
+  - verification
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/springboot-verification
+  dest: .claude/skills/springboot-verification
+  merge: create_only
+- platform: codex
+  source: codex/springboot-verification
+  dest: .agents/skills/springboot-verification
+  merge: create_only
+- platform: copilot
+  source: claude_code/springboot-verification
+  dest: .github/skills/springboot-verification
+  merge: create_only
+- platform: gemini
+  source: claude_code/springboot-verification
+  dest: .gemini/skills/springboot-verification
+  merge: create_only
+conflicts:
+- ecc.verification-loop
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^springboot\-verification$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/springboot-verification/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: c10bd228d00ce98a44412406d9aff519367738ca572149633d3a9b49bd47e41f
+  pinned_at: "2026-10-21"

@@ -48,7 +48,7 @@ destinations:
     dest: .gemini/skills/tdd
     merge: create_only
 dependencies: [mattpocock.codebase-design]
-conflicts: [ecc.tdd-workflow]
+conflicts: [ecc.django-tdd, ecc.laravel-tdd, ecc.springboot-tdd, ecc.tdd-workflow]
 equivalents:
   - kind: skill
     name_patterns: ["^tdd", "test-driven", "test-first"]

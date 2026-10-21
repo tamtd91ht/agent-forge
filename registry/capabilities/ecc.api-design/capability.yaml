@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.api-design
+name: API Design
+description: REST API design patterns including resource naming, status codes, pagination, filtering, error responses, versioning, and rate limiting for production APIs. Use when designing or reviewing REST endpoints, resource names, status codes, pagination, or versioning.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: REST API design patterns including resource naming, status codes, pagination, filtering, error responses, versioning, and rate limiting for production APIs.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/api-design/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/api-design/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (525 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags api, rest, backend). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Tag-only: every backend would otherwise pay for it; the agent requests it when the project exposes an HTTP API without conventions.'
+applicability:
+  tags:
+  - api
+  - rest
+  - backend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/api-design
+  dest: .claude/skills/api-design
+  merge: create_only
+- platform: codex
+  source: codex/api-design
+  dest: .agents/skills/api-design
+  merge: create_only
+- platform: copilot
+  source: claude_code/api-design
+  dest: .github/skills/api-design
+  merge: create_only
+- platform: gemini
+  source: claude_code/api-design
+  dest: .gemini/skills/api-design
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^api\-design$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/api-design/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: fc3af0eca5327b95622c6b7c37457f6628e5b9f24251556d29c802bbffebf666
+  pinned_at: "2026-10-21"

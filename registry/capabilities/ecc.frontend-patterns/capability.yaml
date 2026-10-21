@@ -1,0 +1,74 @@
+schema_version: '1'
+id: ecc.frontend-patterns
+name: Frontend Patterns
+description: Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices. Use when building or reviewing React or Next.js components, state, or render performance.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/frontend-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/frontend-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (658 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks react, nextjs. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - react
+  - nextjs
+  tags:
+  - react
+  - nextjs
+  - frontend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/frontend-patterns
+  dest: .claude/skills/frontend-patterns
+  merge: create_only
+- platform: codex
+  source: codex/frontend-patterns
+  dest: .agents/skills/frontend-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/frontend-patterns
+  dest: .github/skills/frontend-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/frontend-patterns
+  dest: .gemini/skills/frontend-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^frontend\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/frontend-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: c84878f0814cd5c6b7aab660984f0b2efb7729f58d72da4107bddb910074881f
+  pinned_at: "2026-10-21"

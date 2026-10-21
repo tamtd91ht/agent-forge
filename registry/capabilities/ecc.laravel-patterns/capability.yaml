@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.laravel-patterns
+name: Laravel Patterns
+description: Laravel architecture patterns, routing/controllers, Eloquent ORM, service layers, queues, events, caching, and API resources for production apps. Use when building or reviewing Laravel apps — controllers, Eloquent, service layers, queues, or API resources.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Laravel architecture patterns, routing/controllers, Eloquent ORM, service layers, queues, events, caching, and API resources for production apps.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/laravel-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/laravel-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (417 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks laravel. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - laravel
+  tags:
+  - laravel
+  - php
+  - backend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/laravel-patterns
+  dest: .claude/skills/laravel-patterns
+  merge: create_only
+- platform: codex
+  source: codex/laravel-patterns
+  dest: .agents/skills/laravel-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/laravel-patterns
+  dest: .github/skills/laravel-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/laravel-patterns
+  dest: .gemini/skills/laravel-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^laravel\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/laravel-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: ec01f295830dd54da314d8fbce219f54950636647ada7c7219298f5f5f7c23ac
+  pinned_at: "2026-10-21"

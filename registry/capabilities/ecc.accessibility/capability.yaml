@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.accessibility
+name: Accessibility
+description: Design, implement, and audit accessible UI to WCAG 2.2 Level AA across Web, iOS, and Android — semantic ARIA roles and labels, accessibility traits and hints, focus management, contrast, target size, and screen-reader support. Use when building or auditing UI for accessibility compliance, keyboard n
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Design, implement, and audit accessible UI to WCAG 2.2 Level AA across Web, iOS, and Android — semantic ARIA roles and labels, accessibility traits and hints, focus management, contrast, target size, and screen-reader support.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/accessibility/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/accessibility/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (147 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags a11y, accessibility, wcag). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Tag-only; frontend-a11y covers React/Next.js automatically.
+applicability:
+  tags:
+  - a11y
+  - accessibility
+  - wcag
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/accessibility
+  dest: .claude/skills/accessibility
+  merge: create_only
+- platform: codex
+  source: codex/accessibility
+  dest: .agents/skills/accessibility
+  merge: create_only
+- platform: copilot
+  source: claude_code/accessibility
+  dest: .github/skills/accessibility
+  merge: create_only
+- platform: gemini
+  source: claude_code/accessibility
+  dest: .gemini/skills/accessibility
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^accessibility$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/accessibility/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: b76fb23f03659fefeed27846035ffbbb04db3b95519f0fbee62cde24a2c57fea
+  pinned_at: "2026-10-21"

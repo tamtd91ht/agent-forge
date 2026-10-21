@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.csharp-testing
+name: C# Testing
+description: C# and .NET testing patterns with xUnit, FluentAssertions, mocking, integration tests, and test organization best practices. Use when writing or reviewing xUnit tests, mocks, or integration tests in a C# / .NET project.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: C# and .NET testing patterns with xUnit, FluentAssertions, mocking, integration tests, and test organization best practices.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/csharp-testing/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/csharp-testing/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (323 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages csharp. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - csharp
+  tags:
+  - csharp
+  - dotnet
+  - testing
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/csharp-testing
+  dest: .claude/skills/csharp-testing
+  merge: create_only
+- platform: codex
+  source: codex/csharp-testing
+  dest: .agents/skills/csharp-testing
+  merge: create_only
+- platform: copilot
+  source: claude_code/csharp-testing
+  dest: .github/skills/csharp-testing
+  merge: create_only
+- platform: gemini
+  source: claude_code/csharp-testing
+  dest: .gemini/skills/csharp-testing
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^csharp\-testing$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/csharp-testing/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 625e78816411a1dded6f366fec8747de6f993d5c7c52d6ee42973f2068ae823b
+  pinned_at: "2026-10-21"

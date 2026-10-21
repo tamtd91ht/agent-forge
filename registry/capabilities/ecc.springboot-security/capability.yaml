@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.springboot-security
+name: Spring Boot Security
+description: Spring Security best practices for authn/authz, validation, CSRF, secrets, headers, rate limiting, and dependency security in Java Spring Boot services. Use when reviewing Spring Security authn/authz, validation, CSRF, secrets, headers, or rate limiting.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Spring Security best practices for authn/authz, validation, CSRF, secrets, headers, rate limiting, and dependency security in Java Spring Boot services.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/springboot-security/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/springboot-security/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (274 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks spring. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Spring Security counterpart of ecc.security-review; conflicts so a Spring project gets one.
+applicability:
+  frameworks:
+  - spring
+  tags:
+  - spring
+  - security
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/springboot-security
+  dest: .claude/skills/springboot-security
+  merge: create_only
+- platform: codex
+  source: codex/springboot-security
+  dest: .agents/skills/springboot-security
+  merge: create_only
+- platform: copilot
+  source: claude_code/springboot-security
+  dest: .github/skills/springboot-security
+  merge: create_only
+- platform: gemini
+  source: claude_code/springboot-security
+  dest: .gemini/skills/springboot-security
+  merge: create_only
+conflicts:
+- ecc.security-review
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^springboot\-security$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/springboot-security/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: b1e89ba06ba4cd1e7ebd8ee9a4e9368f8fce22b275e95cfc58cae3065b46ca65
+  pinned_at: "2026-10-21"

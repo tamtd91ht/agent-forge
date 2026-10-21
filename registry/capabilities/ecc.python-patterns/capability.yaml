@@ -1,0 +1,71 @@
+schema_version: '1'
+id: ecc.python-patterns
+name: Python Patterns
+description: Pythonic idioms, PEP 8 standards, type hints, and best practices for building robust, efficient, and maintainable Python applications. Use when writing or reviewing Python code and idiomatic structure, typing, or PEP 8 is in question.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Pythonic idioms, PEP 8 standards, type hints, and best practices for building robust, efficient, and maintainable Python applications.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/python-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/python-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (752 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages python. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - python
+  tags:
+  - python
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/python-patterns
+  dest: .claude/skills/python-patterns
+  merge: create_only
+- platform: codex
+  source: codex/python-patterns
+  dest: .agents/skills/python-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/python-patterns
+  dest: .github/skills/python-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/python-patterns
+  dest: .gemini/skills/python-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^python\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/python-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 150dd0130418058ce82e0d842b67711f0552d9b810705a8db32e7eef3ba6db71
+  pinned_at: "2026-10-21"

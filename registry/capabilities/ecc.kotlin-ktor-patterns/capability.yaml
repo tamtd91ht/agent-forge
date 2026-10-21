@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.kotlin-ktor-patterns
+name: Kotlin Ktor Patterns
+description: Ktor server patterns including routing DSL, plugins, authentication, Koin DI, kotlinx.serialization, WebSockets, and testApplication testing. Use when building a Ktor server — routing, plugins, auth, DI, serialization, or tests.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Ktor server patterns including routing DSL, plugins, authentication, Koin DI, kotlinx.serialization, WebSockets, and testApplication testing.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/kotlin-ktor-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/kotlin-ktor-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (691 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks ktor. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - ktor
+  tags:
+  - ktor
+  - kotlin
+  - backend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/kotlin-ktor-patterns
+  dest: .claude/skills/kotlin-ktor-patterns
+  merge: create_only
+- platform: codex
+  source: codex/kotlin-ktor-patterns
+  dest: .agents/skills/kotlin-ktor-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/kotlin-ktor-patterns
+  dest: .github/skills/kotlin-ktor-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/kotlin-ktor-patterns
+  dest: .gemini/skills/kotlin-ktor-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^kotlin\-ktor\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/kotlin-ktor-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 8a45a65d29b707c9411351f107e49a31dcdee23e8892b5381c8da4edfca7b49f
+  pinned_at: "2026-10-21"

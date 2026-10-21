@@ -1,0 +1,98 @@
+schema_version: '1'
+id: ecc.rules.angular
+name: Angular rules (path-scoped)
+description: 'Path-scoped Claude Code rules for Angular: coding-style, patterns, security, testing. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a Angular project the stack-specific half of ECC''s rules without paying for it in every session: 19,153 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/angular/coding-style.md
+  - rules/angular/patterns.md
+  - rules/angular/security.md
+  - rules/angular/testing.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-angular/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/angular/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-angular/ next to ecc-common/. Applies to frameworks angular; no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  frameworks:
+  - angular
+  tags:
+  - angular
+  - frontend
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-angular
+  dest: .claude/rules/ecc-angular
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-angular/coding-style.md
+  dest: .cursor/rules/ecc-angular/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-angular/coding-style.md
+  dest: .github/instructions/ecc-angular-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-angular/patterns.md
+  dest: .cursor/rules/ecc-angular/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-angular/patterns.md
+  dest: .github/instructions/ecc-angular-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-angular/security.md
+  dest: .cursor/rules/ecc-angular/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-angular/security.md
+  dest: .github/instructions/ecc-angular-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-angular/testing.md
+  dest: .cursor/rules/ecc-angular/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-angular/testing.md
+  dest: .github/instructions/ecc-angular-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-angular/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-angular/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-angular/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-angular/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^angular[-/]
+  description: Angular rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 64db79c0944c38dcb082d1969c36e8112dcdb7a4ca92f415a10f3485363cf3bc
+  pinned_at: "2026-10-21"

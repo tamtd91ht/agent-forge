@@ -54,7 +54,7 @@ destinations:
     source: claude_code/tdd-workflow
     dest: .gemini/skills/tdd-workflow
     merge: create_only
-conflicts: [mattpocock.tdd]
+conflicts: [ecc.django-tdd, ecc.laravel-tdd, ecc.springboot-tdd, mattpocock.tdd]
 equivalents:
   - kind: skill
     name_patterns: ["^tdd", "test-driven", "test-first"]

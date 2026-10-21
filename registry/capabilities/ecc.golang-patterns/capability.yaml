@@ -1,0 +1,72 @@
+schema_version: '1'
+id: ecc.golang-patterns
+name: Go Patterns
+description: Idiomatic Go patterns, best practices, and conventions for building robust, efficient, and maintainable Go applications. Use when writing or reviewing Go code and idiomatic structure or conventions are in question.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Idiomatic Go patterns, best practices, and conventions for building robust, efficient, and maintainable Go applications.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/golang-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/golang-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (677 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages go. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - go
+  tags:
+  - go
+  - golang
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/golang-patterns
+  dest: .claude/skills/golang-patterns
+  merge: create_only
+- platform: codex
+  source: codex/golang-patterns
+  dest: .agents/skills/golang-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/golang-patterns
+  dest: .github/skills/golang-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/golang-patterns
+  dest: .gemini/skills/golang-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^golang\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/golang-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 13553d05773df3aa9c17653a57f446f239d57a483dcba38a0b982720efbf3e30
+  pinned_at: "2026-10-21"

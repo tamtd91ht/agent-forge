@@ -1,0 +1,118 @@
+schema_version: '1'
+id: ecc.rules.web
+name: Web (CSS / HTML / components) rules (path-scoped)
+description: 'Path-scoped Claude Code rules for Web (CSS / HTML / components): coding-style, patterns, security, testing, design-quality, performance. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a Web (CSS / HTML / components) project the stack-specific half of ECC''s rules without paying for it in every session: 12,456 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/web/coding-style.md
+  - rules/web/patterns.md
+  - rules/web/security.md
+  - rules/web/testing.md
+  - rules/web/design-quality.md
+  - rules/web/performance.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-web/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/web/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-web/ next to ecc-common/. Applies to project types frontend, fullstack; no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  project_types:
+  - frontend
+  - fullstack
+  tags:
+  - web
+  - css
+  - frontend
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-web
+  dest: .claude/rules/ecc-web
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/coding-style.md
+  dest: .cursor/rules/ecc-web/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/coding-style.md
+  dest: .github/instructions/ecc-web-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/patterns.md
+  dest: .cursor/rules/ecc-web/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/patterns.md
+  dest: .github/instructions/ecc-web-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/security.md
+  dest: .cursor/rules/ecc-web/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/security.md
+  dest: .github/instructions/ecc-web-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/testing.md
+  dest: .cursor/rules/ecc-web/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/testing.md
+  dest: .github/instructions/ecc-web-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/design-quality.md
+  dest: .cursor/rules/ecc-web/design-quality.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/design-quality.md
+  dest: .github/instructions/ecc-web-design-quality.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/performance.md
+  dest: .cursor/rules/ecc-web/performance.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/performance.md
+  dest: .github/instructions/ecc-web-performance.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-web/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-web/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-web/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-web/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^web[-/]
+  description: Web (CSS / HTML / components) rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 17d88f787d70d01d942b693bcf902281fc9f2e1d65451ee6dca719a3558c9625
+  pinned_at: "2026-10-21"

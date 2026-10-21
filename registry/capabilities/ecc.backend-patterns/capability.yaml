@@ -1,0 +1,72 @@
+schema_version: '1'
+id: ecc.backend-patterns
+name: Backend Patterns
+description: Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API routes. Use when building or reviewing Node.js, Express, or Next.js API routes and their data access.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API routes.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/backend-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/backend-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (563 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags backend, architecture). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Tag-only, see api-design.
+applicability:
+  tags:
+  - backend
+  - architecture
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/backend-patterns
+  dest: .claude/skills/backend-patterns
+  merge: create_only
+- platform: codex
+  source: codex/backend-patterns
+  dest: .agents/skills/backend-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/backend-patterns
+  dest: .github/skills/backend-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/backend-patterns
+  dest: .gemini/skills/backend-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^backend\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/backend-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: dfe33b141d82ab6c5266892d59510f431ce6a84350311ee1f3acc2a156d4757a
+  pinned_at: "2026-10-21"

@@ -1,0 +1,71 @@
+schema_version: '1'
+id: ecc.perl-patterns
+name: Perl Patterns
+description: Modern Perl 5.36+ idioms, best practices, and conventions for building robust, maintainable Perl applications. Use when writing or reviewing modern Perl 5.36+ code.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Modern Perl 5.36+ idioms, best practices, and conventions for building robust, maintainable Perl applications.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/perl-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/perl-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (506 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags perl). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Tag-only: the scanner does not detect Perl.'
+applicability:
+  tags:
+  - perl
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/perl-patterns
+  dest: .claude/skills/perl-patterns
+  merge: create_only
+- platform: codex
+  source: codex/perl-patterns
+  dest: .agents/skills/perl-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/perl-patterns
+  dest: .github/skills/perl-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/perl-patterns
+  dest: .gemini/skills/perl-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^perl\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/perl-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: be64182993cb11fc25536826bd13f08ab24677bce91a35a0a377cdfd1ccc9b05
+  pinned_at: "2026-10-21"

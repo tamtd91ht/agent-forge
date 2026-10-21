@@ -1,6 +1,6 @@
 {
-  "reviewed": "2026-10-20",
-  "notes": "Spring Boot service with Maven wrapper. No JVM-specific capability exists in the registry, so only stack-independent ones apply; no Node/Python hooks (no runtime guaranteed); error-handling is TS/JS/Python/Go only.",
+  "reviewed": "2026-10-21",
+  "notes": "Spring Boot service with Maven wrapper. No JVM-specific capability exists in the registry, so only stack-independent ones apply; no Node/Python hooks (no runtime guaranteed); error-handling is TS/JS/Python/Go only. 0.4.0: stack-specific ECC content reviewed in: +ecc.java-coding-standards, ecc.jpa-patterns, ecc.rules.java, ecc.springboot-patterns, ecc.springboot-security, ecc.springboot-tdd, ecc.springboot-verification; -ecc.security-review, ecc.tdd-workflow, ecc.verification-loop (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts).",
   "languages": [
     "java"
   ],
@@ -16,10 +16,14 @@
   ],
   "recommended": [
     "ecc.agent.planner",
+    "ecc.java-coding-standards",
+    "ecc.jpa-patterns",
     "ecc.rules.common",
-    "ecc.security-review",
-    "ecc.tdd-workflow",
-    "ecc.verification-loop",
+    "ecc.rules.java",
+    "ecc.springboot-patterns",
+    "ecc.springboot-security",
+    "ecc.springboot-tdd",
+    "ecc.springboot-verification",
     "forge.managed-notice",
     "karpathy.principles",
     "mattpocock.diagnosing-bugs",

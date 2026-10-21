@@ -18,6 +18,7 @@ Run:  python scripts/curate.py [--allow-revision-drift] [--only <capability-id>]
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -157,6 +158,12 @@ class Item:
     # assets relative path -> exact (old, new) replacements; a missing `old` fails the run so an
     # upstream change to an adapted passage is reviewed instead of silently skipped
     replacements: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
+    # rewrite relative markdown links to sibling skills / rule packs into plain names, because
+    # a skill is installed on its own and its neighbours may not be (see _rewrite_links)
+    rewrite_links: bool = False
+    # hand-adapted assets (edits not expressible as replacements): the run checks that the
+    # upstream files still exist at the recorded revision but never overwrites the copies
+    frozen: bool = False
 
 
 def _mp_skill(
@@ -248,6 +255,9 @@ ITEMS: list[Item] = [
             )
         ],
         notices=[("claude_code/ecc-common/LICENSE-ECC.txt", ECC_NOTICE)],
+        # 1.1.0 removed ECC's agent roster, the links to excluded files and the mandatory
+        # research step by hand (see the manifest notes); re-copying would undo that.
+        frozen=True,
     ),
     # UI/UX guidelines: references are upstream copies; SKILL.md per platform is workspace-authored.
     Item(
@@ -349,6 +359,115 @@ ITEMS: list[Item] = [
 ]
 
 
+# ---- ECC per-stack content (0.4.0) ---------------------------------------------------------
+#
+# Language rule packs: every file carries `paths:` frontmatter, so they load only for matching
+# files and cost no always-loaded context (ADR-0003). `hooks.md` is excluded everywhere: it
+# documents ECC's own hooks in ~/.claude/settings.json. The "extends common/x.md" link in each
+# file points at a path that does not exist once installed; it is rewritten to name the
+# capability that ships those files instead (adapted, see each manifest).
+#
+# (registry id suffix, upstream rules dir, files besides the four standard ones)
+ECC_RULE_PACKS: list[tuple[str, str, tuple[str, ...]]] = [
+    ("golang", "golang", ()),
+    ("typescript", "typescript", ()),
+    ("python", "python", ("fastapi",)),
+    ("java", "java", ()),
+    ("kotlin", "kotlin", ()),
+    ("rust", "rust", ()),
+    ("csharp", "csharp", ()),
+    ("php", "php", ()),
+    ("ruby", "ruby", ()),
+    ("swift", "swift", ()),
+    ("dart", "dart", ()),
+    ("cpp", "cpp", ()),
+    ("react", "react", ()),
+    ("vue", "vue", ()),
+    ("nuxt", "nuxt", ()),
+    ("angular", "angular", ()),
+    ("react-native", "react-native", ("accessibility", "performance", "production-readiness")),
+    ("web", "web", ("design-quality", "performance")),
+    ("fsharp", "fsharp", ()),
+    ("perl", "perl", ()),
+    ("arkts", "arkts", ()),
+]
+RULE_PACK_STANDARD_FILES = ("coding-style", "patterns", "security", "testing")
+
+# Stack-specific skills: one SKILL.md each, verbatim (upstream), no scripts. Which project
+# gets which one is decided by the manifest's applicability, not here.
+ECC_STACK_SKILLS: list[str] = [
+    # JVM
+    "java-coding-standards", "springboot-patterns", "springboot-tdd", "springboot-security",
+    "springboot-verification", "jpa-patterns", "quarkus-security", "hexagonal-architecture",
+    "kotlin-patterns", "kotlin-testing", "kotlin-coroutines-flows", "kotlin-ktor-patterns",
+    "kotlin-exposed-patterns", "android-clean-architecture", "compose-multiplatform-patterns",
+    # Go
+    "golang-patterns", "golang-testing",
+    # Node / TypeScript
+    "nestjs-patterns", "react-patterns", "react-testing", "react-performance",
+    "frontend-patterns", "frontend-a11y", "nextjs-turbopack", "vue-patterns", "nuxt4-patterns",
+    "vite-patterns", "prisma-patterns", "e2e-testing", "react-native-patterns",
+    # Python
+    "python-patterns", "python-testing", "fastapi-patterns", "django-patterns", "django-tdd",
+    "django-security", "django-verification", "django-celery",
+    # Rust, .NET, PHP, Ruby
+    "rust-patterns", "rust-testing", "dotnet-patterns", "csharp-testing", "fsharp-testing",
+    "laravel-patterns", "laravel-tdd", "laravel-security", "laravel-verification", "rails-patterns",
+    # Swift, Dart, C++, Perl
+    "swiftui-patterns", "swift-concurrency-6-2", "swift-protocol-di-testing",
+    "swift-actor-persistence", "dart-flutter-patterns", "flutter-dart-code-review",
+    "cpp-coding-standards", "cpp-testing", "perl-patterns", "perl-security", "perl-testing",
+    # data, infrastructure, cross-cutting
+    "redis-patterns", "postgres-patterns", "mysql-patterns", "database-migrations",
+    "kubernetes-patterns", "deployment-patterns", "api-design", "backend-patterns", "accessibility",
+]  # fmt: skip
+
+_REL_LINK_RE = re.compile(r"\[([^\]]+)\]\((\.\.?/[^)#\s]+)\)")
+
+
+def _rewrite_links(text: str) -> str:
+    """Relative links to sibling ECC skills / rule packs become names, not paths.
+
+    Installed alone, `../react-testing/SKILL.md` or `../../rules/react/` points nowhere. The
+    link text is kept and the target is named as the capability that ships it, so the agent
+    can still ask for it (`--request ecc.<name>`) and `validate`'s link check passes.
+    """
+
+    def sub(m: re.Match[str]) -> str:
+        label, target = m.group(1), m.group(2)
+        if sk := re.fullmatch(r"(?:\.\./)+(?:skills/)?([a-z0-9-]+)/SKILL\.md", target):
+            return (
+                f"{label} (ECC skill `{sk.group(1)}`; capability `ecc.{sk.group(1)}` when curated)"
+            )
+        if rp := re.fullmatch(r"(?:\.\./)+(?:rules/)?([a-z-]+)/(?:[a-z-]+\.md)?", target):
+            return f"{label} (`ecc.rules.{rp.group(1)}`)"
+        if re.fullmatch(r"\./hooks\.md", target):
+            return f"{label} (hooks are not installed by this pack; see the project's own hooks)"
+        return label
+
+    return _REL_LINK_RE.sub(sub, text)
+
+
+def _rule_pack(suffix: str, upstream_dir: str, extra: tuple[str, ...]) -> Item:
+    cid = f"ecc.rules.{suffix}"
+    dest_dir = f"claude_code/ecc-{suffix}"
+    item = Item(cid, "ecc", [], notices=[(f"{dest_dir}/LICENSE-ECC.txt", ECC_NOTICE)])
+    for name in (*RULE_PACK_STANDARD_FILES, *extra):
+        item.files.append((f"rules/{upstream_dir}/{name}.md", f"{dest_dir}/{name}.md"))
+    item.rewrite_links = True
+    return item
+
+
+def _stack_skill(name: str) -> Item:
+    item = _skill(f"ecc.{name}", name)
+    item.rewrite_links = True
+    return item
+
+
+ITEMS.extend(_rule_pack(s, d, extra) for s, d, extra in ECC_RULE_PACKS)
+ITEMS.extend(_stack_skill(n) for n in ECC_STACK_SKILLS)
+
+
 def git_head(checkout: Path) -> str:
     return subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=checkout, capture_output=True, text=True, check=True
@@ -390,6 +509,13 @@ def main() -> int:
                 )
                 continue
         assets = REGISTRY / item.capability_id / "assets"
+        if item.frozen:
+            missing = [up for up, _ in item.files if not (checkout / up).is_file()]
+            if missing:
+                print(f"!! {item.capability_id}: upstream file missing: {missing}", file=sys.stderr)
+                return 2
+            print(f"kept {item.capability_id}: hand-adapted assets, upstream files present")
+            continue
         for up, down in item.files:
             src = checkout / up
             dst = assets / down
@@ -406,6 +532,8 @@ def main() -> int:
                     )
                     return 2
                 text = text.replace(old, new, 1)
+            if item.rewrite_links and down.endswith(".md"):
+                text = _rewrite_links(text)
             if down in item.footers:
                 text = text.rstrip("\n") + item.footers[down]
             dst.write_text(text, encoding="utf-8", newline="\n")

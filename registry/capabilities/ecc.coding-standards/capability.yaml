@@ -45,7 +45,7 @@ destinations:
     source: claude_code/coding-standards
     dest: .gemini/skills/coding-standards
     merge: create_only
-conflicts: [ecc.rules.common]
+conflicts: [ecc.java-coding-standards, ecc.rules.common]
 equivalents:
   - kind: skill
     name_patterns: ["coding-standard", "code-style", "style-guide", "conventions"]

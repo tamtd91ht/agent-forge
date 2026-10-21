@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.react-native-patterns
+name: React Native Patterns
+description: React Native and Expo app patterns — Expo Router navigation, state separation (server/client/route/form), TanStack Query data fetching with Zod, performant lists, NativeWind/StyleSheet styling, native APIs, and secure storage. Use when building or editing React Native / Expo screens, components, nav
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: React Native and Expo app patterns — Expo Router navigation, state separation (server/client/route/form), TanStack Query data fetching with Zod, performant lists, NativeWind/StyleSheet styling, native APIs, and secure storage.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/react-native-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/react-native-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (327 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks react-native. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - react-native
+  tags:
+  - react-native
+  - expo
+  - mobile
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/react-native-patterns
+  dest: .claude/skills/react-native-patterns
+  merge: create_only
+- platform: codex
+  source: codex/react-native-patterns
+  dest: .agents/skills/react-native-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/react-native-patterns
+  dest: .github/skills/react-native-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/react-native-patterns
+  dest: .gemini/skills/react-native-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^react\-native\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/react-native-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 807c40891483647b0efc0a945fb74b6fe9b1ac681908258677b3f2cd59da21da
+  pinned_at: "2026-10-21"

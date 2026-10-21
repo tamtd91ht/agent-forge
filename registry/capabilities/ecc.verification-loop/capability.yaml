@@ -41,6 +41,7 @@ destinations:
     source: claude_code/verification-loop
     dest: .gemini/skills/verification-loop
     merge: create_only
+conflicts: [ecc.django-verification, ecc.laravel-verification, ecc.springboot-verification]
 equivalents:
   - kind: skill
     name_patterns: ["verif", "quality-gate", "pre-commit-check"]

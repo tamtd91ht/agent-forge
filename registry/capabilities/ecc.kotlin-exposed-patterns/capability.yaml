@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.kotlin-exposed-patterns
+name: Kotlin Exposed Patterns
+description: JetBrains Exposed ORM patterns including DSL queries, DAO pattern, transactions, HikariCP connection pooling, Flyway migrations, and repository pattern. Use when working with the Exposed ORM — DSL or DAO queries, transactions, pooling, or migrations.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: JetBrains Exposed ORM patterns including DSL queries, DAO pattern, transactions, HikariCP connection pooling, Flyway migrations, and repository pattern.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/kotlin-exposed-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/kotlin-exposed-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (721 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks exposed. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - exposed
+  tags:
+  - exposed
+  - kotlin
+  - database
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/kotlin-exposed-patterns
+  dest: .claude/skills/kotlin-exposed-patterns
+  merge: create_only
+- platform: codex
+  source: codex/kotlin-exposed-patterns
+  dest: .agents/skills/kotlin-exposed-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/kotlin-exposed-patterns
+  dest: .github/skills/kotlin-exposed-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/kotlin-exposed-patterns
+  dest: .gemini/skills/kotlin-exposed-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^kotlin\-exposed\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/kotlin-exposed-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9025633ee31a5a5ebdc7d2bc9450ee52826c182d5a0ebc2cb7d143c24afb0ac9
+  pinned_at: "2026-10-21"

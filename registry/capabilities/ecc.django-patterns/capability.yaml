@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.django-patterns
+name: Django Patterns
+description: Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps. Use when building or reviewing Django apps, DRF APIs, ORM queries, or caching.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/django-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/django-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (736 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks django. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - django
+  tags:
+  - django
+  - python
+  - backend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/django-patterns
+  dest: .claude/skills/django-patterns
+  merge: create_only
+- platform: codex
+  source: codex/django-patterns
+  dest: .agents/skills/django-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/django-patterns
+  dest: .github/skills/django-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/django-patterns
+  dest: .gemini/skills/django-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^django\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/django-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 610a41970f9587a8efd3d63f8954f7acab672ac3895b319b7107ce8636858fc7
+  pinned_at: "2026-10-21"

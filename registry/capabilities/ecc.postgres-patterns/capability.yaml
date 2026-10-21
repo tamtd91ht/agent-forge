@@ -1,0 +1,75 @@
+schema_version: '1'
+id: ecc.postgres-patterns
+name: Postgres Patterns
+description: PostgreSQL database patterns for query optimization, schema design, indexing, and security. Based on Supabase best practices. Use when designing PostgreSQL schemas, indexes, or RLS policies, or when a query is too slow.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: PostgreSQL database patterns for query optimization, schema design, indexing, and security.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/postgres-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/postgres-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (149 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks postgres. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Applies when a PostgreSQL driver is a dependency.
+applicability:
+  frameworks:
+  - postgres
+  tags:
+  - postgres
+  - sql
+  - database
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/postgres-patterns
+  dest: .claude/skills/postgres-patterns
+  merge: create_only
+- platform: codex
+  source: codex/postgres-patterns
+  dest: .agents/skills/postgres-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/postgres-patterns
+  dest: .github/skills/postgres-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/postgres-patterns
+  dest: .gemini/skills/postgres-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^postgres\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/postgres-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: f93e6b3a15ee7cd0e2756b775c30e11d45fae88763a22434883da42bfb6b5dd2
+  pinned_at: "2026-10-21"

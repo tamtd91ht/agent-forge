@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.dart-flutter-patterns
+name: Dart Flutter Patterns
+description: Production-ready Dart and Flutter patterns covering null safety, immutable state with Freezed, async composition, widget architecture, state management (BLoC, Riverpod, Provider), GoRouter navigation with auth guards, Dio networking, error handling, and testing. Use when writing or reviewing Dart an
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Production-ready Dart and Flutter patterns covering null safety, immutable state with Freezed, async composition, widget architecture, state management (BLoC, Riverpod, Provider), GoRouter navigation with auth guards, Dio networking, error .
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/dart-flutter-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/dart-flutter-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (565 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages dart. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - dart
+  tags:
+  - dart
+  - flutter
+  - mobile
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/dart-flutter-patterns
+  dest: .claude/skills/dart-flutter-patterns
+  merge: create_only
+- platform: codex
+  source: codex/dart-flutter-patterns
+  dest: .agents/skills/dart-flutter-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/dart-flutter-patterns
+  dest: .github/skills/dart-flutter-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/dart-flutter-patterns
+  dest: .gemini/skills/dart-flutter-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^dart\-flutter\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/dart-flutter-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: de22bf81bd2870e81416f79a29959262c9ae7285a79e65849fdd1dab97dd0bd0
+  pinned_at: "2026-10-21"

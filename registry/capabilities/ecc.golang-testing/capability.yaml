@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.golang-testing
+name: Go Testing
+description: Go testing patterns including table-driven tests, subtests, benchmarks, fuzzing, and test coverage. Follows TDD methodology with idiomatic Go practices. Use when writing Go tests — table-driven cases, subtests, benchmarks, fuzzing, or coverage.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: Go testing patterns including table-driven tests, subtests, benchmarks, fuzzing, and test coverage.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/golang-testing/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/golang-testing/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (722 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages go. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - go
+  tags:
+  - go
+  - golang
+  - testing
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/golang-testing
+  dest: .claude/skills/golang-testing
+  merge: create_only
+- platform: codex
+  source: codex/golang-testing
+  dest: .agents/skills/golang-testing
+  merge: create_only
+- platform: copilot
+  source: claude_code/golang-testing
+  dest: .github/skills/golang-testing
+  merge: create_only
+- platform: gemini
+  source: claude_code/golang-testing
+  dest: .gemini/skills/golang-testing
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^golang\-testing$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/golang-testing/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 049fb924b63d7553af742ea1ead20d5d91e31074d34afab0efe33739021b73c0
+  pinned_at: "2026-10-21"

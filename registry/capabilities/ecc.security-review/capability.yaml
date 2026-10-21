@@ -46,6 +46,7 @@ destinations:
     source: claude_code/security-review
     dest: .gemini/skills/security-review
     merge: create_only
+conflicts: [ecc.django-security, ecc.laravel-security, ecc.quarkus-security, ecc.springboot-security]
 equivalents:
   - kind: skill
     name_patterns: ["security"]

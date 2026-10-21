@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.cpp-coding-standards
+name: C++ Coding Standards
+description: C++ coding standards based on the C++ Core Guidelines (isocpp.github.io). Use when writing, reviewing, or refactoring C++ code to enforce modern, safe, and idiomatic practices.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: C++ coding standards based on the C++ Core Guidelines (isocpp.github.io).
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/cpp-coding-standards/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/cpp-coding-standards/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (725 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags cpp, c++, standards). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Tag-only: the scanner does not detect C/C++ projects yet.'
+applicability:
+  tags:
+  - cpp
+  - c++
+  - standards
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/cpp-coding-standards
+  dest: .claude/skills/cpp-coding-standards
+  merge: create_only
+- platform: codex
+  source: codex/cpp-coding-standards
+  dest: .agents/skills/cpp-coding-standards
+  merge: create_only
+- platform: copilot
+  source: claude_code/cpp-coding-standards
+  dest: .github/skills/cpp-coding-standards
+  merge: create_only
+- platform: gemini
+  source: claude_code/cpp-coding-standards
+  dest: .gemini/skills/cpp-coding-standards
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^cpp\-coding\-standards$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/cpp-coding-standards/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 6337c785f672d12bd66dbef8a6a6a8b3206b919672ad55729bc4f5766a8c609a
+  pinned_at: "2026-10-21"

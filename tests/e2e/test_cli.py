@@ -92,7 +92,15 @@ def test_full_cli_lifecycle(real_workspace, make_project) -> None:
     plan = unwrap(out)
     pid = plan["plan_id"]
     selected = {s["capability_id"] for s in plan["selected"]}
-    assert "ecc.security-review" in selected and "uiux.guidelines" in selected
+    # a security review skill is selected: the generic one, or a stack-specific counterpart
+    # that replaced it through a declared conflict (0.4.0 stack curation)
+    assert selected & {
+        "ecc.security-review",
+        "ecc.django-security",
+        "ecc.laravel-security",
+        "ecc.springboot-security",
+    }
+    assert "uiux.guidelines" in selected
     rejected = {r["capability_id"]: r["category"] for r in plan["rejected"]}
     assert rejected["rea.reverse-engineer-anything"] == "not_applicable"  # tag-only
     assert rejected["uiux.full-toolkit"] == "needs_runtime"  # frontend: hinted, not installed
@@ -113,8 +121,19 @@ def test_full_cli_lifecycle(real_workspace, make_project) -> None:
     out = run("apply", pid, "--workspace", ws, "--yes", "--json").stdout
     tx = unwrap(out)
     assert tx["status"] == "completed"
-    assert (root / ".claude" / "skills" / "security-review" / "SKILL.md").is_file()
-    assert (root / ".claude" / "skills" / "security-review" / "LICENSE-ECC.txt").is_file()
+    security = next(
+        c
+        for c in sorted(selected)
+        if c
+        in {
+            "ecc.security-review",
+            "ecc.django-security",
+            "ecc.laravel-security",
+            "ecc.springboot-security",
+        }
+    )
+    skill_dir = root / ".claude" / "skills" / security.removeprefix("ecc.")
+    assert (skill_dir / "SKILL.md").is_file() and (skill_dir / "LICENSE-ECC.txt").is_file()
     claude_md = (root / "CLAUDE.md").read_text(encoding="utf-8")
     assert claude_md.startswith("# Project\n\nUser instructions.\n")
     # validate + status
@@ -122,10 +141,7 @@ def test_full_cli_lifecycle(real_workspace, make_project) -> None:
     assert unwrap(out)["ok"]
     out = run("status", str(root), "--workspace", ws, "--json").stdout
     st = unwrap(out)
-    assert {c["capability"] for c in st["capabilities"]} >= {
-        "ecc.security-review",
-        "forge.managed-notice",
-    }
+    assert {c["capability"] for c in st["capabilities"]} >= {security, "forge.managed-notice"}
     # applying twice is refused (stale: files now exist)
     run("apply", pid, "--workspace", ws, "--yes", expect=7)
     # user modification then rollback

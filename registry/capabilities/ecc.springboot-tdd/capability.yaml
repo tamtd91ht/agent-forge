@@ -1,0 +1,78 @@
+schema_version: '1'
+id: ecc.springboot-tdd
+name: Spring Boot TDD
+description: Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo. Use when adding features, fixing bugs, or refactoring.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/springboot-tdd/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/springboot-tdd/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (160 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks spring. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Spring-specific TDD (JUnit 5, Mockito, MockMvc, Testcontainers); conflicts with the generic TypeScript-flavoured ecc.tdd-workflow so a Spring project gets the one that matches its stack.
+applicability:
+  frameworks:
+  - spring
+  tags:
+  - spring
+  - tdd
+  - testing
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/springboot-tdd
+  dest: .claude/skills/springboot-tdd
+  merge: create_only
+- platform: codex
+  source: codex/springboot-tdd
+  dest: .agents/skills/springboot-tdd
+  merge: create_only
+- platform: copilot
+  source: claude_code/springboot-tdd
+  dest: .github/skills/springboot-tdd
+  merge: create_only
+- platform: gemini
+  source: claude_code/springboot-tdd
+  dest: .gemini/skills/springboot-tdd
+  merge: create_only
+conflicts:
+- ecc.tdd-workflow
+- mattpocock.tdd
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^springboot\-tdd$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/springboot-tdd/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 47c2434f50c68c350e8790ca2737f76de02d6a59cfdc52b42fee48e7c8a1b20b
+  pinned_at: "2026-10-21"

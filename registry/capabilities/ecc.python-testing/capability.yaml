@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.python-testing
+name: Python Testing
+description: Python testing strategies using pytest, TDD methodology, fixtures, mocking, parametrization, and coverage requirements. Use when writing pytest tests — fixtures, mocks, parametrization, or coverage.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: Python testing strategies using pytest, TDD methodology, fixtures, mocking, parametrization, and coverage requirements.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/python-testing/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/python-testing/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (818 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages python. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - python
+  tags:
+  - python
+  - pytest
+  - testing
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/python-testing
+  dest: .claude/skills/python-testing
+  merge: create_only
+- platform: codex
+  source: codex/python-testing
+  dest: .agents/skills/python-testing
+  merge: create_only
+- platform: copilot
+  source: claude_code/python-testing
+  dest: .github/skills/python-testing
+  merge: create_only
+- platform: gemini
+  source: claude_code/python-testing
+  dest: .gemini/skills/python-testing
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^python\-testing$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/python-testing/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9717c757f417057a5c766f68395824c14a9266519bb173e8a54c80ad4e961e07
+  pinned_at: "2026-10-21"

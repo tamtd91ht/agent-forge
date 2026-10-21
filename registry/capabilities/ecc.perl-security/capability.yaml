@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.perl-security
+name: Perl Security
+description: Comprehensive Perl security covering taint mode, input validation, safe process execution, DBI parameterized queries, web security (XSS/SQLi/CSRF), and perlcritic security policies. Use when reviewing Perl input handling, process execution, DBI queries, or web-facing code.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Comprehensive Perl security covering taint mode, input validation, safe process execution, DBI parameterized queries, web security (XSS/SQLi/CSRF), and perlcritic security policies.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/perl-security/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/perl-security/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (505 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags perl, security). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Tag-only. One acknowledged content-safety finding: a shell-injection teaching example quotes `rm -rf /` as the attack to prevent.'
+  acknowledged_findings:
+  - rule: destructive-delete
+    path: '*/perl-security/SKILL.md'
+    reason: 'Teaching example: shows `rm -rf /` as the shell-injection payload a tainted argument could carry, in a section about preventing exactly that.'
+applicability:
+  tags:
+  - perl
+  - security
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/perl-security
+  dest: .claude/skills/perl-security
+  merge: create_only
+- platform: codex
+  source: codex/perl-security
+  dest: .agents/skills/perl-security
+  merge: create_only
+- platform: copilot
+  source: claude_code/perl-security
+  dest: .github/skills/perl-security
+  merge: create_only
+- platform: gemini
+  source: claude_code/perl-security
+  dest: .gemini/skills/perl-security
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^perl\-security$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/perl-security/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: c5cec2c10f78c6c953bc25699ee289867f1b37e852994201b65ddbc88a3292fe
+  pinned_at: "2026-10-21"

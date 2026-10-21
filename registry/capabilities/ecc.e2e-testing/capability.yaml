@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.e2e-testing
+name: E2E Testing
+description: Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies. Use when writing Playwright tests, structuring page objects, or fixing flaky E2E runs in CI.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/e2e-testing/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/e2e-testing/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (328 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks test:playwright. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - test:playwright
+  tags:
+  - e2e
+  - playwright
+  - testing
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/e2e-testing
+  dest: .claude/skills/e2e-testing
+  merge: create_only
+- platform: codex
+  source: codex/e2e-testing
+  dest: .agents/skills/e2e-testing
+  merge: create_only
+- platform: copilot
+  source: claude_code/e2e-testing
+  dest: .github/skills/e2e-testing
+  merge: create_only
+- platform: gemini
+  source: claude_code/e2e-testing
+  dest: .gemini/skills/e2e-testing
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^e2e\-testing$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/e2e-testing/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 53e6adb13659dff9dd24fc78866ddb568c77957122b7121f18e09416f25c560c
+  pinned_at: "2026-10-21"

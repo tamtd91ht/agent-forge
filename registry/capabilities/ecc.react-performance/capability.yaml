@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.react-performance
+name: React Performance
+description: React and Next.js performance optimization patterns adapted from Vercel Engineering's React Best Practices (https://github.com/vercel-labs/agent-skills). Organizes 70+ rules across 8 priority categories — waterfalls, bundle size, server-side, client fetching, re-render, rendering, JS micro-perf, adv
+version: 1.0.0
+kind: skill
+category: engineering.reliability
+purpose: React and Next.js performance optimization patterns adapted from Vercel Engineering's React Best Practices (https://github.com/vercel-labs/agent-skills).
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/react-performance/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/react-performance/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (576 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks react, nextjs. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Adapted: relative links to sibling ECC skills / rule packs are rewritten to plain names (curate.py _rewrite_links), because a skill is installed on its own and the neighbour may not be.'
+applicability:
+  frameworks:
+  - react
+  - nextjs
+  tags:
+  - react
+  - nextjs
+  - performance
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/react-performance
+  dest: .claude/skills/react-performance
+  merge: create_only
+- platform: codex
+  source: codex/react-performance
+  dest: .agents/skills/react-performance
+  merge: create_only
+- platform: copilot
+  source: claude_code/react-performance
+  dest: .github/skills/react-performance
+  merge: create_only
+- platform: gemini
+  source: claude_code/react-performance
+  dest: .gemini/skills/react-performance
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^react\-performance$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/react-performance/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: fbfa0c132f7b6e4afda4e33d3ebffa5f3bf6ab03620863c2b3d36bc48ebd8c36
+  pinned_at: "2026-10-21"

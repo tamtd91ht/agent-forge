@@ -1,0 +1,74 @@
+schema_version: '1'
+id: ecc.hexagonal-architecture
+name: Hexagonal Architecture
+description: 'Design, implement, and refactor Ports & Adapters systems with clear domain boundaries, dependency inversion, and testable use-case orchestration across TypeScript, Java, Kotlin, and Go services. Use when introducing or refactoring toward Ports and Adapters, or when domain logic has become entangled '
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Design, implement, and refactor Ports & Adapters systems with clear domain boundaries, dependency inversion, and testable use-case orchestration across TypeScript, Java, Kotlin, and Go services.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/hexagonal-architecture/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/hexagonal-architecture/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (278 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags hexagonal, ports-adapters, architecture, ddd). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Tag-only: an architecture style is a team decision, not something a scan can infer.'
+applicability:
+  tags:
+  - hexagonal
+  - ports-adapters
+  - architecture
+  - ddd
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/hexagonal-architecture
+  dest: .claude/skills/hexagonal-architecture
+  merge: create_only
+- platform: codex
+  source: codex/hexagonal-architecture
+  dest: .agents/skills/hexagonal-architecture
+  merge: create_only
+- platform: copilot
+  source: claude_code/hexagonal-architecture
+  dest: .github/skills/hexagonal-architecture
+  merge: create_only
+- platform: gemini
+  source: claude_code/hexagonal-architecture
+  dest: .gemini/skills/hexagonal-architecture
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^hexagonal\-architecture$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/hexagonal-architecture/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: b651f086d1eff84529577827ce03263acf1e2b2dbd204118e62e05e289dd786e
+  pinned_at: "2026-10-21"

@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.django-celery
+name: Django Celery
+description: Django + Celery async task patterns — configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing. Use when adding background jobs, scheduled tasks, or async processing to a Django app.
+version: 1.0.0
+kind: skill
+category: engineering.reliability
+purpose: Django + Celery async task patterns — configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/django-celery/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/django-celery/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (459 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks celery. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - celery
+  tags:
+  - celery
+  - django
+  - async
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/django-celery
+  dest: .claude/skills/django-celery
+  merge: create_only
+- platform: codex
+  source: codex/django-celery
+  dest: .agents/skills/django-celery
+  merge: create_only
+- platform: copilot
+  source: claude_code/django-celery
+  dest: .github/skills/django-celery
+  merge: create_only
+- platform: gemini
+  source: claude_code/django-celery
+  dest: .gemini/skills/django-celery
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^django\-celery$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/django-celery/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 6e681ba8213e82fb2b47dd68bedd47fcc3cf6465be1a7bbffa8e86e785be577e
+  pinned_at: "2026-10-21"

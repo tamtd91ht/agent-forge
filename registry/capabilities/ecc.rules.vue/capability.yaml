@@ -1,0 +1,99 @@
+schema_version: '1'
+id: ecc.rules.vue
+name: Vue rules (path-scoped)
+description: 'Path-scoped Claude Code rules for Vue: coding-style, patterns, security, testing. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a Vue project the stack-specific half of ECC''s rules without paying for it in every session: 9,167 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/vue/coding-style.md
+  - rules/vue/patterns.md
+  - rules/vue/security.md
+  - rules/vue/testing.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-vue/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/vue/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-vue/ next to ecc-common/. Applies to frameworks vue, nuxt; no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  frameworks:
+  - vue
+  - nuxt
+  tags:
+  - vue
+  - frontend
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-vue
+  dest: .claude/rules/ecc-vue
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-vue/coding-style.md
+  dest: .cursor/rules/ecc-vue/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-vue/coding-style.md
+  dest: .github/instructions/ecc-vue-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-vue/patterns.md
+  dest: .cursor/rules/ecc-vue/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-vue/patterns.md
+  dest: .github/instructions/ecc-vue-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-vue/security.md
+  dest: .cursor/rules/ecc-vue/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-vue/security.md
+  dest: .github/instructions/ecc-vue-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-vue/testing.md
+  dest: .cursor/rules/ecc-vue/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-vue/testing.md
+  dest: .github/instructions/ecc-vue-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-vue/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-vue/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-vue/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-vue/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^vue[-/]
+  description: Vue rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 63b9f5cdfa9dc72b52e77e96dddcb0a844e727958a064fe2201a7f6880f861bc
+  pinned_at: "2026-10-21"

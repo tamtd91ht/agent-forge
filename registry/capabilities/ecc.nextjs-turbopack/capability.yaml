@@ -1,0 +1,72 @@
+schema_version: '1'
+id: ecc.nextjs-turbopack
+name: Next.js Turbopack
+description: Next.js 16+ and Turbopack guidance — incremental Rust bundling, file-system caching, faster dev startup and HMR, Turbopack vs webpack tradeoffs, and the middleware.ts to proxy.ts filename change. Use when developing or debugging Next.js 16+ apps, diagnosing slow dev startup or hot reload, choosing b
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Next.js 16+ and Turbopack guidance — incremental Rust bundling, file-system caching, faster dev startup and HMR, Turbopack vs webpack tradeoffs, and the middleware.ts to proxy.ts filename change.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/nextjs-turbopack/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/nextjs-turbopack/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (59 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks nextjs. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - nextjs
+  tags:
+  - nextjs
+  - turbopack
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/nextjs-turbopack
+  dest: .claude/skills/nextjs-turbopack
+  merge: create_only
+- platform: codex
+  source: codex/nextjs-turbopack
+  dest: .agents/skills/nextjs-turbopack
+  merge: create_only
+- platform: copilot
+  source: claude_code/nextjs-turbopack
+  dest: .github/skills/nextjs-turbopack
+  merge: create_only
+- platform: gemini
+  source: claude_code/nextjs-turbopack
+  dest: .gemini/skills/nextjs-turbopack
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^nextjs\-turbopack$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/nextjs-turbopack/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 92d52e0e64018a7bd41dac6cd897b3d08b31eb099ca2380303d255cb206c3a91
+  pinned_at: "2026-10-21"

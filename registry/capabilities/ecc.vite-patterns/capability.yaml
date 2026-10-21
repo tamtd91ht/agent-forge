@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.vite-patterns
+name: Vite Patterns
+description: Vite build tool patterns including config, plugins, HMR, env variables, proxy setup, SSR, library mode, dependency pre-bundling, and build optimization. Activate when working with vite.config.ts, Vite plugins, or Vite-based projects.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Vite build tool patterns including config, plugins, HMR, env variables, proxy setup, SSR, library mode, dependency pre-bundling, and build optimization.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/vite-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/vite-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (451 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks vite. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - vite
+  tags:
+  - vite
+  - build
+  - frontend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/vite-patterns
+  dest: .claude/skills/vite-patterns
+  merge: create_only
+- platform: codex
+  source: codex/vite-patterns
+  dest: .agents/skills/vite-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/vite-patterns
+  dest: .github/skills/vite-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/vite-patterns
+  dest: .gemini/skills/vite-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^vite\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/vite-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 7f1b5d07588e648b9ecbfff34bac2753e0f2a953a55f0ba201bb768ba29a6f76
+  pinned_at: "2026-10-21"

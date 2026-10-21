@@ -1,0 +1,96 @@
+schema_version: '1'
+id: ecc.rules.cpp
+name: C++ rules (path-scoped)
+description: 'Path-scoped Claude Code rules for C++: coding-style, patterns, security, testing. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a C++ project the stack-specific half of ECC''s rules without paying for it in every session: 4,596 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/cpp/coding-style.md
+  - rules/cpp/patterns.md
+  - rules/cpp/security.md
+  - rules/cpp/testing.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-cpp/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/cpp/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-cpp/ next to ecc-common/. Applies to an explicit request only (tags cpp, c++); no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  tags:
+  - cpp
+  - c++
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-cpp
+  dest: .claude/rules/ecc-cpp
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-cpp/coding-style.md
+  dest: .cursor/rules/ecc-cpp/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-cpp/coding-style.md
+  dest: .github/instructions/ecc-cpp-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-cpp/patterns.md
+  dest: .cursor/rules/ecc-cpp/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-cpp/patterns.md
+  dest: .github/instructions/ecc-cpp-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-cpp/security.md
+  dest: .cursor/rules/ecc-cpp/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-cpp/security.md
+  dest: .github/instructions/ecc-cpp-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-cpp/testing.md
+  dest: .cursor/rules/ecc-cpp/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-cpp/testing.md
+  dest: .github/instructions/ecc-cpp-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-cpp/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-cpp/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-cpp/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-cpp/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^cpp[-/]
+  description: C++ rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 46caf534e43aa096a1caf8e5ecaa386c7b45afbf94977e03d753c0c8898be2a4
+  pinned_at: "2026-10-21"

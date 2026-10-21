@@ -1,0 +1,77 @@
+schema_version: '1'
+id: ecc.react-testing
+name: React Testing
+description: React component testing with React Testing Library, Vitest/Jest, MSW for network mocking, accessibility assertions with axe, and the decision boundary between component tests and Playwright/Cypress end-to-end runs. Use when writing or fixing tests for React components, hooks, or pages.
+version: 1.0.0
+kind: skill
+category: engineering.testing
+purpose: React component testing with React Testing Library, Vitest/Jest, MSW for network mocking, accessibility assertions with axe, and the decision boundary between component tests and Playwright/Cypress end-to-end runs.
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/react-testing/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/react-testing/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (425 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks react, nextjs, remix. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Adapted: relative links to sibling ECC skills / rule packs are rewritten to plain names (curate.py _rewrite_links), because a skill is installed on its own and the neighbour may not be.'
+applicability:
+  frameworks:
+  - react
+  - nextjs
+  - remix
+  tags:
+  - react
+  - testing
+  - frontend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/react-testing
+  dest: .claude/skills/react-testing
+  merge: create_only
+- platform: codex
+  source: codex/react-testing
+  dest: .agents/skills/react-testing
+  merge: create_only
+- platform: copilot
+  source: claude_code/react-testing
+  dest: .github/skills/react-testing
+  merge: create_only
+- platform: gemini
+  source: claude_code/react-testing
+  dest: .gemini/skills/react-testing
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^react\-testing$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/react-testing/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: d6ddf330af48d72174e03cd4096121cdb9ccc306c6a346aa7e6382309b184cb6
+  pinned_at: "2026-10-21"

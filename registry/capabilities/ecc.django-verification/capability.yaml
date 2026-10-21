@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.django-verification
+name: Django Verification
+description: Run the full Django verification loop — environment check, mypy/ruff/black linting, migration safety, pytest with coverage targets, pip-audit and bandit security scans, settings and logging review, and diff review — producing a phased pass/fail report before release or PR. Use when preparing a Djang
+version: 1.0.0
+kind: skill
+category: engineering.verification
+purpose: Run the full Django verification loop — environment check, mypy/ruff/black linting, migration safety, pytest with coverage targets, pip-audit and bandit security scans, settings and logging review, and diff review — producing a phased pass/.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/django-verification/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/django-verification/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (471 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks django. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Django counterpart of ecc.verification-loop.
+applicability:
+  frameworks:
+  - django
+  tags:
+  - django
+  - verification
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/django-verification
+  dest: .claude/skills/django-verification
+  merge: create_only
+- platform: codex
+  source: codex/django-verification
+  dest: .agents/skills/django-verification
+  merge: create_only
+- platform: copilot
+  source: claude_code/django-verification
+  dest: .github/skills/django-verification
+  merge: create_only
+- platform: gemini
+  source: claude_code/django-verification
+  dest: .gemini/skills/django-verification
+  merge: create_only
+conflicts:
+- ecc.verification-loop
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^django\-verification$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/django-verification/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 277884191cb6ee4055b52132ea4afc8fa9ab2755027086e49f20e1028b3b2ff5
+  pinned_at: "2026-10-21"

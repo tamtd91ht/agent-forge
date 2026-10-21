@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.android-clean-architecture
+name: Android Clean Architecture
+description: Clean Architecture patterns for Android and Kotlin Multiplatform projects — module structure, dependency rules, UseCases, Repositories, and data layer patterns. Use when structuring modules, layers, or data flow in an Android or KMP project.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Clean Architecture patterns for Android and Kotlin Multiplatform projects — module structure, dependency rules, UseCases, Repositories, and data layer patterns.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/android-clean-architecture/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/android-clean-architecture/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (341 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags android, kmp, kotlin). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - 'Tag-only: the scanner does not detect Android/KMP projects yet.'
+applicability:
+  tags:
+  - android
+  - kmp
+  - kotlin
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/android-clean-architecture
+  dest: .claude/skills/android-clean-architecture
+  merge: create_only
+- platform: codex
+  source: codex/android-clean-architecture
+  dest: .agents/skills/android-clean-architecture
+  merge: create_only
+- platform: copilot
+  source: claude_code/android-clean-architecture
+  dest: .github/skills/android-clean-architecture
+  merge: create_only
+- platform: gemini
+  source: claude_code/android-clean-architecture
+  dest: .gemini/skills/android-clean-architecture
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^android\-clean\-architecture$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/android-clean-architecture/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9103d696548d5b8d1ec4ff5bae9278f450d590cc2eaf12961ec12aad1fd20ea2
+  pinned_at: "2026-10-21"

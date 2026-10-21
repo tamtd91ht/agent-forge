@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.fastapi-patterns
+name: FastAPI Patterns
+description: 'FastAPI best practices covering project structure, Pydantic v2 schemas, dependency injection, async handlers, authentication, authorization, transactional service layers, and testing with httpx and pytest. Use when building or reviewing FastAPI apps — Pydantic schemas, dependencies, async handlers, '
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: FastAPI best practices covering project structure, Pydantic v2 schemas, dependency injection, async handlers, authentication, authorization, transactional service layers, and testing with httpx and pytest.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/fastapi-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/fastapi-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (515 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks fastapi. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - fastapi
+  tags:
+  - fastapi
+  - python
+  - backend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/fastapi-patterns
+  dest: .claude/skills/fastapi-patterns
+  merge: create_only
+- platform: codex
+  source: codex/fastapi-patterns
+  dest: .agents/skills/fastapi-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/fastapi-patterns
+  dest: .github/skills/fastapi-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/fastapi-patterns
+  dest: .gemini/skills/fastapi-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^fastapi\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/fastapi-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 1a2b3f049ec06c7052e9a04c9207e693e0fa009df6c2b9fa96109a9f01ecea4d
+  pinned_at: "2026-10-21"

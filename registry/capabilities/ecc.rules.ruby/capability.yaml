@@ -1,0 +1,97 @@
+schema_version: '1'
+id: ecc.rules.ruby
+name: Ruby rules (path-scoped)
+description: 'Path-scoped Claude Code rules for Ruby: coding-style, patterns, security, testing. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a Ruby project the stack-specific half of ECC''s rules without paying for it in every session: 7,878 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/ruby/coding-style.md
+  - rules/ruby/patterns.md
+  - rules/ruby/security.md
+  - rules/ruby/testing.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-ruby/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/ruby/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-ruby/ next to ecc-common/. Applies to languages ruby; no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  languages:
+  - ruby
+  tags:
+  - ruby
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-ruby
+  dest: .claude/rules/ecc-ruby
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-ruby/coding-style.md
+  dest: .cursor/rules/ecc-ruby/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-ruby/coding-style.md
+  dest: .github/instructions/ecc-ruby-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-ruby/patterns.md
+  dest: .cursor/rules/ecc-ruby/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-ruby/patterns.md
+  dest: .github/instructions/ecc-ruby-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-ruby/security.md
+  dest: .cursor/rules/ecc-ruby/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-ruby/security.md
+  dest: .github/instructions/ecc-ruby-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-ruby/testing.md
+  dest: .cursor/rules/ecc-ruby/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-ruby/testing.md
+  dest: .github/instructions/ecc-ruby-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-ruby/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-ruby/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-ruby/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-ruby/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^ruby[-/]
+  description: Ruby rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 98a0e5a557679009d9d3bb8b4ef4ff3e414dca5e8d1e52a0a8b4cc428c77f7a4
+  pinned_at: "2026-10-21"

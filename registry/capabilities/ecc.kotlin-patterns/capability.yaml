@@ -1,0 +1,71 @@
+schema_version: '1'
+id: ecc.kotlin-patterns
+name: Kotlin Patterns
+description: Idiomatic Kotlin patterns, best practices, and conventions for building robust, efficient, and maintainable Kotlin applications with coroutines, null safety, and DSL builders. Use when writing or reviewing Kotlin code and idiomatic structure or null safety is in question.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Idiomatic Kotlin patterns, best practices, and conventions for building robust, efficient, and maintainable Kotlin applications with coroutines, null safety, and DSL builders.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/kotlin-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/kotlin-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (713 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages kotlin. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - kotlin
+  tags:
+  - kotlin
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/kotlin-patterns
+  dest: .claude/skills/kotlin-patterns
+  merge: create_only
+- platform: codex
+  source: codex/kotlin-patterns
+  dest: .agents/skills/kotlin-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/kotlin-patterns
+  dest: .github/skills/kotlin-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/kotlin-patterns
+  dest: .gemini/skills/kotlin-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^kotlin\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/kotlin-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: e6674fdc9b53b06f83335c4603c7025fe7bb07ba7b1ef5d0d21f37f7f016c511
+  pinned_at: "2026-10-21"

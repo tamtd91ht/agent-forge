@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.mysql-patterns
+name: Mysql Patterns
+description: MySQL and MariaDB schema, query, indexing, transaction, replication, and connection-pool patterns for production backends. Use when designing MySQL or MariaDB schemas and indexes, or when a query, transaction, or replica lags.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: MySQL and MariaDB schema, query, indexing, transaction, replication, and connection-pool patterns for production backends.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/mysql-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/mysql-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (414 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks mysql. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Applies when a MySQL/MariaDB driver is a dependency.
+applicability:
+  frameworks:
+  - mysql
+  tags:
+  - mysql
+  - mariadb
+  - sql
+  - database
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/mysql-patterns
+  dest: .claude/skills/mysql-patterns
+  merge: create_only
+- platform: codex
+  source: codex/mysql-patterns
+  dest: .agents/skills/mysql-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/mysql-patterns
+  dest: .github/skills/mysql-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/mysql-patterns
+  dest: .gemini/skills/mysql-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^mysql\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/mysql-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 049a84b1d8d2389c3f4e0b0f7ea60c64b2d6f186daf99b84e5a800f296ab6735
+  pinned_at: "2026-10-21"

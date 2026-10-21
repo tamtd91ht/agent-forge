@@ -1,0 +1,74 @@
+schema_version: '1'
+id: ecc.frontend-a11y
+name: Frontend a11y
+description: 'Accessibility patterns for React and Next.js — semantic HTML, ARIA attributes, form labeling, keyboard navigation, focus management, and screen reader support. Use when building or reviewing forms, modals, dropdowns, tooltips, or tabs, fixing a11y lint or code-review findings, or wiring up keyboard '
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Accessibility patterns for React and Next.js — semantic HTML, ARIA attributes, form labeling, keyboard navigation, focus management, and screen reader support.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/frontend-a11y/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/frontend-a11y/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (444 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks react, nextjs. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - react
+  - nextjs
+  tags:
+  - a11y
+  - accessibility
+  - react
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/frontend-a11y
+  dest: .claude/skills/frontend-a11y
+  merge: create_only
+- platform: codex
+  source: codex/frontend-a11y
+  dest: .agents/skills/frontend-a11y
+  merge: create_only
+- platform: copilot
+  source: claude_code/frontend-a11y
+  dest: .github/skills/frontend-a11y
+  merge: create_only
+- platform: gemini
+  source: claude_code/frontend-a11y
+  dest: .gemini/skills/frontend-a11y
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^frontend\-a11y$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/frontend-a11y/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: e1f68d3929ce5a3e8341d81aa4cc5ac889c9b8920451668f6293e1e2ec814052
+  pinned_at: "2026-10-21"

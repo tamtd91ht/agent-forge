@@ -1,0 +1,72 @@
+schema_version: '1'
+id: ecc.swift-actor-persistence
+name: Swift Actor Persistence
+description: Thread-safe data persistence in Swift using actors — in-memory cache with file-backed storage, eliminating data races by design. Use when persisting data in Swift and a data race or thread-safety problem needs designing out.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: Thread-safe data persistence in Swift using actors — in-memory cache with file-backed storage, eliminating data races by design.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/swift-actor-persistence/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/swift-actor-persistence/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (145 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages swift. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - swift
+  tags:
+  - swift
+  - persistence
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/swift-actor-persistence
+  dest: .claude/skills/swift-actor-persistence
+  merge: create_only
+- platform: codex
+  source: codex/swift-actor-persistence
+  dest: .agents/skills/swift-actor-persistence
+  merge: create_only
+- platform: copilot
+  source: claude_code/swift-actor-persistence
+  dest: .github/skills/swift-actor-persistence
+  merge: create_only
+- platform: gemini
+  source: claude_code/swift-actor-persistence
+  dest: .gemini/skills/swift-actor-persistence
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^swift\-actor\-persistence$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/swift-actor-persistence/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 7be293379e7ae5ea2bbac5c80824d43df5a79349cad77fe0b5e788ac24c965d7
+  pinned_at: "2026-10-21"

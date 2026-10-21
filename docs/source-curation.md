@@ -1,9 +1,45 @@
-# Source curation record (initial catalog 2026-10-16, last update 2026-10-20)
+# Source curation record (initial catalog 2026-10-16, last update 2026-10-21)
 
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (33)
+## Curated (124)
+
+### Stack-specific ECC content (0.4.0, 89 capabilities)
+
+A Java/Kafka/Redis service used to receive only the stack-agnostic, TypeScript-flavoured
+skills (`ecc.tdd-workflow` teaches Vitest, `ecc.security-review` shows Express). ECC ships
+per-language rule packs and framework skills; they are curated as one capability each so the
+resolver and `/agent-forge-upgrade` pick by stack. Everything below is from ECC at the pinned
+revision, one file per item, copied by `scripts/curate.py`; relative links to sibling skills
+are rewritten to names (`_rewrite_links`), which is the only adaptation.
+
+| Group | Capabilities | Applies to |
+|---|---|---|
+| Rule packs `ecc.rules.<x>` (21) | golang, typescript, python (+fastapi), java, kotlin, rust, csharp, php, ruby, swift, dart, react, vue, nuxt, angular, react-native (+a11y, performance, production-readiness), web (+design-quality, performance); tag-only: cpp, fsharp, perl, arkts | detected language / framework; every file has `paths:` so **0 always-loaded context**; `hooks.md` excluded everywhere |
+| JVM (15) | java-coding-standards, springboot-{patterns,tdd,security,verification}, jpa-patterns, quarkus-security, kotlin-{patterns,testing,coroutines-flows}, kotlin-ktor-patterns, kotlin-exposed-patterns; tag-only: hexagonal-architecture, android-clean-architecture, compose-multiplatform-patterns | `java` / `spring` / `quarkus` / `kotlin` / `ktor` / `exposed` |
+| Go (2) | golang-patterns, golang-testing | `go` |
+| Node / TypeScript (13) | nestjs-patterns, react-{patterns,testing,performance}, frontend-{patterns,a11y}, nextjs-turbopack, vue-patterns, nuxt4-patterns, vite-patterns, prisma-patterns, e2e-testing, react-native-patterns | detected framework (`react`, `nextjs`, `vue`, `nuxt`, `nestjs`, `vite`, `prisma`, `test:playwright`, `react-native`) |
+| Python (8) | python-{patterns,testing}, fastapi-patterns, django-{patterns,tdd,security,verification}, django-celery | `python` / `fastapi` / `django` / `celery` |
+| Rust, .NET, PHP, Ruby (10) | rust-{patterns,testing}, dotnet-patterns, csharp-testing, laravel-{patterns,tdd,security,verification}, rails-patterns; tag-only fsharp-testing | `rust` / `csharp` / `laravel` / `rails` |
+| Swift, Dart, C++, Perl (11) | swiftui-patterns, swift-concurrency-6-2, swift-protocol-di-testing, swift-actor-persistence, dart-flutter-patterns, flutter-dart-code-review; tag-only cpp-{coding-standards,testing}, perl-{patterns,security,testing} | `swift` / `dart`; tags |
+| Data and infrastructure (9) | redis-patterns, postgres-patterns, mysql-patterns, database-migrations, deployment-patterns; tag-only kubernetes-patterns, api-design, backend-patterns, accessibility | integration markers the scanner now records (`redis`, `kafka`, `postgres`, `mysql`, `mongodb`, `prisma`, `vite`, `celery`, `ktor`, `exposed`, `docker`) |
+
+Framework-specific counterparts **conflict** with the generic skill they replace and score one
+point higher, so a Spring project gets `springboot-tdd` / `springboot-security` /
+`springboot-verification` and not `ecc.tdd-workflow` / `ecc.security-review` /
+`ecc.verification-loop` (same for Django, Laravel, Quarkus security, Java coding standards).
+No upstream has Kafka content yet; `kafka` is detected and recorded for when one does.
+`ecc.rules.common` is now `frozen` in `curate.py`: its 1.1.0 hand adaptation is never
+overwritten by a re-run.
+
+### Workspace-authored (0.4.0)
+
+| Capability | Decision | Why |
+|---|---|---|
+| `forge.skill.view-data-loading` | skill, both platforms, `project_types` frontend / fullstack / mobile-or-desktop | request discipline for a screen: request map (first paint vs enhancement vs on interaction), one request per resource, parallel independent calls, nothing secondary blocking the first render, fetch on need, dedupe / cache / cancel; written from a recurring client-project finding |
+
+### Initial catalog (34)
 
 | Capability | From | Decision | Why |
 |---|---|---|---|

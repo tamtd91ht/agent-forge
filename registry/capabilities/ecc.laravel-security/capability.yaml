@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.laravel-security
+name: Laravel Security
+description: Laravel security best practices — authentication, authorization, Eloquent safety, CSRF, XSS prevention, API security, and secure deployment configurations. Use when reviewing Laravel auth, Eloquent safety, CSRF, XSS, API security, or deployment configuration.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Laravel security best practices — authentication, authorization, Eloquent safety, CSRF, XSS prevention, API security, and secure deployment configurations.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/laravel-security/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/laravel-security/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (951 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks laravel. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Laravel counterpart of ecc.security-review.
+applicability:
+  frameworks:
+  - laravel
+  tags:
+  - laravel
+  - security
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/laravel-security
+  dest: .claude/skills/laravel-security
+  merge: create_only
+- platform: codex
+  source: codex/laravel-security
+  dest: .agents/skills/laravel-security
+  merge: create_only
+- platform: copilot
+  source: claude_code/laravel-security
+  dest: .github/skills/laravel-security
+  merge: create_only
+- platform: gemini
+  source: claude_code/laravel-security
+  dest: .gemini/skills/laravel-security
+  merge: create_only
+conflicts:
+- ecc.security-review
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^laravel\-security$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/laravel-security/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 1d0e280097442a837489ba2dc4df6ea68a2ae464dcb76eb008061055a191a7e3
+  pinned_at: "2026-10-21"

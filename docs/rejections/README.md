@@ -13,7 +13,9 @@ merely interesting but not ready are listed under *Watching* in
 
 - [ecc-hooks.md](ecc-hooks.md)
 - [ecc-rules-common-extra.md](ecc-rules-common-extra.md)
-- [ecc-rules-per-language.md](ecc-rules-per-language.md) (deferred)
+- [ecc-rules-per-language.md](ecc-rules-per-language.md) (curated in 0.4.0; history)
+- [ecc-docker-patterns.md](ecc-docker-patterns.md)
+- [ecc-angular-developer.md](ecc-angular-developer.md)
 - [ecc-commands.md](ecc-commands.md)
 - [ecc-mcp-configs.md](ecc-mcp-configs.md)
 - [ecc-osint-investigation.md](ecc-osint-investigation.md)

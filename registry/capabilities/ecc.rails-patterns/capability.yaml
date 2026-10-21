@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.rails-patterns
+name: Rails Patterns
+description: 'Ruby on Rails framework patterns for Rails 7.1+ and 8.x apps. Covers the directory contract, skinny controllers with service objects, form objects, query objects, idiomatic ActiveRecord, background jobs, ViewComponent, Hotwire, and the Rails 8 Solid stack. Use when building or reviewing Rails apps, '
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Ruby on Rails framework patterns for Rails 7.1+ and 8.x apps.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/rails-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/rails-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (476 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks rails. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - rails
+  tags:
+  - rails
+  - ruby
+  - backend
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/rails-patterns
+  dest: .claude/skills/rails-patterns
+  merge: create_only
+- platform: codex
+  source: codex/rails-patterns
+  dest: .agents/skills/rails-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/rails-patterns
+  dest: .github/skills/rails-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/rails-patterns
+  dest: .gemini/skills/rails-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^rails\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/rails-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 65978e35a9da1c048ca6c4d019e3ab96327e508127ef0e785c3d3331a613c151
+  pinned_at: "2026-10-21"

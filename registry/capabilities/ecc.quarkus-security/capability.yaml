@@ -1,0 +1,76 @@
+schema_version: '1'
+id: ecc.quarkus-security
+name: Quarkus Security
+description: 'Quarkus security implementation patterns: JWT and OIDC authentication, @RolesAllowed RBAC and SecurityIdentity checks, Bean Validation and custom validators, parameterized Panache queries, BCrypt password hashing, CORS and security headers, rate limiting, audit logging, Vault or environment-variable'
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: 'Quarkus security implementation patterns: JWT and OIDC authentication, @RolesAllowed RBAC and SecurityIdentity checks, Bean Validation and custom validators, parameterized Panache queries, BCrypt password hashing, CORS and security headers,.'
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/quarkus-security/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/quarkus-security/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (469 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks quarkus. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Quarkus counterpart of ecc.security-review.
+applicability:
+  frameworks:
+  - quarkus
+  tags:
+  - quarkus
+  - security
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/quarkus-security
+  dest: .claude/skills/quarkus-security
+  merge: create_only
+- platform: codex
+  source: codex/quarkus-security
+  dest: .agents/skills/quarkus-security
+  merge: create_only
+- platform: copilot
+  source: claude_code/quarkus-security
+  dest: .github/skills/quarkus-security
+  merge: create_only
+- platform: gemini
+  source: claude_code/quarkus-security
+  dest: .gemini/skills/quarkus-security
+  merge: create_only
+conflicts:
+- ecc.security-review
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^quarkus\-security$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/quarkus-security/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 6521be33cee9825239a8508898c40347cba5184161106a6875416568e02030a0
+  pinned_at: "2026-10-21"

@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.compose-multiplatform-patterns
+name: Compose Multiplatform Patterns
+description: Compose Multiplatform and Jetpack Compose patterns for KMP projects — state management, navigation, theming, performance, and platform-specific UI. Use when building Compose or Jetpack Compose UI, state, navigation, or theming in a KMP project.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Compose Multiplatform and Jetpack Compose patterns for KMP projects — state management, navigation, theming, performance, and platform-specific UI.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/compose-multiplatform-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/compose-multiplatform-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (301 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags compose, android, kmp). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Tag-only, see android-clean-architecture.
+applicability:
+  tags:
+  - compose
+  - android
+  - kmp
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/compose-multiplatform-patterns
+  dest: .claude/skills/compose-multiplatform-patterns
+  merge: create_only
+- platform: codex
+  source: codex/compose-multiplatform-patterns
+  dest: .agents/skills/compose-multiplatform-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/compose-multiplatform-patterns
+  dest: .github/skills/compose-multiplatform-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/compose-multiplatform-patterns
+  dest: .gemini/skills/compose-multiplatform-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^compose\-multiplatform\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/compose-multiplatform-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 3c60bcab93261e6b15c299336a7dfad2a39f640d48a12884eccd4afc8ac60b29
+  pinned_at: "2026-10-21"

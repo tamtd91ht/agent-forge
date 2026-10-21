@@ -1,0 +1,98 @@
+schema_version: '1'
+id: ecc.rules.kotlin
+name: Kotlin rules (path-scoped)
+description: 'Path-scoped Claude Code rules for Kotlin: coding-style, patterns, security, testing. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a Kotlin project the stack-specific half of ECC''s rules without paying for it in every session: 12,457 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/kotlin/coding-style.md
+  - rules/kotlin/patterns.md
+  - rules/kotlin/security.md
+  - rules/kotlin/testing.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-kotlin/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/kotlin/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-kotlin/ next to ecc-common/. Applies to languages kotlin; no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  languages:
+  - kotlin
+  tags:
+  - kotlin
+  - jvm
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-kotlin
+  dest: .claude/rules/ecc-kotlin
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-kotlin/coding-style.md
+  dest: .cursor/rules/ecc-kotlin/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-kotlin/coding-style.md
+  dest: .github/instructions/ecc-kotlin-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-kotlin/patterns.md
+  dest: .cursor/rules/ecc-kotlin/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-kotlin/patterns.md
+  dest: .github/instructions/ecc-kotlin-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-kotlin/security.md
+  dest: .cursor/rules/ecc-kotlin/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-kotlin/security.md
+  dest: .github/instructions/ecc-kotlin-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-kotlin/testing.md
+  dest: .cursor/rules/ecc-kotlin/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-kotlin/testing.md
+  dest: .github/instructions/ecc-kotlin-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-kotlin/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-kotlin/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-kotlin/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-kotlin/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^kotlin[-/]
+  description: Kotlin rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 271b2822b2d377a01e9a957680642e2abd5b89c725c07a22a807954b2df43a7c
+  pinned_at: "2026-10-21"

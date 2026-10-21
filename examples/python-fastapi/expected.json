@@ -1,6 +1,6 @@
 {
-  "reviewed": "2026-10-20",
-  "notes": "FastAPI service with ruff. Python hooks (secret guard, ruff format); no UI items.",
+  "reviewed": "2026-10-21",
+  "notes": "FastAPI service with ruff. Python hooks (secret guard, ruff format); no UI items. 0.4.0: stack-specific ECC content reviewed in: +ecc.fastapi-patterns, ecc.python-patterns, ecc.python-testing, ecc.rules.python; -- (framework-specific counterparts replace the generic TypeScript-flavoured skills through declared conflicts).",
   "languages": [
     "python"
   ],
@@ -18,7 +18,11 @@
   "recommended": [
     "ecc.agent.planner",
     "ecc.error-handling",
+    "ecc.fastapi-patterns",
+    "ecc.python-patterns",
+    "ecc.python-testing",
     "ecc.rules.common",
+    "ecc.rules.python",
     "ecc.security-review",
     "ecc.tdd-workflow",
     "ecc.verification-loop",

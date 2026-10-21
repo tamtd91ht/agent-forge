@@ -1,0 +1,74 @@
+schema_version: '1'
+id: ecc.prisma-patterns
+name: Prisma Patterns
+description: Prisma ORM patterns for TypeScript backends — schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrate dev resetting the DB, @updatedAt skipped on bulk writes, and serverless connection exhaustion. Use
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: Prisma ORM patterns for TypeScript backends — schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrate dev resetting the DB, @updatedAt skipp.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/prisma-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/prisma-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (402 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks prisma. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - prisma
+  tags:
+  - prisma
+  - orm
+  - database
+  - typescript
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/prisma-patterns
+  dest: .claude/skills/prisma-patterns
+  merge: create_only
+- platform: codex
+  source: codex/prisma-patterns
+  dest: .agents/skills/prisma-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/prisma-patterns
+  dest: .github/skills/prisma-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/prisma-patterns
+  dest: .gemini/skills/prisma-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^prisma\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/prisma-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 7a84719e6fd8216548e05477678b7896426de2c7438ab721a33de69bf07d626e
+  pinned_at: "2026-10-21"

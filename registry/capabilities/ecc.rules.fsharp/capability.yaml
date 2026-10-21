@@ -1,0 +1,96 @@
+schema_version: '1'
+id: ecc.rules.fsharp
+name: F# rules (path-scoped)
+description: 'Path-scoped Claude Code rules for F#: coding-style, patterns, security, testing. Each file carries `paths:` frontmatter, so it loads only when a matching file is in play and adds no always-loaded context.'
+version: 1.0.0
+kind: rule
+category: engineering.standards
+purpose: 'Gives a F# project the stack-specific half of ECC''s rules without paying for it in every session: 10,161 characters of guidance that the tool attaches only to matching files.'
+status: curated
+provenance: adapted
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - rules/fsharp/coding-style.md
+  - rules/fsharp/patterns.md
+  - rules/fsharp/security.md
+  - rules/fsharp/testing.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/ecc-fsharp/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream rules/fsharp/ minus hooks.md (it documents ECC's own hooks in ~/.claude/settings.json). Every file has `paths:` frontmatter, so context_chars is 0 (ADR-0003), which is why the per-language packs deferred in docs/rejections/ecc-rules-per-language.md are curated now. Installed under .claude/rules/ecc-fsharp/ next to ecc-common/. Applies to an explicit request only (tags fsharp, dotnet); no hard dependency on ecc.rules.common, the text stands on its own.
+  notes:
+  - 'Adapted: the ''> This file extends [common/x.md](../common/x.md)'' line in each file is rewritten to name ecc.rules.common instead of a relative link that would be broken once installed.'
+applicability:
+  tags:
+  - fsharp
+  - dotnet
+  - rules
+platforms:
+- claude_code
+- cursor
+- copilot
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/ecc-fsharp
+  dest: .claude/rules/ecc-fsharp
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-fsharp/coding-style.md
+  dest: .cursor/rules/ecc-fsharp/coding-style.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-fsharp/coding-style.md
+  dest: .github/instructions/ecc-fsharp-coding-style.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-fsharp/patterns.md
+  dest: .cursor/rules/ecc-fsharp/patterns.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-fsharp/patterns.md
+  dest: .github/instructions/ecc-fsharp-patterns.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-fsharp/security.md
+  dest: .cursor/rules/ecc-fsharp/security.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-fsharp/security.md
+  dest: .github/instructions/ecc-fsharp-security.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-fsharp/testing.md
+  dest: .cursor/rules/ecc-fsharp/testing.mdc
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-fsharp/testing.md
+  dest: .github/instructions/ecc-fsharp-testing.instructions.md
+  merge: create_only
+- platform: cursor
+  source: claude_code/ecc-fsharp/LICENSE-ECC.txt
+  dest: .cursor/rules/ecc-fsharp/LICENSE-ECC.txt
+  merge: create_only
+- platform: copilot
+  source: claude_code/ecc-fsharp/LICENSE-ECC.txt
+  dest: .github/instructions/ecc-fsharp/LICENSE-ECC.txt
+  merge: create_only
+equivalents:
+- kind: rule
+  name_patterns:
+  - ^fsharp[-/]
+  description: F# rules already present
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: a73530bef687d1bbdeae2cb5b9cea60eca0f493cbd971110892396c33e26559a
+  pinned_at: "2026-10-21"

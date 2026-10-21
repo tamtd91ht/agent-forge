@@ -1,0 +1,73 @@
+schema_version: '1'
+id: ecc.swiftui-patterns
+name: SwiftUI Patterns
+description: SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices. Use when building or reviewing SwiftUI views, @Observable state, navigation, or render performance.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/swiftui-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/swiftui-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (260 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages swift. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  languages:
+  - swift
+  tags:
+  - swift
+  - swiftui
+  - ios
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/swiftui-patterns
+  dest: .claude/skills/swiftui-patterns
+  merge: create_only
+- platform: codex
+  source: codex/swiftui-patterns
+  dest: .agents/skills/swiftui-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/swiftui-patterns
+  dest: .github/skills/swiftui-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/swiftui-patterns
+  dest: .gemini/skills/swiftui-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^swiftui\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/swiftui-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 58b7a6631bfe545155e1936b73a479b8e14664cfe997448bda087a1dad17adfe
+  pinned_at: "2026-10-21"

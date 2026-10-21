@@ -1,0 +1,75 @@
+schema_version: '1'
+id: ecc.redis-patterns
+name: Redis Patterns
+description: Redis data structure patterns, caching strategies, distributed locks, rate limiting, pub/sub, and connection management for production applications. Use when adding caching, a distributed lock, rate limiting, or pub/sub with Redis, or when key design needs review.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: Redis data structure patterns, caching strategies, distributed locks, rate limiting, pub/sub, and connection management for production applications.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/redis-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/redis-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (405 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks redis. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  notes:
+  - Applies when a Redis client is a dependency (ioredis / redis / jedis / lettuce / go-redis / redis-py, see the scanner's integration markers).
+applicability:
+  frameworks:
+  - redis
+  tags:
+  - redis
+  - cache
+  - database
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/redis-patterns
+  dest: .claude/skills/redis-patterns
+  merge: create_only
+- platform: codex
+  source: codex/redis-patterns
+  dest: .agents/skills/redis-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/redis-patterns
+  dest: .github/skills/redis-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/redis-patterns
+  dest: .gemini/skills/redis-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^redis\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/redis-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: ad6f103cfc7b7f893ae67aba6fcf06e46478e79a535f0b6ea6d485245e89b5a5
+  pinned_at: "2026-10-21"

@@ -1,0 +1,74 @@
+schema_version: '1'
+id: ecc.jpa-patterns
+name: JPA Patterns
+description: JPA/Hibernate patterns for entity design, relationships, query optimization, transactions, auditing, indexing, pagination, and pooling in Spring Boot. Use when designing JPA entities or relationships, or when a Hibernate query, transaction, or N+1 problem needs fixing.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: JPA/Hibernate patterns for entity design, relationships, query optimization, transactions, auditing, indexing, pagination, and pooling in Spring Boot.
+status: curated
+provenance: upstream
+source:
+  source_id: ecc
+  repository: https://github.com/affaan-m/ECC
+  revision: 76aaa77df6adc5b889e689007bf99b9a4f74af34
+  paths:
+  - skills/jpa-patterns/SKILL.md
+license:
+  spdx: MIT
+  attribution: Everything Claude Code (ECC), Copyright (c) 2026 Affaan Mustafa
+  redistribution_ok: true
+  notice_file: claude_code/jpa-patterns/LICENSE-ECC.txt
+review:
+  reviewed_at: '2026-10-21'
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: Upstream ECC skill, one SKILL.md (153 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks spring. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+applicability:
+  frameworks:
+  - spring
+  tags:
+  - jpa
+  - hibernate
+  - spring
+  - database
+platforms:
+- claude_code
+- codex
+- copilot
+- gemini
+install_strategy: file_copy
+destinations:
+- platform: claude_code
+  source: claude_code/jpa-patterns
+  dest: .claude/skills/jpa-patterns
+  merge: create_only
+- platform: codex
+  source: codex/jpa-patterns
+  dest: .agents/skills/jpa-patterns
+  merge: create_only
+- platform: copilot
+  source: claude_code/jpa-patterns
+  dest: .github/skills/jpa-patterns
+  merge: create_only
+- platform: gemini
+  source: claude_code/jpa-patterns
+  dest: .gemini/skills/jpa-patterns
+  merge: create_only
+equivalents:
+- kind: skill
+  name_patterns:
+  - ^jpa\-patterns$
+  description: the same skill already present
+validation:
+- type: frontmatter
+  path: .claude/skills/jpa-patterns/SKILL.md
+  params:
+    required:
+    - name
+    - description
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 31d8fe9207c227bb5ab543c4378575e02b595a6f173be052afd8fabaa23ee696
+  pinned_at: "2026-10-21"
