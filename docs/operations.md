@@ -46,7 +46,7 @@ reversed. See [security.md](security.md#transactions-crashes-and-rollback).
 | Python | 3.11 – 3.14 | 3.11, 3.14 |
 | OS | Windows 10+, macOS, Linux | windows-latest, ubuntu-latest, macos-latest |
 | Coding tools | Claude Code ≥ 2.0 (skills, rules, agents, CLAUDE.md, hooks, MCP); Codex (skills, AGENTS.md); Cursor (rules, instructions, MCP); GitHub Copilot (skills, path instructions, repository instructions); Gemini CLI (skills, GEMINI.md, MCP) | adapter conformance suite (`tests/conformance/`), `doctor` tool-version check, weekly docs watch |
-| Installer | `install.ps1` (PowerShell 5.1+), `install.sh` (POSIX sh); installs the latest GitHub Release, `AGENT_FORGE_VERSION` pins one | windows-latest, ubuntu-latest, macos-latest |
+| Installer | `install.ps1` (PowerShell 5.1+), `install.sh` (POSIX sh); installs the latest GitHub Release after verifying the wheel's SHA-256 against `SHA256SUMS` (and its Sigstore bundle when `cosign` is present); `AGENT_FORGE_VERSION` pins one; stops with exit 1 when no release can be resolved (never falls back to `main`); writes `~/.agent-forge/VERSION` (`ref`, `verified`, `installed_at`) that `doctor` reports | windows-latest, ubuntu-latest, macos-latest (install from a checkout, and the "unverifiable release is not installed" path) |
 
 Adapters record the date their conventions were last verified (`AdapterInfo.verified_on`)
 and the tool version range (`min_version`/`max_version`); a tool outside the range is
@@ -57,7 +57,7 @@ verified documentation page changes; the adapter update is gated by the conforma
 
 | Channel | Command | Notes |
 |---|---|---|
-| Installer (recommended) | `install.ps1` / `install.sh` in a project root | latest release, venv in `~/.agent-forge`, launcher, `setup` |
+| Installer (recommended) | `install.ps1` / `install.sh` in a project root | latest release, checksum (+ Sigstore with `cosign`) verified, venv in `~/.agent-forge`, launcher, `VERSION`, `setup`; `AGENT_FORGE_REF=<branch>` installs an **unverified** archive for development only |
 | uvx | `uvx --from "git+https://github.com/tamtd91ht/agent-forge@vX.Y.Z" agent-forge …` | no Python management by the team; run `init --workspace` once |
 | pipx | `pipx install "git+https://github.com/tamtd91ht/agent-forge@vX.Y.Z"` | same |
 | CI | `.github/actions/check` | installs a release into the runner, runs `check` (and `forge --approval-file`) |

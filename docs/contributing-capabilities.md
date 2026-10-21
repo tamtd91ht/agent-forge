@@ -31,6 +31,12 @@ Use the PR template (`.github/PULL_REQUEST_TEMPLATE.md`). Run locally:
 .venv/Scripts/python -m pytest -q tests/conformance       # every destination renders for its platform
 ```
 
+Line endings: `.gitattributes` stores every text file as LF, and the pinned digest is
+computed from those bytes. On Windows set `git config core.autocrlf false` in this clone (or
+keep the default and never pin from a CRLF working copy: `pin_integrity.py` refuses one).
+If `git ls-files --eol registry | grep crlf` prints anything, run
+`git add --renormalize . && git checkout -- registry` before pinning.
+
 ## What CI checks (no reviewer time)
 
 | Check | Where | Fails when |
@@ -40,7 +46,8 @@ Use the PR template (`.github/PULL_REQUEST_TEMPLATE.md`). Run locally:
 | Content safety (pipe-to-shell, broad deletes, sudo, credentials, instruction overrides) | `validate` | a finding is not acknowledged with a reason |
 | Licence notice present, `redistribution_ok: true` for curated | `validate` | notice file missing |
 | Relative links, skill-to-skill calls, dependency cycles and version constraints | `validate` | any broken |
-| Integrity pin matches assets | `validate` | assets changed after pinning |
+| Integrity pin matches assets | `validate`, `pin_integrity.py --check` (own CI job) | assets changed after pinning |
+| Registry files are LF | `registry-integrity` job | a CRLF file is committed (the pin would match no clone) |
 | Risk rationale above `low` | `validate` | missing |
 | Every destination renders and passes its adapter's rules | `tests/conformance` | a platform cannot express the kind |
 | Example projects still match their reviewed expectations | `scripts/matching_report.py` | the resolver's choices changed |

@@ -42,6 +42,25 @@ jobs:
       - name: Example projects match their reviewed expectations
         run: uv run python scripts/matching_report.py
 
+  registry-integrity:
+    # Independent of the test suite: the pinned digests must match the bytes git ships (LF),
+    # or every installer on Linux/macOS rejects the entry skill as an integrity mismatch.
+    name: registry integrity (LF, pins)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: No CRLF in the registry (index or working tree)
+        run: |
+          bad="$(git ls-files --eol registry | grep -E 'i/crlf|w/crlf|i/mixed|w/mixed' || true)"
+          if [ -n "$bad" ]; then echo "$bad"; echo "normalize to LF: git add --renormalize . && git checkout -- registry"; exit 1; fi
+      - run: uv sync --locked --all-extras
+      - name: Pinned digests match the assets
+        run: uv run python scripts/pin_integrity.py --check
+      - run: uv run agent-forge validate --no-provenance
+
   installer:
     name: installer (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -66,6 +85,19 @@ jobs:
           test -f .claude/skills/agent-forge-upgrade/SKILL.md
           "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" forge --dry-run . --json > /dev/null
           "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" check . --json > /dev/null
+          # the installed catalog must pass the same integrity checks as the repository
+          "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" validate --no-provenance
+          "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" doctor --json > /dev/null
+          grep -q '^verified=' "$AGENT_FORGE_INSTALL_DIR/VERSION"
+      - name: A release that cannot be verified is never installed (POSIX)
+        if: runner.os != 'Windows'
+        env:
+          AGENT_FORGE_VERSION: v0.0.0
+          AGENT_FORGE_INSTALL_DIR: ${{ runner.temp }}/home-none/.agent-forge
+        run: |
+          mkdir -p "$RUNNER_TEMP/demo-none" && cd "$RUNNER_TEMP/demo-none"
+          if sh "$GITHUB_WORKSPACE/install.sh"; then echo "installer must fail"; exit 1; fi
+          test ! -e "$AGENT_FORGE_INSTALL_DIR"
       - name: Install into a scratch project (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -82,6 +114,22 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "dry-run failed" }
           & "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" check . --json | Out-Null
           if ($LASTEXITCODE -ne 0) { throw "check failed" }
+          & "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" validate --no-provenance
+          if ($LASTEXITCODE -ne 0) { throw "installed catalog fails validate" }
+          if (-not (Select-String -Path "$env:AGENT_FORGE_INSTALL_DIR\VERSION" -Pattern '^verified=' -Quiet)) { throw "VERSION file missing" }
+      - name: A release that cannot be verified is never installed (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          AGENT_FORGE_VERSION: v0.0.0
+          AGENT_FORGE_INSTALL_DIR: ${{ runner.temp }}\home-none\.agent-forge
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\demo-none" | Out-Null
+          Set-Location "$env:RUNNER_TEMP\demo-none"
+          $failed = $false
+          try { Get-Content "$env:GITHUB_WORKSPACE\install.ps1" -Raw | Invoke-Expression } catch { $failed = $true }
+          if (-not $failed) { throw "installer must fail" }
+          if (Test-Path $env:AGENT_FORGE_INSTALL_DIR) { throw "nothing may be installed" }
 
   audit:
     name: dependency audit (locked runtime set)
