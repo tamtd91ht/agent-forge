@@ -1,0 +1,62 @@
+schema_version: "1"
+id: forge.skill.view-data-loading
+name: View data loading (request discipline for a screen)
+description: Plan and review how a web or mobile view loads its data - request map (first paint vs enhancement vs on interaction), one request per resource, independent requests in parallel, nothing non-essential blocking the first render, fetch on need, dedupe / cache / cancel / ordering, per-stack pointers and a review checklist.
+version: 1.0.0
+kind: skill
+category: engineering.performance
+purpose: Stops the most common client-side performance bug - a screen that fires too many API calls, sequentially, and spins until every one of them has answered - by making the agent draw the request map first and keep secondary data off the critical path.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-21"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored from a recurring finding in client projects (redundant and sequential API calls per view, secondary data blocking the main render). Pure markdown, one file, no scripts, hooks or MCP; framework pointers name only libraries the project may already use and tell the agent not to introduce a second one. Applies to every project the scanner marks frontend, fullstack or mobile-or-desktop, so /agent-forge-upgrade proposes it whenever a web or mobile part is detected; on-demand (model-invoked by its description), 0 always-loaded beyond name + description.
+  notes:
+    - "Complements ecc.react-performance (rendering, bundles) and ecc.frontend-patterns (architecture); this one is only about the request layer of a view and is stack-neutral."
+applicability:
+  project_types: [frontend, fullstack, mobile-or-desktop]
+  tags: [frontend, mobile, api, performance, data-fetching, network]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/view-data-loading
+    dest: .claude/skills/view-data-loading
+    merge: create_only
+  - platform: codex
+    source: codex/view-data-loading
+    dest: .agents/skills/view-data-loading
+    merge: create_only
+  - platform: copilot
+    source: claude_code/view-data-loading
+    dest: .github/skills/view-data-loading
+    merge: create_only
+  - platform: gemini
+    source: claude_code/view-data-loading
+    dest: .gemini/skills/view-data-loading
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["data-fetch", "data-loading", "request-waterfall", "api-calls"]
+    content_patterns: ["request map", "waterfall", "Promise\\.all", "stale-while-revalidate", "first paint"]
+    description: an existing data-fetching discipline skill
+  - kind: instruction
+    content_patterns: ["request waterfall", "parallel(ise|ize) (independent )?requests", "one request per resource"]
+    description: data-fetching rules already present in project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/view-data-loading/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 7244d9476e3f6f506c5f2a44f0040cfaf135d2ccbb121fde285f0d1005593435
+  pinned_at: "2026-10-21"

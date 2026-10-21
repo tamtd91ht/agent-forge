@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### Added (stack curation, towards 0.4.0)
+- **89 stack-specific ECC capabilities**, so a project is served in its own stack instead of
+  only by the generic TypeScript-flavoured skills: 21 path-scoped rule packs
+  (`ecc.rules.<language|framework>`, 0 always-loaded context, `hooks.md` excluded) and 68
+  framework / language / data skills (Spring Boot, Quarkus, JPA, Kotlin, Ktor, Go, NestJS,
+  React, Next.js, Vue, Nuxt, Vite, Prisma, Playwright, React Native, Python, FastAPI, Django,
+  Celery, Rust, .NET, Laravel, Rails, Swift, Dart/Flutter, C++, Perl, Redis, PostgreSQL,
+  MySQL, migrations, Kubernetes, deployment, API design, accessibility). Framework-specific
+  TDD / security / verification skills conflict with and outrank the generic ones, so a Spring
+  project gets `springboot-tdd`, not `ecc.tdd-workflow`. `docs/source-curation.md` has the map;
+  `docker-patterns` and `angular-developer` are rejected with reasons.
+- Scanner records integrations as frameworks from dependency manifests across ecosystems
+  (`redis`, `kafka`, `postgres`, `mysql`, `mongodb`, `prisma`, `vite`, `celery`, `ktor`,
+  `exposed`; `docker` from a Dockerfile / compose file), so data-store and tooling skills apply
+  only when the dependency is really there.
+- `forge.skill.view-data-loading` (workspace-authored): request discipline for a web or
+  mobile view - request map (first paint vs enhancement vs on interaction), one request per
+  resource, independent requests in parallel, nothing secondary blocking the first render,
+  fetch on need, dedupe / cache / cancel. Applies to frontend, fullstack and mobile-or-desktop
+  projects, so `/agent-forge-upgrade` proposes it whenever a web part is detected.
+- `scripts/curate.py`: `rewrite_links` (relative links to sibling skills become names) and
+  `frozen` items (hand-adapted assets such as `ecc.rules.common` are never overwritten by a
+  re-run).
+
 ## 0.3.2 — 2026-10-21
 
 Parts 2 and 3 of the external review's fix list (`docs/history/agent-forge-fix-v0.3.1.md`).

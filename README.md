@@ -109,7 +109,11 @@ once on their machine.
 Useful topics for `/agent-forge-upgrade <focus>` or `AF forge . --want <tag>`: `security`,
 `testing`, `tdd`, `review`, `planning`, `adr`, `git`, `ui`, `ux`, `e2e`, `docs`, `hooks`,
 `formatting`, `karpathy`, `grill-with-docs`, `grilling`, `domain-modeling`,
-`codebase-design`, `agent-docs`, `tdd-seams`, `git-guard`, `mattpocock`.
+`codebase-design`, `agent-docs`, `tdd-seams`, `git-guard`, `mattpocock`, and per stack:
+`java`, `spring`, `kotlin`, `go`, `react`, `vue`, `angular`, `python`, `django`, `rust`, `dotnet`,
+`laravel`, `rails`, `swift`, `flutter`, `redis`, `postgres`, `mysql`, `kubernetes`, `api`,
+`data-fetching`, `hexagonal`, `a11y`. Stack-specific content is proposed automatically when the
+scan detects the language, framework or dependency; tags are for what a scan cannot see.
 
 ## Uninstall
 
