@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.3.2 — 2026-10-21
+
+Parts 2 and 3 of the external review's fix list (`docs/history/agent-forge-fix-v0.3.1.md`).
+
 ### Added
 - `check` gates on decision records: a SKIP / REMOVE that no longer verifies against the
   project (basis disappeared) and an applied plan whose `decisions_digest` matches no
