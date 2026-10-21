@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.3.1 — 2026-10-21
+
+### Fixed
+- **v0.2.0–v0.3.0 could not be installed on Linux/macOS.** `sha256_tree` sorted `Path`
+  objects, and `WindowsPath` compares case-insensitively while `PosixPath` does not, so any
+  asset tree with an upper-case file next to a lower-case one (`LICENSE-*.txt`, `SKILL.md`)
+  hashed differently per OS. 12 of 34 pins, including `forge.skill.agent-forge-upgrade`,
+  were computed on Windows and never matched on POSIX: `validate` failed, the installer
+  rejected the entry skill, the `v0.3.0` release job failed. The earlier CRLF explanation
+  was wrong. Files are now visited in code-point order of their POSIX relative path; all
+  pins re-computed; `tests/unit/test_util_hashing.py` pins a known digest that CI checks on
+  Windows, Linux and macOS. The registry digest in plans changes too: plans approved before
+  the upgrade are reported stale and must be re-planned.
+- CI `registry-integrity` runs on all three OS; the docs site built with three broken
+  relative links to files outside `docs/` (strict mode), now absolute links.
+- Root cause and fix list from an external review: `docs/history/agent-forge-fix-v0.3.1.md`.
+
 ## 0.3.0 — 2026-10-21
 
 ### The decision layer (ADR-0007; tracked checklist in docs/roadmap-decision-layer.md)

@@ -4,7 +4,8 @@
 |---|---|---|
 | `No Agent Forge workspace found` (exit 3) | not inside a workspace and no `AGENT_FORGE_HOME` | `agent-forge init`, or pass `--workspace`, or set `AGENT_FORGE_HOME` |
 | `plan is stale; target files changed since planning` (exit 7) | a destination changed after `assign` | re-run `assign`/`upgrade`, then `diff`, `approve` |
-| `registry changed since planning` (exit 7) | curated assets edited (e.g. after `curate.py`) | re-run `assign` |
+| `registry changed since planning` (exit 7) | curated assets edited (e.g. after `curate.py`), or Agent Forge upgraded across 0.3.1 (digest computation fixed) | re-run `assign` / `forge` |
+| `assets digest … does not match pinned integrity` / `integrity_mismatch` on Linux or macOS | Agent Forge < 0.3.1: digests were pinned in Windows path order, so 12 capabilities (incl. the entry skill) never matched on POSIX | re-run the install command (≥ 0.3.1) before anything else; do not re-pin a registry you did not author |
 | `plan modifies shared files` (exit 6) | plan touches `CLAUDE.md`/`AGENTS.md`/settings | review `diff`, then `approve --shared-files` |
 | `interactive confirmation required (no TTY)` (exit 6) | `apply`/`rollback` without a terminal | use `--yes` after reviewing `diff` |
 | `approval digest does not match` (exit 8) | plan file edited after approval | `approve --revoke`, re-run `assign`; never hand-edit plans |
