@@ -1,0 +1,5 @@
+{
+  "disabledMcpjsonServers": [
+    "unused-db"
+  ]
+}
