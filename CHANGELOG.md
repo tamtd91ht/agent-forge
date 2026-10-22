@@ -21,6 +21,12 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
   `forge.skill.event-contract` (outbox, envelope, business keys, one type per topic with a
   version, compatible evolution, reuse-before-create and retirement, producer-built payloads,
   transport table); proposed when a Kafka, RabbitMQ or Celery dependency is detected.
+- The `pii` pack: `forge.skill.pii-protection` (tiers recorded with the schema, encryption at
+  rest with a key-version prefix, keyed hash and opaque blind index for search, display
+  pattern per field, nothing in clear in logs / events / caches / exports, rotation with
+  re-encryption, erasure that scrubs in place and propagates to every copy).
+- Trait sampling spreads the 300 sampled source files round-robin across top-level
+  directories, so a large first directory cannot hide tenant or money code elsewhere.
 - `forge.hook.guard-secret-literals`: PreToolUse guard that refuses a credential *value* in
   the text about to be written (complements the by-name `guard-secrets-*` hooks); opt-in.
 - `agent-forge lint` gains four warning checks: `deadref` (a skill / agent / command / rule or

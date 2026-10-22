@@ -21,6 +21,7 @@ PACKS = {
     "forge.skill.money-safety": "money",
     "forge.skill.event-consumer-safety": "event_driven",
     "forge.skill.event-contract": "event_driven",
+    "forge.skill.pii-protection": "pii",
 }
 
 
@@ -100,6 +101,15 @@ def test_event_pack_follows_a_broker_dependency(make_project) -> None:
     assert verdicts["forge.skill.event-consumer-safety"] == "recommended"
     assert verdicts["forge.skill.event-contract"] == "recommended"
     assert verdicts["forge.skill.tenant-isolation"] == "not_applicable"
+
+
+def test_pii_pack_follows_personal_data_identifiers(make_project) -> None:
+    person = "class Person:\n    nationalId: str\n    dateOfBirth: str\n"
+    src = {f"src/people/p{i}.py": person for i in range(3)}
+    src["src/other.py"] = "x = 1\n"
+    verdicts = _verdicts(make_project("people", files=src))
+    assert verdicts["forge.skill.pii-protection"] == "recommended"
+    assert verdicts["forge.skill.money-safety"] == "not_applicable"
 
 
 def test_a_confirmed_trait_is_enough(make_project) -> None:

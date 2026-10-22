@@ -72,8 +72,8 @@ model.
    when its source shows the trait (`tests/unit/test_trait_packs.py`). The `event_driven` pack
    followed the same day: `forge.skill.event-consumer-safety` (consuming side) and
    `forge.skill.event-contract` (producing side and topology), split so a change on one side
-   never loads the other. Candidates for the next round: PII encryption tiers and erasure
-   (`pii`), telephony provisioning and CDR (`telephony`).
+   never loads the other, then `forge.skill.pii-protection` (`pii`). Left for a later round:
+   telephony provisioning and CDR (`telephony`), whose audience is narrow.
 
 ## Consequences
 

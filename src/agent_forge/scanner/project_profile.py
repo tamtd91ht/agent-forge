@@ -16,7 +16,7 @@ from agent_forge.config import DEFAULT_CONFIG
 from agent_forge.errors import ScanError
 from agent_forge.models.project import Detection, Evidence, GitState, ProjectProfile
 from agent_forge.scanner.agent_detection import detect_agents
-from agent_forge.scanner.filesystem import Walker
+from agent_forge.scanner.filesystem import WalkEntry, Walker
 from agent_forge.util import now_iso
 
 # ---- language indicators -------------------------------------------------------------------
@@ -521,6 +521,25 @@ _TRAIT_SAMPLE_FILES = 300
 _SOURCE_SUFFIXES = tuple(sorted({s for suffixes in _LANG_SUFFIXES.values() for s in suffixes}))
 
 
+def _sample_source_files(walker: Walker, limit: int = _TRAIT_SAMPLE_FILES) -> list[WalkEntry]:
+    """Up to `limit` source files spread across top-level directories (round-robin), so a
+    repository whose first directory alone holds more files than the limit still shows its
+    other parts; the walk order within a directory is kept."""
+    buckets: dict[str, list[WalkEntry]] = {}
+    for entry in walker.find_by_suffix(_SOURCE_SUFFIXES):
+        top = entry.rel.split("/", 1)[0] if "/" in entry.rel else ""
+        buckets.setdefault(top, []).append(entry)
+    out: list[WalkEntry] = []
+    queues = [buckets[k] for k in sorted(buckets)]
+    while len(out) < limit and queues:
+        queues = [q for q in queues if q]
+        for q in queues:
+            if len(out) >= limit:
+                break
+            out.append(q.pop(0))
+    return out
+
+
 def _detect_traits(walker: Walker, frameworks: dict[str, Detection]) -> dict[str, Detection]:
     traits: dict[str, Detection] = {}
     for trait, names in _TRAIT_FROM_FRAMEWORKS.items():
@@ -528,7 +547,7 @@ def _detect_traits(walker: Walker, frameworks: dict[str, Detection]) -> dict[str
             det = frameworks.get(fw)
             if det is not None and det.confidence >= 0.5:
                 _add(traits, trait, 0.85, det.evidence[0].path, f"{fw} integration")
-    sample = walker.find_by_suffix(_SOURCE_SUFFIXES, limit=_TRAIT_SAMPLE_FILES)
+    sample = _sample_source_files(walker)
     hits: dict[str, list[tuple[str, str]]] = {t: [] for t in _TRAIT_TOKENS}
     sampled = 0
     for entry in sample:

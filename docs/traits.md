@@ -12,7 +12,7 @@ wrong for every project without it, whatever the stack, so `applicability.traits
 |---|---|---|
 | `multi_tenant` | identifiers such as `tenantId`, `tenant_id`, `organizationId`, `workspaceId` across sampled source files | `forge.skill.tenant-isolation` |
 | `money` | `wallet`, `ledger`, `invoice`, `refund`, `payout`, `chargeback`, `settlement`, `billing`, `*MinorUnits` | `forge.skill.money-safety` |
-| `pii` | `nationalId`, `dateOfBirth`, `passportNumber`, `ssn`, `gdpr`, `pii`, `personalData` | (next round) |
+| `pii` | `nationalId`, `dateOfBirth`, `passportNumber`, `ssn`, `gdpr`, `pii`, `personalData` | `forge.skill.pii-protection` |
 | `event_driven` | a detected broker integration: Kafka, RabbitMQ, Celery | `forge.skill.event-consumer-safety`, `forge.skill.event-contract` |
 | `telephony` | `SIP`, `dialplan`, `FreeSWITCH`, `FusionPBX`, `Asterisk`, `CDR`, `IVR`, `ringGroup`, `callerId` | (next round) |
 
@@ -21,7 +21,8 @@ files that show it; `--json` carries them under `data.traits` like frameworks.
 
 ## How confidence is computed
 
-The scanner reads up to 300 source files (bounded by the usual walker limits, secret-looking
+The scanner reads up to 300 source files, spread round-robin across top-level directories so
+a large first directory cannot hide the rest (bounded by the usual walker limits, secret-looking
 files never read) and counts, per trait, how many mention one of its identifiers. The
 **share** of files decides the confidence; thresholds are conservative on purpose:
 

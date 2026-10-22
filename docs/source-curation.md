@@ -3,7 +3,7 @@
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (131)
+## Curated (132)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -74,6 +74,7 @@ overwritten by a re-run.
 | `forge.skill.money-safety` | workspace (generalised from the same platform's money rule, ADR-0010) | skill, all four platforms, `traits: [money]` | integer minor units, idempotency key before the state change, atomic transaction or saga with compensation, lock before check-then-act, bounded classified retries, immutable audit, outbox + idempotent consumers; proposed only when the scan shows money handling |
 | `forge.skill.event-consumer-safety` | workspace (generalised from the same platform's Kafka / RabbitMQ consumer, retry-DLQ and shutdown rules, ADR-0010) | skill, all four platforms, `traits: [event_driven]` | acknowledge after the work's commit, dedup by id, failure classification, bounded retries, owned and monitored DLQ with context headers, ordering per business key, explicit groups, commit-then-close; broker-neutral |
 | `forge.skill.event-contract` | workspace (generalised from the same platform's message-integrity, topic governance / lifecycle, durability, delay and dispatch-contract rules, ADR-0010) | skill, all four platforms, `traits: [event_driven]` | transactional outbox, durable producer settings, envelope, business keys, one type per topic with a version, compatible evolution, reuse-before-create and five-phase retirement, producer-built payloads, transport table |
+| `forge.skill.pii-protection` | workspace (generalised from the same platform's PII-encryption rule, blind-index, secret-rotation and erasure skills, ADR-0010) | skill, all four platforms, `traits: [pii]` | three tiers recorded with the schema, encryption at rest with key-version prefix, keyed hash + opaque blind index for search, display pattern per field, nothing in clear in logs / events / caches / exports, rotation with re-encryption, erasure that scrubs in place and propagates to every copy |
 | `mattpocock.diagnosing-bugs` | mattpocock `skills/engineering/diagnosing-bugs` (+ `scripts/hitl-loop.template.sh`) | verbatim, both, always | red-capable feedback loop before any hypothesis; no registry equivalent |
 | `mattpocock.grilling` | mattpocock `skills/productivity/grilling` | verbatim, both, tag `grilling` | frontier-of-the-design-tree interview with recommended answers |
 | `mattpocock.domain-modeling` | mattpocock `skills/engineering/domain-modeling` (+ ADR/GLOSSARY formats) | verbatim, both, tag `domain-modeling` | lazy GLOSSARY.md and the three-criteria ADR test; overlaps `ecc.architecture-decision-records` only on format |

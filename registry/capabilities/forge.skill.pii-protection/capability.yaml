@@ -1,0 +1,75 @@
+schema_version: "1"
+id: forge.skill.pii-protection
+name: PII protection (classify, encrypt, search safely, show carefully, erase completely)
+description: Checklist for every field that identifies a person - three tiers recorded next to the schema, authenticated encryption at rest with a key-version prefix and keys from a secret store, keyed hash for exact lookups and an opaque blind index for partial search, a display pattern per field (has-flag, pre-computed mask with audited full access, decrypt on read), nothing in clear in logs / events / caches / exports, key rotation with a re-encryption job, and an erasure path that scrubs in place and propagates to index, cache, logs, events and remote copies before the legal deadline.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Stops personal data from leaking through the places nobody designed - search indexes that mirror the store, logs with request bodies, event payloads, long-lived caches, exports - and makes "delete my data" an implemented path rather than a ticket, by giving the agent one checklist from the day a field is added to the day it is erased.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, generalised from a production platform's PII-encryption critical rule
+    and its blind-index, secret-rotation and right-to-erasure companions (ADR-0010). The
+    product's scoped exceptions, class names, collection names, topic names and regulator-
+    specific deadlines were removed; the tier model, storage and search patterns, display
+    patterns, rotation and erasure steps remain and apply to any system that holds personal
+    data. Pure markdown, one file. Gated by the `pii` trait (identifiers such as nationalId,
+    dateOfBirth, ssn, gdpr across sampled source files, or confirmed in profile.yaml);
+    on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "Trait-gated (ADR-0010). Complements forge.skill.tenant-isolation (who may see a record) with what may be seen and stored of it; the backend reviewer's security dimension asks the question, this skill is the implementation."
+    - "Evidence: in daily use in one production codebase; not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  traits: [pii]
+  tags: [pii, privacy, gdpr, encryption, erasure, security]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/pii-protection
+    dest: .claude/skills/pii-protection
+    merge: create_only
+  - platform: codex
+    source: codex/pii-protection
+    dest: .agents/skills/pii-protection
+    merge: create_only
+  - platform: copilot
+    source: claude_code/pii-protection
+    dest: .github/skills/pii-protection
+    merge: create_only
+  - platform: gemini
+    source: claude_code/pii-protection
+    dest: .gemini/skills/pii-protection
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["pii", "privacy", "gdpr", "personal-?data", "erasure", "encryption"]
+    content_patterns: ["right to (be forgotten|erasure)", "blind index", "key.?version", "mask"]
+    description: an existing personal-data handling skill
+  - kind: rule
+    name_patterns: ["pii", "privacy", "gdpr", "encrypt"]
+    content_patterns: ["encrypt(ed)? at rest", "plaintext", "erasure|forgotten"]
+    description: a PII rule already present
+  - kind: instruction
+    content_patterns: ["(never|must not) (store|log|index) (raw |plaintext )?(pii|personal data)", "right to (be forgotten|erasure)"]
+    description: PII rules already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/pii-protection/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 73d20e15229009bb1cc74f71149f7b5a56d4aa947dbd99efd822992eaf2256ba
+  pinned_at: "2026-10-22"

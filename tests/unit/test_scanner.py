@@ -268,3 +268,14 @@ def test_trait_override_confirms_and_rules_out(make_project) -> None:
     pii = next(d for d in profile.traits if d.name == "pii")
     assert pii.confidence == 1.0 and pii.evidence[0].path == ".agent-forge/profile.yaml"
     assert any("unknown trait 'bogus'" in w for w in profile.warnings)
+
+
+def test_trait_sampling_spreads_across_top_level_directories(make_project) -> None:
+    # 400 token-free files in the first directory alone exceed the sample size; the tenant
+    # identifiers live in the last directory and must still be seen.
+    files = {f"aaa/f{i:03d}.py": "x = 1\n" for i in range(400)}
+    files.update({f"zzz/m{i:03d}.py": _TENANT_SRC for i in range(100)})
+    profile = scan_project(make_project("spread", files=files))
+    assert "multi_tenant" in profile.trait_names
+    mt = next(d for d in profile.traits if d.name == "multi_tenant")
+    assert mt.confidence >= 0.6
