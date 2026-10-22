@@ -46,7 +46,7 @@ under `data`.
 
 | Command | What you learn |
 |---|---|
-| `AF scan . --json` | languages, frameworks, project types, platforms, every existing agent asset, what is already managed |
+| `AF scan . --json` | languages, frameworks, project types, **traits** (`multi_tenant`, `money`, `pii`, `event_driven`, `telephony`, each with the files that show it), platforms, every existing agent asset, what is already managed. A trait-gated capability is proposed only when its trait is present; if you think the scan missed one, ask the user to confirm it in `.agent-forge/profile.yaml` (`traits:`), never assert it yourself |
 | `AF lint . --json` | always-loaded context per existing file and in total, duplicate rules, credentials in agent files, hooks that run flagged commands. The existing config's score, before you propose anything |
 | `AF catalog --json` | every capability: id, kind, purpose, applicability, risk, conflicts, permissions, `review.evidence` |
 | `AF status . --json` and `AF drift . --json` | versions, outdated entries, files the user edited, earlier decisions and whether their basis still exists |
@@ -108,7 +108,7 @@ capability you dislike; do not soften one you can prove.
 | `conflicts` | path and quoted line of the project convention it contradicts |
 | `security` | the manifest field (`permissions`, hook, MCP) in `risk`, and the project rule or policy that forbids it |
 | `context_cost` | `context_chars` copied from the catalog, and the budget or total it would exceed |
-| `stack_mismatch` | `applicability` vs `scan --json` (language, framework, project type) |
+| `stack_mismatch` | `applicability` vs `scan --json` (language, framework, project type, trait) |
 | `evidence_worse` | `review.evidence` verdict `worse` in the catalog |
 | `duplicate_tool` | path and quoted line of `.mcp.json` / `settings.json` / `package.json` that already provides the tool |
 | `unused` | (installed skills and subagents only) `AF usage` shows zero invocations over at least 14 observed days. Rules are never "invoked" |

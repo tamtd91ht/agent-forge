@@ -163,6 +163,14 @@ class Applicability(StrictModel):
     any_of_files: list[str] = Field(
         default_factory=list, description="Glob-free relative paths; applies if at least one exists"
     )
+    traits: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Domain characteristics (ADR-0010): multi_tenant, money, pii, event_driven, "
+            "telephony. Detected by the scanner with evidence or confirmed in "
+            ".agent-forge/profile.yaml; applies when at least one listed trait is present"
+        ),
+    )
     tags: list[str] = Field(
         default_factory=list, description="Matches user-requested tags (--want)"
     )

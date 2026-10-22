@@ -1,0 +1,67 @@
+schema_version: "1"
+id: forge.skill.money-safety
+name: Money safety (balance changes that never double-apply)
+description: Checklist for code that moves or records money - integer minor units, idempotency key checked before the state change, one atomic transaction or a saga with compensation and stored state, serialised operations per account under a lock, balance validated inside the transaction, bounded classified retries, immutable audit entries, outbox and idempotent consumers for money events, and the tests that prove each property.
+version: 1.0.0
+kind: skill
+category: engineering.correctness
+purpose: Stops the three ways money code fails in production - an operation applied twice, two operations racing on one account, a multi-step flow stopping half-way - by making the agent answer four design questions first and put idempotency, locking, atomicity and audit on every balance change.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored, generalised from a production SaaS platform's critical money rule and its storage-specific companions (ADR-0010); product identifiers, storage engine and broker names were removed, what remains applies to any service that changes a balance. Pure markdown, one file, no scripts, hooks or MCP. Gated by the `money` trait, so it is proposed only to a project whose source shows money handling (wallet, ledger, invoice, refund, payout, minor units) or whose team confirmed the trait; on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "Trait-gated (ADR-0010). Complements forge.agent.backend-reviewer's 'money and transactions' review dimension with the implementation checklist."
+    - "Evidence: in daily use in one production codebase; not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  traits: [money]
+  tags: [money, payments, billing, ledger, idempotency, transactions]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/money-safety
+    dest: .claude/skills/money-safety
+    merge: create_only
+  - platform: codex
+    source: codex/money-safety
+    dest: .agents/skills/money-safety
+    merge: create_only
+  - platform: copilot
+    source: claude_code/money-safety
+    dest: .github/skills/money-safety
+    merge: create_only
+  - platform: gemini
+    source: claude_code/money-safety
+    dest: .gemini/skills/money-safety
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["money", "payment", "billing", "ledger", "wallet"]
+    content_patterns: ["idempoten", "minor units", "double[- ]?(charge|spend)"]
+    description: an existing money-handling skill
+  - kind: rule
+    name_patterns: ["money", "payment", "financ"]
+    content_patterns: ["idempoten", "minor units|integer cents"]
+    description: a money-safety rule already present
+  - kind: instruction
+    content_patterns: ["idempotency key.*(before|prior to)", "money is an integer|integer (number of )?cents|minor units"]
+    description: money-safety rules already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/money-safety/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9d0cabfdf112af8be4b6faea59b963f6e17055319fbd5013e33c569d21ecb72c
+  pinned_at: "2026-10-22"

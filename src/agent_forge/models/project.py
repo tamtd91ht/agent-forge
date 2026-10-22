@@ -109,6 +109,13 @@ class ProjectProfile(BaseModel):
     languages: list[Detection] = Field(default_factory=list)
     frameworks: list[Detection] = Field(default_factory=list)
     project_types: list[Detection] = Field(default_factory=list)
+    traits: list[Detection] = Field(
+        default_factory=list,
+        description=(
+            "Domain characteristics (multi_tenant, money, pii, event_driven, telephony) with the "
+            "source files that show them; confirmed or ruled out in .agent-forge/profile.yaml"
+        ),
+    )
     platforms: list[PlatformDetection] = Field(default_factory=list)
     assets: list[AgentAsset] = Field(default_factory=list)
     managed: list[ManagedCapabilityRecord] = Field(default_factory=list)
@@ -140,6 +147,10 @@ class ProjectProfile(BaseModel):
         return self.detected_names(self.project_types)
 
     @property
+    def trait_names(self) -> set[str]:
+        return self.detected_names(self.traits)
+
+    @property
     def platform_names(self) -> set[Platform]:
         return {p.platform for p in self.platforms if p.confidence >= 0.5}
 
@@ -162,4 +173,8 @@ class ProjectProfile(BaseModel):
             "assets": sorted((a.kind, a.path, a.sha256 or "") for a in self.assets),
             "managed": sorted((m.capability_id, m.version) for m in self.managed),
         }
+        # Only present when a trait is detected, so fingerprints of projects without traits
+        # are unchanged by ADR-0010 while a trait appearing or disappearing still stales a plan.
+        if self.trait_names:
+            payload["traits"] = sorted(self.trait_names)
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()

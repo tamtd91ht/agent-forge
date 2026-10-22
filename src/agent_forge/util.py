@@ -109,10 +109,22 @@ def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     try:
         data = yaml.safe_load(m.group(1))
     except yaml.YAMLError:
-        return {}, text
+        # Not valid YAML, yet the tools read it: a description such as
+        # "Use when … Triggered by: x, y" is the common case. Keep the top-level
+        # `key: value` lines so name / description are still known.
+        data = _lenient_frontmatter(m.group(1))
     if not isinstance(data, dict):
         return {}, text
     return data, text[m.end() :]
+
+
+def _lenient_frontmatter(block: str) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for line in block.splitlines():
+        km = re.match(r"^([A-Za-z_][\w-]*):\s*(.*)$", line)
+        if km:
+            out[km.group(1)] = km.group(2).strip().strip("'\"")
+    return out
 
 
 def markdown_headings(text: str, max_level: int = 3) -> list[str]:

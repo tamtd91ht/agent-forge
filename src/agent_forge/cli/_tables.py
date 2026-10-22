@@ -46,6 +46,8 @@ def _print_profile(profile) -> None:
     console.print(f"languages:     {fmt(profile.languages)}")
     console.print(f"frameworks:    {fmt(profile.frameworks)}")
     console.print(f"project types: {fmt(profile.project_types)}")
+    if profile.traits:
+        console.print(f"traits:        {fmt(profile.traits)}")
     console.print(
         "platforms:     "
         + (

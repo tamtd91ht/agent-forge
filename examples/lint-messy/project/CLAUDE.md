@@ -37,3 +37,7 @@ Every public function has a docstring that says what it returns and when it rais
 ## When unsure
 
 Ask. A question costs a minute; a wrong assumption costs a day. State the assumption you are making when you cannot ask.
+
+## Where things are
+
+There are 4 rules under `.claude/rules/`, all always loaded. Release steps live in `skills/release`; the runbook is @docs/release.md.

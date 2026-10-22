@@ -29,7 +29,8 @@ def lint(
 ) -> int:
     """Score the agent configuration a project already has: always-loaded context per file,
     duplicate rules, credentials in agent files, hooks that run flagged commands, MCP servers
-    defined but disabled. Read-only, no workspace or catalog needed, proposes nothing."""
+    defined but disabled, dead references, overclaimed counts, overlapping skill descriptions,
+    missing frontmatter. Read-only, no workspace or catalog needed, proposes nothing."""
 
     def body() -> int:
         from agent_forge.lint import lint_project

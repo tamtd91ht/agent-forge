@@ -469,6 +469,14 @@
       "title": "Test Commands",
       "type": "array"
     },
+    "traits": {
+      "description": "Domain characteristics (multi_tenant, money, pii, event_driven, telephony) with the source files that show them; confirmed or ruled out in .agent-forge/profile.yaml",
+      "items": {
+        "$ref": "#/$defs/Detection"
+      },
+      "title": "Traits",
+      "type": "array"
+    },
     "warnings": {
       "items": {
         "type": "string"

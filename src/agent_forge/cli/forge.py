@@ -151,6 +151,7 @@ def forge(
             "languages": sorted(profile.language_names),
             "frameworks": sorted(profile.framework_names),
             "project_types": sorted(profile.project_type_names),
+            "traits": sorted(profile.trait_names),
             "platforms": [p.value for p in platforms],
             "managed": [m.capability_id for m in profile.managed],
         }

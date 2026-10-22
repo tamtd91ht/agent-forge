@@ -72,6 +72,14 @@
           },
           "title": "Tags",
           "type": "array"
+        },
+        "traits": {
+          "description": "Domain characteristics (ADR-0010): multi_tenant, money, pii, event_driven, telephony. Detected by the scanner with evidence or confirmed in .agent-forge/profile.yaml; applies when at least one listed trait is present",
+          "items": {
+            "type": "string"
+          },
+          "title": "Traits",
+          "type": "array"
         }
       },
       "title": "Applicability",

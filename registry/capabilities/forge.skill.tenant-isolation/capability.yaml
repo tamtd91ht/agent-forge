@@ -1,0 +1,68 @@
+schema_version: "1"
+id: forge.skill.tenant-isolation
+name: Tenant isolation (multi-tenant data boundary)
+description: Checklist for every code path that touches tenant-scoped data - tenant identity from the authenticated context only, the tenant condition on every query, cache key, message, search request and background job, per-tenant uniqueness, explicit and audited cross-tenant paths, and the two-tenant tests that prove the boundary; stack-neutral with per-stack pointers.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Prevents the most expensive bug a multi-tenant service can ship - one tenant seeing another's data - by making the agent put the tenant condition on every layer and write the test that would have caught the leak.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: Workspace-authored, generalised from a production multi-tenant CRM's critical rule and its five stack-specific companions (ADR-0010); every product-specific identifier, module name and storage layout was removed, what remains is the layer-by-layer rule set any multi-tenant service needs. Pure markdown, one file, no scripts, hooks or MCP. Gated by the `multi_tenant` trait, so it is proposed only to a project whose source shows tenant identifiers (or whose team confirmed the trait in .agent-forge/profile.yaml); on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "First trait-gated capability (ADR-0010). The engine never proposes it to a single-tenant project; the entry skill cites the scanner's trait evidence when it ADDs it."
+    - "Complements forge.agent.backend-reviewer (which asks about tenant scoping as one review dimension); this skill is the implementation checklist."
+    - "Evidence: used daily in one production codebase for a year; not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  traits: [multi_tenant]
+  tags: [multi-tenant, tenant, saas, security, isolation]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/tenant-isolation
+    dest: .claude/skills/tenant-isolation
+    merge: create_only
+  - platform: codex
+    source: codex/tenant-isolation
+    dest: .agents/skills/tenant-isolation
+    merge: create_only
+  - platform: copilot
+    source: claude_code/tenant-isolation
+    dest: .github/skills/tenant-isolation
+    merge: create_only
+  - platform: gemini
+    source: claude_code/tenant-isolation
+    dest: .gemini/skills/tenant-isolation
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["tenant", "multi-?tenan"]
+    content_patterns: ["tenant.?id", "cross-tenant", "row-level security"]
+    description: an existing tenant-isolation skill
+  - kind: rule
+    name_patterns: ["tenant"]
+    content_patterns: ["tenant.?id.*(every|all) (quer|filter)", "cross-tenant"]
+    description: a tenant-isolation rule already present
+  - kind: instruction
+    content_patterns: ["tenant.?id (from|via) (the )?(jwt|token|session|principal|security ?context)", "every (query|filter) (must|MUST) (include|have|carry) tenant"]
+    description: tenant-isolation rules already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/tenant-isolation/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: c1edbf4d2c49ff625f7a5c01176b34a4f4ebdfe7c7b675e0566f7d1218471a1f
+  pinned_at: "2026-10-22"

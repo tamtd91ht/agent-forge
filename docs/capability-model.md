@@ -29,7 +29,7 @@ The directory name must equal `id`. JSON Schema: `registry/schema/capability.sch
 | `license` | SPDX id, attribution line, optional `notice_file` (relative to `assets/`), `redistribution_ok` (required true for curated) |
 | `review` | date, reviewer, `rationale` (required for curated), `risk_rationale` (required above `low`: why, and what limits it), `acknowledged_findings` (content-safety findings a reviewer accepted: `rule`, asset `path` glob, `reason`), `signed_off_by` / `signed_off_at`, notes |
 | `integrity` | `assets_sha256` pinned by `scripts/pin_integrity.py`. A capability whose assets no longer match is rejected at plan time (`integrity_mismatch`), not only reported by `validate` |
-| `applicability` | `always`, `project_types`, `languages`, `frameworks`, `any_of_files`, `tags`. Non-empty lists are ANDed; `tags` only match `--want`. Tag-only capabilities are installed on request only. |
+| `applicability` | `always`, `project_types`, `languages`, `frameworks`, `traits`, `any_of_files`, `tags`. Non-empty lists are ANDed (any-of within a list); `tags` only match `--want`. Tag-only capabilities are installed on request only. `traits` are domain characteristics the scanner detects with evidence (`multi_tenant`, `money`, `pii`, `event_driven`, `telephony`) or the team confirms in `.agent-forge/profile.yaml`; see [traits.md](traits.md) and ADR-0010. |
 | `platforms` | `claude_code`, `codex` |
 | `install_strategy` | `file_copy` \| `section_merge` \| `native_plugin` \| `reference_only` |
 | `destinations` | per platform: `source` (file or dir under `assets/`), `dest` (relative to target), `merge` (`create_only` \| `replace_managed` \| `append_section` + `section_id`) |

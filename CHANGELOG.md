@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+Content for what a project *does*, not only what it is built with (ADR-0010).
+
+### Added
+- **Traits** (`docs/traits.md`): the scanner detects domain characteristics with evidence and
+  confidence from sampled source files (`multi_tenant`, `money`, `pii`, `telephony`) or from a
+  detected broker (`event_driven`); `scan` prints them, `.agent-forge/profile.yaml` confirms
+  (`traits:`) or rules them out (`ignore:`), and `applicability.traits` gates capabilities on
+  them (`not_applicable` with the trait named when absent; `stack_mismatch` in `decisions
+  verify`). A trait appearing or disappearing stales a plan; projects without traits keep
+  their fingerprints. RabbitMQ is now recorded as an integration across ecosystems.
+- First trait-gated capabilities, generalised from a production multi-tenant platform's
+  critical rules: `forge.skill.tenant-isolation` (`multi_tenant`) and
+  `forge.skill.money-safety` (`money`), on-demand skills for all four platforms.
+- `forge.hook.guard-secret-literals`: PreToolUse guard that refuses a credential *value* in
+  the text about to be written (complements the by-name `guard-secrets-*` hooks); opt-in.
+- `agent-forge lint` gains four warning checks: `deadref` (a skill / agent / command / rule or
+  `@import` that does not exist), `index_drift` (an instruction claims more skills, agents,
+  rules, commands or hooks than the disk holds), `overlap` (two skills or two agents whose
+  descriptions are too alike for the model to choose), `schema` (a skill or agent without
+  `name` / `description`). `examples/lint-messy` carries one of each, reviewed.
+- `docs/contributing-capabilities.md#writing-a-hook`: the stderr / exit-code, Stop-hook,
+  marker-confirmation, fail-open and Bash-bypass lessons every hook must follow.
+
+### Changed
+- Frontmatter that is not valid YAML (a description containing `Triggered by: …`) is read
+  leniently as `key: value` lines, as the tools do; `lint` now counts such skills' context
+  instead of reporting 0, and no longer calls them undiscoverable.
+- The entry skill (2.3.0) reads `traits` from `scan --json`, treats a trait-gated capability
+  on a project without the trait as `stack_mismatch`, and asks the user to confirm a missed
+  trait in `profile.yaml` instead of asserting it.
+
 ## 0.4.0 — 2026-10-21
 
 The catalog serves every detected stack, and review becomes a first-class capability.

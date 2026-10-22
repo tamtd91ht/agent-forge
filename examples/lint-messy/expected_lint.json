@@ -1,11 +1,11 @@
 {
-  "reviewed": "2026-10-21",
-  "notes": "Every finding below was checked by a person. The rule `.claude/rules/no-tests.md` contradicts CLAUDE.md on purpose and must NOT appear here: contradictions need judgement and belong to the skill's `conflicts` ground, not to lint. `${API_KEY}` placeholders and the `ruff format` hook must not be flagged either.",
-  "always_on_total": 2564,
+  "reviewed": "2026-10-22",
+  "notes": "Every finding below was checked by a person. The rule `.claude/rules/no-tests.md` contradicts CLAUDE.md on purpose and must NOT appear here: contradictions need judgement and belong to the skill's `conflicts` ground, not to lint. `${API_KEY}` placeholders and the `ruff format` hook must not be flagged either. Since 2026-10-22 the fixture also carries one dead skill reference and one dead @import (`skills/release`, `@docs/release.md`), an overclaimed count ('4 rules', three exist), a second deploy skill whose description overlaps the first (reported on `deploy-prod`, never on `deploy`), and a `notes` skill without frontmatter.",
+  "always_on_total": 2797,
   "files": [
     {
       "path": "CLAUDE.md",
-      "chars": 2022
+      "chars": 2178
     },
     {
       "path": ".claude/rules/testing.md",
@@ -20,14 +20,22 @@
       "chars": 101
     },
     {
+      "path": ".claude/skills/deploy-prod/SKILL.md",
+      "chars": 77
+    },
+    {
       "path": ".claude/skills/deploy/SKILL.md",
       "chars": 59
+    },
+    {
+      "path": ".claude/skills/notes/SKILL.md",
+      "chars": 0
     }
   ],
   "counts": {
-    "assets": 8,
+    "assets": 10,
     "managed": 0,
-    "hand_written": 9,
+    "hand_written": 11,
     "hooks": 2,
     "mcp_servers": 2
   },
@@ -44,12 +52,37 @@
     },
     {
       "level": "warning",
+      "check": "overlap",
+      "path": ".claude/skills/deploy-prod/SKILL.md"
+    },
+    {
+      "level": "warning",
+      "check": "schema",
+      "path": ".claude/skills/notes/SKILL.md"
+    },
+    {
+      "level": "warning",
       "check": "mcp",
       "path": ".mcp.json"
     },
     {
       "level": "warning",
       "check": "duplicate",
+      "path": "CLAUDE.md"
+    },
+    {
+      "level": "warning",
+      "check": "deadref",
+      "path": "CLAUDE.md"
+    },
+    {
+      "level": "warning",
+      "check": "deadref",
+      "path": "CLAUDE.md"
+    },
+    {
+      "level": "warning",
+      "check": "index_drift",
       "path": "CLAUDE.md"
     }
   ],

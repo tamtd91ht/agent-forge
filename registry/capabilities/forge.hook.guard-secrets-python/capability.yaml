@@ -19,6 +19,8 @@ review:
   reviewer: agent-forge maintainers
   rationale: 40-line stdlib script with no network and no writes; the hook entry references it through $CLAUDE_PROJECT_DIR (documented hook env var). Installed only for Python projects so `python` is guaranteed to exist. Merged into .claude/settings.json as a JSON fragment; every other setting and hook is preserved. Requires `approve --hooks`.
   risk_rationale: "Runs a command on every Edit/Write. Limited to reading the hook payload (never the file), no network, no writes, fails open; gated by approve --hooks."
+  notes:
+    - "Sees only the Edit / Write / MultiEdit payload: a file written through the Bash tool (tee, >, sed -i, cp) bypasses it. Pair with forge.hook.guard-secret-literals for values and a repository-level scanner in CI."
 applicability:
   languages: [python]
   tags: [security, hooks, guard]

@@ -14,6 +14,9 @@ that `rollback` can undo.
   [ADR-0006](adr/0006-canonical-format-and-adapters.md),
   [ADR-0007](adr/0007-decision-layer.md); [ADR-0008](adr/0008-default-catalog-criteria.md) is proposed).
   The decision layer's tracked checklist: [roadmap-decision-layer.md](roadmap-decision-layer.md).
+- **Traits:** capabilities for what a project *does* (multi-tenant, money, PII, event-driven,
+  telephony), gated by what its source shows ([traits](traits.md),
+  [ADR-0010](adr/0010-traits-and-archetype-packs.md)).
 - **Evidence:** the opt-in evaluation harness and what has (not yet) been measured
   ([evaluation](evaluation.md)).
 - **Direction:** the [6-month plan](roadmap-2026h2.md) and its status.

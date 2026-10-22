@@ -113,6 +113,7 @@ _RUST_FRAMEWORKS: dict[str, tuple[str, ...]] = {
 _NODE_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "redis": ("ioredis", "redis", "@upstash/redis"),
     "kafka": ("kafkajs", "node-rdkafka", "@confluentinc/kafka-javascript"),
+    "rabbitmq": ("amqplib", "amqp-connection-manager", "rascal"),
     "postgres": ("pg", "postgres", "pg-promise"),
     "mysql": ("mysql", "mysql2"),
     "mongodb": ("mongodb", "mongoose"),
@@ -122,6 +123,7 @@ _NODE_INTEGRATIONS: dict[str, tuple[str, ...]] = {
 _PY_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "redis": ("redis", "aioredis"),
     "kafka": ("kafka-python", "confluent-kafka", "aiokafka", "faust-streaming"),
+    "rabbitmq": ("pika", "aio-pika", "kombu"),
     "postgres": ("psycopg", "psycopg2", "psycopg2-binary", "asyncpg"),
     "mysql": ("mysqlclient", "pymysql", "mysql-connector-python", "aiomysql"),
     "mongodb": ("pymongo", "motor"),
@@ -130,6 +132,7 @@ _PY_INTEGRATIONS: dict[str, tuple[str, ...]] = {
 _JVM_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "redis": ("spring-boot-starter-data-redis", "redis.clients", "io.lettuce"),
     "kafka": ("spring-kafka", "org.apache.kafka", "kafka-clients"),
+    "rabbitmq": ("spring-boot-starter-amqp", "spring-rabbit", "com.rabbitmq"),
     "postgres": ("org.postgresql",),
     "mysql": ("mysql-connector", "com.mysql", "mariadb-java-client"),
     "mongodb": ("spring-boot-starter-data-mongodb", "mongodb-driver"),
@@ -144,6 +147,7 @@ _GO_INTEGRATIONS: dict[str, tuple[str, ...]] = {
         "github.com/Shopify/sarama",
         "github.com/confluentinc/confluent-kafka-go",
     ),
+    "rabbitmq": ("github.com/rabbitmq/amqp091-go", "github.com/streadway/amqp"),
     "postgres": ("github.com/jackc/pgx", "github.com/lib/pq"),
     "mysql": ("github.com/go-sql-driver/mysql",),
     "mongodb": ("go.mongodb.org/mongo-driver",),
@@ -151,6 +155,7 @@ _GO_INTEGRATIONS: dict[str, tuple[str, ...]] = {
 _RUST_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "redis": ("redis",),
     "kafka": ("rdkafka",),
+    "rabbitmq": ("lapin",),
     "postgres": ("tokio-postgres", "postgres"),
     "mysql": ("mysql_async",),
 }
@@ -475,6 +480,84 @@ def _detect_project_types(
             _add(types, "unknown", 0.3, "*", "no language indicators")
 
 
+# ---- traits (ADR-0010) ---------------------------------------------------------------------
+# Domain characteristics that manifests cannot show: the identifiers a codebase uses when it
+# has the characteristic. Confidence comes from the share of sampled source files that mention
+# one of them, so a stray word in one file is never a trait. Below 0.5 the trait is reported as
+# a warning for the team to confirm in profile.yaml and is not used for recommendations.
+_TRAIT_TOKENS: dict[str, re.Pattern[str]] = {
+    "multi_tenant": re.compile(
+        r"\b(tenant_?id|tenantId|TenantId|tenant_uuid|organization_?id|organizationId"
+        r"|workspace_?id|workspaceId)\b"
+    ),
+    "money": re.compile(
+        r"\b(wallet|ledger|invoice|refund|payout|chargeback|settlement|billing"
+        r"|balance_?minor|amount_?minor|MinorUnits)\b",
+        re.I,
+    ),
+    "pii": re.compile(
+        r"\b(nationalId|national_id|dateOfBirth|date_of_birth|passport_?number|passportNumber"
+        r"|ssn|social_security|gdpr|pii|personal_?data|personalData)\b",
+        re.I,
+    ),
+    "telephony": re.compile(
+        r"\b(SIP|dialplan|FreeSWITCH|FusionPBX|Asterisk|CDRs?|IVR|ring_?group|ringGroup"
+        r"|caller_?id|callerId)\b"
+    ),
+}
+# (share for 0.8, share for 0.6, share for 0.4) of sampled source files per trait.
+_TRAIT_THRESHOLDS: dict[str, tuple[float, float, float]] = {
+    "multi_tenant": (0.15, 0.06, 0.02),
+    "money": (0.08, 0.03, 0.01),
+    "pii": (0.06, 0.02, 0.005),
+    "telephony": (0.05, 0.02, 0.005),
+}
+# A trait implied by a detected integration rather than by source tokens.
+_TRAIT_FROM_FRAMEWORKS: dict[str, tuple[str, ...]] = {
+    "event_driven": ("kafka", "rabbitmq", "celery"),
+}
+TRAIT_NAMES: tuple[str, ...] = (*_TRAIT_TOKENS, *_TRAIT_FROM_FRAMEWORKS)
+_TRAIT_SAMPLE_FILES = 300
+_SOURCE_SUFFIXES = tuple(sorted({s for suffixes in _LANG_SUFFIXES.values() for s in suffixes}))
+
+
+def _detect_traits(walker: Walker, frameworks: dict[str, Detection]) -> dict[str, Detection]:
+    traits: dict[str, Detection] = {}
+    for trait, names in _TRAIT_FROM_FRAMEWORKS.items():
+        for fw in names:
+            det = frameworks.get(fw)
+            if det is not None and det.confidence >= 0.5:
+                _add(traits, trait, 0.85, det.evidence[0].path, f"{fw} integration")
+    sample = walker.find_by_suffix(_SOURCE_SUFFIXES, limit=_TRAIT_SAMPLE_FILES)
+    hits: dict[str, list[tuple[str, str]]] = {t: [] for t in _TRAIT_TOKENS}
+    sampled = 0
+    for entry in sample:
+        text = walker.read_text(entry.rel)
+        if text is None:
+            continue
+        sampled += 1
+        for trait, pattern in _TRAIT_TOKENS.items():
+            m = pattern.search(text)
+            if m:
+                hits[trait].append((entry.rel, m.group(0)))
+    for trait, found in hits.items():
+        if not found or not sampled:
+            continue
+        share = len(found) / sampled
+        hi, mid, low = _TRAIT_THRESHOLDS[trait]
+        conf = 0.8 if share >= hi else 0.6 if share >= mid else 0.4 if share >= low else 0.0
+        if not conf:
+            continue
+        if len(found) < 2:
+            conf = 0.4  # one file is a hint for the team to confirm, never a trait on its own
+        summary = f"{len(found)} of {sampled} sampled source files mention {found[0][1]!r}"
+        for rel, token in found[:3]:
+            _add(traits, trait, conf, rel, f"mentions {token!r}")
+        traits[trait].confidence = conf  # _add bumps on repeats; the share decides
+        traits[trait].evidence.insert(0, Evidence(path="*", detail=summary))
+    return traits
+
+
 PROFILE_OVERRIDE = ".agent-forge/profile.yaml"
 
 
@@ -485,9 +568,26 @@ class ProfileOverride(BaseModel):
     languages: list[str] = Field(default_factory=list)
     frameworks: list[str] = Field(default_factory=list)
     project_types: list[str] = Field(default_factory=list)
-    ignore: list[str] = Field(
-        default_factory=list, description="detections to drop (language/framework/type names)"
+    traits: list[str] = Field(
+        default_factory=list, description="domain traits the team confirms (ADR-0010)"
     )
+    ignore: list[str] = Field(
+        default_factory=list,
+        description="detections to drop (language/framework/type/trait names)",
+    )
+
+
+def _load_override(walker: Walker, warnings: list[str] | None) -> ProfileOverride | None:
+    text = walker.read_text(PROFILE_OVERRIDE)
+    if text is None:
+        return None
+    try:
+        raw = yaml.safe_load(text) or {}
+        return ProfileOverride.model_validate(raw)
+    except (yaml.YAMLError, ValidationError, TypeError) as exc:
+        if warnings is not None:
+            warnings.append(f"{PROFILE_OVERRIDE} ignored: invalid ({str(exc).splitlines()[0]})")
+        return None
 
 
 def _apply_overrides(
@@ -499,15 +599,8 @@ def _apply_overrides(
     *,
     project_types_only: bool = False,
 ) -> None:
-    text = walker.read_text(PROFILE_OVERRIDE)
-    if text is None:
-        return
-    try:
-        raw = yaml.safe_load(text) or {}
-        ov = ProfileOverride.model_validate(raw)
-    except (yaml.YAMLError, ValidationError, TypeError) as exc:
-        if not project_types_only:
-            warnings.append(f"{PROFILE_OVERRIDE} ignored: invalid ({str(exc).splitlines()[0]})")
+    ov = _load_override(walker, None if project_types_only else warnings)
+    if ov is None:
         return
     targets = [(types, ov.project_types)] if project_types_only else [
         (languages, ov.languages), (frameworks, ov.frameworks)
@@ -519,6 +612,25 @@ def _apply_overrides(
     for dets in (types,) if project_types_only else (languages, frameworks):
         for name in ov.ignore:
             dets.pop(name, None)
+
+
+def _apply_trait_overrides(
+    walker: Walker, traits: dict[str, Detection], warnings: list[str]
+) -> None:
+    ov = _load_override(walker, None)
+    if ov is None:
+        return
+    for name in ov.traits:
+        if name not in TRAIT_NAMES:
+            warnings.append(
+                f"{PROFILE_OVERRIDE}: unknown trait {name!r} ignored "
+                f"(known: {', '.join(TRAIT_NAMES)})"
+            )
+            continue
+        traits.pop(name, None)
+        _add(traits, name, 1.0, PROFILE_OVERRIDE, "confirmed by the project")
+    for name in ov.ignore:
+        traits.pop(name, None)
 
 
 def _git_state(root: Path) -> GitState:
@@ -591,6 +703,8 @@ def scan_project(target: Path, *, limits: dict[str, int] | None = None) -> Proje
     _apply_overrides(walker, languages, frameworks, warnings, types)
     _detect_project_types(walker, languages, frameworks, types)
     _apply_overrides(walker, languages, frameworks, warnings, types, project_types_only=True)
+    traits = _detect_traits(walker, frameworks)
+    _apply_trait_overrides(walker, traits, warnings)
     if agent_deps:
         _add(
             frameworks,
@@ -599,7 +713,12 @@ def scan_project(target: Path, *, limits: dict[str, int] | None = None) -> Proje
             "*",
             "agent-related dependencies: " + ", ".join(sorted(agent_deps)),
         )
-    for kind, dets in (("language", languages), ("framework", frameworks), ("project type", types)):
+    for kind, dets in (
+        ("language", languages),
+        ("framework", frameworks),
+        ("project type", types),
+        ("trait", traits),
+    ):
         for d in dets.values():
             if 0.3 <= d.confidence < 0.5:
                 warnings.append(
@@ -629,6 +748,7 @@ def scan_project(target: Path, *, limits: dict[str, int] | None = None) -> Proje
         languages=sorted(languages.values(), key=lambda d: -d.confidence),
         frameworks=sorted(frameworks.values(), key=lambda d: -d.confidence),
         project_types=sorted(types.values(), key=lambda d: -d.confidence),
+        traits=sorted(traits.values(), key=lambda d: (-d.confidence, d.name)),
         platforms=inv.platforms,
         assets=inv.assets,
         managed=inv.managed,

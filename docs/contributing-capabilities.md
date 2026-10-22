@@ -37,6 +37,34 @@ keep the default and never pin from a CRLF working copy: `pin_integrity.py` refu
 If `git ls-files --eol registry | grep crlf` prints anything, run
 `git add --renormalize . && git checkout -- registry` before pinning.
 
+## Writing a hook
+
+Lessons from production hook sets, each learned the hard way; a hook that ignores them
+looks installed and does nothing.
+
+- **Only stderr + exit 2 reaches the model.** Text on stdout with exit 0 is shown to the
+  person and never to the agent. A guard that explains itself on stdout blocks silently.
+- **PreToolUse exit 2 blocks the call; PostToolUse exit 2 does not undo the edit.** Use the
+  first for refusals, the second for "this is already written, review it" warnings. Say in the
+  message which one it is.
+- **A Stop hook that wants to leave a note must not block.** Print
+  `{"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "..."}}` with exit 0;
+  a `decision: block` on Stop makes the agent loop on the reminder.
+- **Hooks are stateless; a confirmation is a marker in the content.** When a change needs the
+  user's explicit yes (a file that moves workloads between clusters, a secret rotation), block
+  the first attempt with the checklist and accept a retry that carries an agreed marker in the
+  new text. No state file, no race.
+- **Read the payload, not the file.** `tool_input.content` / `new_string` / `edits[]` is what
+  will be written; the file on disk is the past. Never open the target path from a guard.
+- **Fail open on your own bugs.** A malformed payload, a missing interpreter, an exception:
+  exit 0. The guard is a rail, not the sandbox (`docs/security.md`, runtime boundary).
+- **Edit/Write guards do not see Bash.** `tee`, `>`, `sed -i`, `cp` write files through the
+  Bash tool and bypass every Edit/Write hook. Say so in `review.notes`; a Bash guard that
+  recognises those forms is a separate, heuristic hook.
+- **Every hook ships with its own test** that runs the script exactly as Claude Code would
+  (`python -I script.py < payload.json`; see `tests/unit/test_guard_git_hook.py`): blocked
+  cases, allowed cases, placeholders that must pass, and the malformed payload.
+
 ## What CI checks (no reviewer time)
 
 | Check | Where | Fails when |

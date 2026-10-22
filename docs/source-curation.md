@@ -1,9 +1,9 @@
-# Source curation record (initial catalog 2026-10-16, last update 2026-10-21)
+# Source curation record (initial catalog 2026-10-16, last update 2026-10-22)
 
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (126)
+## Curated (129)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -69,6 +69,9 @@ overwritten by a re-run.
 | `karpathy.principles` | andrej-karpathy-skills `CLAUDE.md` | adapted, `section_merge` into `CLAUDE.md` / `AGENTS.md`, both, always; conflicts with `karpathy.guidelines` | always-on beats a skill that may not trigger; ~45 lines, wording of the principles unchanged |
 | `karpathy.guidelines` | andrej-karpathy-skills `skills/karpathy-guidelines/SKILL.md` | verbatim, both, tag-only (`--want guidelines-skill`) | for projects that keep instruction files minimal; an explicit request outranks the section |
 | `forge.hook.guard-dangerous-git` | workspace (idea from mattpocock `misc/git-guardrails-claude-code`) | hook (class `hook`), tag-only (`--want git-guard`) | PreToolUse on Bash: blocks force-push, remote ref deletion, `reset --hard`, `clean -f`, `branch -D`, wholesale `checkout`/`restore`, `stash drop/clear`; plain `git push` passes; stdlib, fails open |
+| `forge.hook.guard-secret-literals` | workspace (patterned after a production team's content-level secret scan, ADR-0010 scouting) | hook (class `hook`), tag-only (`--want secrets`) | PreToolUse on Edit/Write/MultiEdit: blocks a credential *value* in the new text (password / API-key assignment with an inline value, AWS key id, PEM block, JWT, connection string with a password, known token prefixes); placeholders and `${VAR}` pass, test / fixture / docs paths skipped; complements the by-name guards; stdlib, fails open |
+| `forge.skill.tenant-isolation` | workspace (generalised from a production multi-tenant platform's critical rule, ADR-0010) | skill, all four platforms, `traits: [multi_tenant]` | tenant identity from the authenticated context only, the tenant condition on every query / cache key / message / search / job, per-tenant uniqueness, explicit audited cross-tenant paths, two-tenant tests; proposed only when the scan shows tenant identifiers |
+| `forge.skill.money-safety` | workspace (generalised from the same platform's money rule, ADR-0010) | skill, all four platforms, `traits: [money]` | integer minor units, idempotency key before the state change, atomic transaction or saga with compensation, lock before check-then-act, bounded classified retries, immutable audit, outbox + idempotent consumers; proposed only when the scan shows money handling |
 | `mattpocock.diagnosing-bugs` | mattpocock `skills/engineering/diagnosing-bugs` (+ `scripts/hitl-loop.template.sh`) | verbatim, both, always | red-capable feedback loop before any hypothesis; no registry equivalent |
 | `mattpocock.grilling` | mattpocock `skills/productivity/grilling` | verbatim, both, tag `grilling` | frontier-of-the-design-tree interview with recommended answers |
 | `mattpocock.domain-modeling` | mattpocock `skills/engineering/domain-modeling` (+ ADR/GLOSSARY formats) | verbatim, both, tag `domain-modeling` | lazy GLOSSARY.md and the three-criteria ADR test; overlaps `ecc.architecture-decision-records` only on format |

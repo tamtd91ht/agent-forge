@@ -106,3 +106,50 @@ def test_duplicates_secrets_hooks_and_mcp(tmp_path: Path) -> None:
     assert not rep.ok
     doc = rep.to_dict()
     assert doc["ok"] is False and doc["always_on_total"] > 0
+
+
+def test_dead_references_count_drift_overlap_and_schema(tmp_path: Path) -> None:
+    root = _project(
+        tmp_path / "r",
+        {
+            "pyproject.toml": "[project]\nname='x'\nversion='0'\n",
+            "CLAUDE.md": (
+                "# Project\n\nWe keep 5 rules in `.claude/rules/` and 2 agents. "
+                "Use `skills/review` for reviews and read @docs/arch.md first. "
+                "Prose like rules/skills, a glob `skills/voip-*/SKILL.md` and "
+                "`commands/{name}.md` are not references. The 1 VOIP skill is a subset.\n"
+            ),
+            ".claude/rules/one.md": "# One\n\nShort.\n",
+            ".claude/rules/_INDEX.md": "# Index\n\n| `one.md` |\n",
+            ".claude/agents/reviewer.md": "---\nname: reviewer\ndescription: reviews code\n---\n# r\n",
+            ".claude/agents/planner.md": "---\nname: planner\ndescription: plans work\n---\n# p\n",
+            ".claude/agents/_ROUTING.md": "# Routing\n\nreviewer handles reviews.\n",
+            ".claude/skills/voip-a/SKILL.md": (
+                "---\nname: voip-a\ndescription: Use when provisioning a SIP trunk for a tenant. "
+                "Triggered by: trunk, SIP, dialplan\n---\n# a\n"
+            ),
+            ".claude/skills/voip-b/SKILL.md": (
+                "---\nname: voip-b\ndescription: Use when provisioning a SIP trunk for a tenant, "
+                "triggered by dialplan changes\n---\n# b\n"
+            ),
+            ".claude/skills/bare/SKILL.md": "# bare\n\nno frontmatter\n",
+            "docs/other.md": "x\n",
+        },
+    )
+    rep = lint_project(root)
+    by_check = {}
+    for f in rep.findings:
+        by_check.setdefault(f.check, []).append(f)
+    dead = {f.message.split("refers to ")[1].split(",")[0] for f in by_check["deadref"]}
+    assert dead == {"skills/review", "@docs/arch.md"}
+    drift = [f.message for f in by_check["index_drift"]]
+    assert len(drift) == 1 and "5 rules" in drift[0] and "only 1" in drift[0]  # 2 agents: true
+    overlap = by_check["overlap"]
+    assert len(overlap) == 1 and overlap[0].path == ".claude/skills/voip-b/SKILL.md"
+    assert "voip-a" in overlap[0].message
+    schema = {f.path for f in by_check["schema"]}
+    assert schema == {".claude/skills/bare/SKILL.md"}  # _ROUTING.md is a table, not a subagent
+    # a description with "Triggered by:" is not valid YAML but the tool still reads it
+    chars = {f.path: f.chars for f in rep.files}
+    assert chars[".claude/skills/voip-a/SKILL.md"] > len("voip-a")
+    assert rep.ok  # all four checks warn; none is an error

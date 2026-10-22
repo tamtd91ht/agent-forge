@@ -166,3 +166,38 @@ def test_optional_dependency_makes_dependant_optional(
     rec, _opt, _rej = _result_ids(evaluate(reg, profile, _ctx(requested_ids=requested)))
     # requesting the dependant pulls its dependency in, with the reason recorded
     assert {"t.shell", "t.needs-shell", "t.tagged-shell", "t.needs-tagged-shell"} <= rec
+
+
+def test_trait_gated_capability_applies_only_when_the_trait_is_shown(
+    synthetic_registry: Path, make_project
+) -> None:
+    write_capability(
+        synthetic_registry,
+        base_manifest("t.tenant-only", applicability={"traits": ["multi_tenant"]}),
+        skill_assets("tenant-only"),
+    )
+    reg = load_registry(synthetic_registry)
+    plain = scan_project(make_project("plain"))
+    _rec, _opt, rej = _result_ids(evaluate(reg, plain, _ctx()))
+    assert rej["t.tenant-only"] == "not_applicable"
+    reason = next(
+        r for r in evaluate(reg, plain, _ctx()).rejected if r.capability.id == "t.tenant-only"
+    )
+    assert any("trait not shown" in x for x in reason.reasons)
+    src = "def f(tenant_id):\n    return tenant_id\n"
+    tenant = scan_project(make_project("tenant", files={f"src/m{i}.py": src for i in range(4)}))
+    assert "multi_tenant" in tenant.trait_names
+    rec, _opt, _rej = _result_ids(evaluate(reg, tenant, _ctx()))
+    assert "t.tenant-only" in rec
+    # the team can rule the trait out; the capability then stays out without --exclude
+    ruled_out = scan_project(
+        make_project(
+            "ruled-out",
+            files={
+                **{f"src/m{i}.py": src for i in range(4)},
+                ".agent-forge/profile.yaml": "ignore: [multi_tenant]\n",
+            },
+        )
+    )
+    _rec, _opt, rej = _result_ids(evaluate(reg, ruled_out, _ctx()))
+    assert rej["t.tenant-only"] == "not_applicable"

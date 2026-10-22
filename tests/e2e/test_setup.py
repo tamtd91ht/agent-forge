@@ -25,7 +25,7 @@ def test_setup_installs_only_the_entry_skill(real_workspace, make_project) -> No
         p.relative_to(root).as_posix() for p in root.rglob("*") if ".git" not in p.parts
     )
     out = run_json("setup", str(root), "--workspace", ws, "--json")
-    assert out["installed_version"] == "2.2.0" and len(out["steps"]) == 1
+    assert out["installed_version"] == "2.3.0" and len(out["steps"]) == 1
     skill = (root / ".claude/skills/agent-forge-upgrade/SKILL.md").read_text(encoding="utf-8")
     assert "disable-model-invocation: true" in skill
     after = sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if ".git" not in p.parts)

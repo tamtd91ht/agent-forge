@@ -19,6 +19,8 @@ review:
   reviewer: agent-forge maintainers
   rationale: Same logic as the Python guard, for projects where `node` is guaranteed. No dependencies, no network, no writes. Merged into .claude/settings.json; requires `approve --hooks`.
   risk_rationale: "Runs a command on every Edit/Write. Limited to reading the hook payload (never the file), no network, no writes, fails open; gated by approve --hooks."
+  notes:
+    - "Sees only the Edit / Write / MultiEdit payload: a file written through the Bash tool (tee, >, sed -i, cp) bypasses it. Pair with forge.hook.guard-secret-literals for values and a repository-level scanner in CI."
 applicability:
   languages: [javascript, typescript]
   tags: [security, hooks, guard]

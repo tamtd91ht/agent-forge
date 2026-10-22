@@ -161,3 +161,11 @@ installer contacts GitHub only to resolve and download a release; `doctor` does 
 - `validate` does not run project test commands; it only lists them.
 - Hooks and MCP servers are Claude Code only; Codex hooks/MCP live in `.codex/*` (trusted
   projects, per-hash hook trust) and are not managed.
+- The curated Edit/Write guards (`forge.hook.guard-secrets-*`, `forge.hook.guard-secret-literals`)
+  see only the Edit / Write / MultiEdit payload. A file written through the Bash tool
+  (`tee`, `>`, `sed -i`, `cp`) bypasses them; only `forge.hook.guard-dangerous-git` watches
+  Bash, and only for git. A guard rail, not a sandbox: pair them with a repository-level
+  secret scanner in CI.
+- Trait detection (`docs/traits.md`) is a heuristic over sampled source files; a wrong or
+  missed trait changes which capabilities are *proposed*, never what is written without
+  approval. The team corrects it in `.agent-forge/profile.yaml`.

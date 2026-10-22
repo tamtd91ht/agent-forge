@@ -139,6 +139,18 @@ def _applicability(
         if hit:
             matched += 1
             reasons.append("framework: " + ", ".join(sorted(hit)))
+    if app.traits:
+        dims += 1
+        hit = profile.trait_names & set(app.traits)
+        if hit:
+            matched += 1
+            reasons.append("trait: " + ", ".join(sorted(hit)))
+        else:
+            reasons.append(
+                "trait not shown by the project: "
+                + ", ".join(sorted(app.traits))
+                + " (confirm it in .agent-forge/profile.yaml if the scan is wrong)"
+            )
     if app.any_of_files:
         dims += 1
         present = [

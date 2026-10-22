@@ -1,0 +1,55 @@
+schema_version: "1"
+id: forge.hook.guard-secret-literals
+name: Guard credential literals (Python hook)
+description: PreToolUse hook that blocks an Edit/Write/MultiEdit whose new text contains an obvious secret literal - password or API-key assignment with an inline value, cloud access-key id, PEM private-key block, JWT, connection string with a password, known token prefixes; placeholders and environment indirection pass, test and fixture paths are skipped. Stdlib Python.
+version: 1.0.0
+kind: hook
+category: safety.hooks
+purpose: Stops the agent from writing a real credential into source or configuration by mistake. forge.hook.guard-secrets-* refuse edits to secret files by name; this one refuses secret values in any file. Exit code 2 blocks the tool call and tells the agent to use the environment or a secret store instead.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, patterned after a production team's content-level secret scan
+    (ADR-0010 scouting) with the product-specific skip list replaced by generic test / fixture
+    / docs paths. Stdlib script, no network, no writes, never reads the file; it inspects only
+    the text in the hook payload (`content`, `new_string`, `edits[].new_string`).
+    High-precision patterns on purpose (an inline value next to a credential-looking name, or
+    a token with a known shape); `${VAR}`, `<placeholder>`, `changeme` and similar never
+    match, so false positives are rare and a developer always has an escape (move the fixture
+    under test/, or use indirection). Fails open on a malformed payload. Opt-in by tag because
+    it needs `python` on PATH; when Python is missing the hook errors without blocking. Merged
+    into .claude/settings.json as a JSON fragment; requires `approve --hooks`.
+  risk_rationale: "Runs a command before every Edit/Write/MultiEdit and can block it. Payload only, no network, no file reads or writes, fails open; gated by approve --hooks and opt-in by tag."
+  notes:
+    - "Patterns are a guard rail, not a scanner: a secret split across two edits, base64-wrapped or stored under an unusual name passes. Pair with a repository-level scanner in CI."
+    - "Known bypass shared by every Edit/Write hook: a Bash tool call that writes the file (`tee`, `>`, `sed -i`, `cp`) is not seen by this hook. forge.hook.guard-dangerous-git watches Bash for git only."
+applicability:
+  tags: [security, secrets, guard, hooks]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-guard-secret-literals
+removal: delete_managed_files
+risk: medium
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: a0248b2bbe63ab4462ae910f260081b9fb3c95cbee5f36e7b7f12d5e1d777933
+  pinned_at: "2026-10-22"

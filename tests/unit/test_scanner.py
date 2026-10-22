@@ -208,3 +208,63 @@ def test_invalid_profile_override_is_reported_not_applied(make_project) -> None:
     profile = scan_project(root)
     assert any("profile.yaml ignored" in w for w in profile.warnings)
     assert "java" not in profile.language_names
+
+
+# ---- traits (ADR-0010) -----------------------------------------------------------------------
+
+_TENANT_SRC = (
+    "def list_orders(tenant_id: str, page: int) -> list:\n"
+    "    return repo.find({'tenantId': tenant_id}, page=page)\n"
+)
+
+
+def test_traits_are_detected_from_source_with_evidence(make_project) -> None:
+    files = {f"src/svc/module{i}.py": _TENANT_SRC for i in range(5)}
+    files["src/billing/wallet.py"] = "class Wallet:\n    def refund(self, invoice): ...\n"
+    files["src/other.py"] = "x = 1\n"
+    root = make_project("tenant", files=files)
+    profile = scan_project(root)
+    assert "multi_tenant" in profile.trait_names
+    mt = next(d for d in profile.traits if d.name == "multi_tenant")
+    assert mt.confidence >= 0.6
+    assert mt.evidence[0].path == "*" and "sampled source files" in mt.evidence[0].detail
+    assert any(e.path.startswith("src/svc/") for e in mt.evidence)
+    # one money file out of eight: a low-confidence hint, not a trait used for recommendations
+    assert "money" not in profile.trait_names
+    assert any("low-confidence trait 'money'" in w for w in profile.warnings)
+    assert profile.fingerprint() != scan_project(make_project("plain-fp")).fingerprint()
+
+
+def test_event_driven_trait_follows_a_broker_dependency(make_project) -> None:
+    root = make_project(
+        "broker",
+        files={
+            "pyproject.toml": (
+                "[project]\nname='x'\nversion='0'\ndependencies=['pytest','aiokafka']\n"
+            )
+        },
+    )
+    profile = scan_project(root)
+    assert "kafka" in profile.framework_names
+    ev = next(d for d in profile.traits if d.name == "event_driven")
+    assert ev.confidence >= 0.8 and ev.evidence[0].path == "pyproject.toml"
+
+
+def test_project_without_traits_keeps_its_fingerprint(make_project) -> None:
+    root = make_project("plain2")
+    profile = scan_project(root)
+    assert profile.traits == []
+    before = profile.fingerprint()
+    profile.traits = []  # explicit: the payload key is absent, not an empty list
+    assert profile.fingerprint() == before
+
+
+def test_trait_override_confirms_and_rules_out(make_project) -> None:
+    files = {f"src/m{i}.py": _TENANT_SRC for i in range(4)}
+    files[".agent-forge/profile.yaml"] = "traits: [pii, bogus]\nignore: [multi_tenant]\n"
+    root = make_project("trait-override", files=files)
+    profile = scan_project(root)
+    assert "multi_tenant" not in profile.trait_names
+    pii = next(d for d in profile.traits if d.name == "pii")
+    assert pii.confidence == 1.0 and pii.evidence[0].path == ".agent-forge/profile.yaml"
+    assert any("unknown trait 'bogus'" in w for w in profile.warnings)
