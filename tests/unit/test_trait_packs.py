@@ -16,7 +16,12 @@ from tests.conftest import REAL_REGISTRY
 
 REG = load_registry(REAL_REGISTRY)
 POLICY = load_policies(REAL_REGISTRY)
-PACKS = {"forge.skill.tenant-isolation": "multi_tenant", "forge.skill.money-safety": "money"}
+PACKS = {
+    "forge.skill.tenant-isolation": "multi_tenant",
+    "forge.skill.money-safety": "money",
+    "forge.skill.event-consumer-safety": "event_driven",
+    "forge.skill.event-contract": "event_driven",
+}
 
 
 def _verdicts(root: Path) -> dict[str, str]:
@@ -79,6 +84,22 @@ def test_packs_are_proposed_when_the_source_shows_the_trait(make_project) -> Non
     verdicts = _verdicts(make_project("saas", files=src))
     assert verdicts["forge.skill.tenant-isolation"] == "recommended"
     assert verdicts["forge.skill.money-safety"] == "recommended"
+
+
+def test_event_pack_follows_a_broker_dependency(make_project) -> None:
+    verdicts = _verdicts(
+        make_project(
+            "broker",
+            files={
+                "pyproject.toml": (
+                    "[project]\nname='x'\nversion='0'\ndependencies=['pytest','aiokafka']\n"
+                )
+            },
+        )
+    )
+    assert verdicts["forge.skill.event-consumer-safety"] == "recommended"
+    assert verdicts["forge.skill.event-contract"] == "recommended"
+    assert verdicts["forge.skill.tenant-isolation"] == "not_applicable"
 
 
 def test_a_confirmed_trait_is_enough(make_project) -> None:

@@ -3,7 +3,7 @@
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (129)
+## Curated (131)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -72,6 +72,8 @@ overwritten by a re-run.
 | `forge.hook.guard-secret-literals` | workspace (patterned after a production team's content-level secret scan, ADR-0010 scouting) | hook (class `hook`), tag-only (`--want secrets`) | PreToolUse on Edit/Write/MultiEdit: blocks a credential *value* in the new text (password / API-key assignment with an inline value, AWS key id, PEM block, JWT, connection string with a password, known token prefixes); placeholders and `${VAR}` pass, test / fixture / docs paths skipped; complements the by-name guards; stdlib, fails open |
 | `forge.skill.tenant-isolation` | workspace (generalised from a production multi-tenant platform's critical rule, ADR-0010) | skill, all four platforms, `traits: [multi_tenant]` | tenant identity from the authenticated context only, the tenant condition on every query / cache key / message / search / job, per-tenant uniqueness, explicit audited cross-tenant paths, two-tenant tests; proposed only when the scan shows tenant identifiers |
 | `forge.skill.money-safety` | workspace (generalised from the same platform's money rule, ADR-0010) | skill, all four platforms, `traits: [money]` | integer minor units, idempotency key before the state change, atomic transaction or saga with compensation, lock before check-then-act, bounded classified retries, immutable audit, outbox + idempotent consumers; proposed only when the scan shows money handling |
+| `forge.skill.event-consumer-safety` | workspace (generalised from the same platform's Kafka / RabbitMQ consumer, retry-DLQ and shutdown rules, ADR-0010) | skill, all four platforms, `traits: [event_driven]` | acknowledge after the work's commit, dedup by id, failure classification, bounded retries, owned and monitored DLQ with context headers, ordering per business key, explicit groups, commit-then-close; broker-neutral |
+| `forge.skill.event-contract` | workspace (generalised from the same platform's message-integrity, topic governance / lifecycle, durability, delay and dispatch-contract rules, ADR-0010) | skill, all four platforms, `traits: [event_driven]` | transactional outbox, durable producer settings, envelope, business keys, one type per topic with a version, compatible evolution, reuse-before-create and five-phase retirement, producer-built payloads, transport table |
 | `mattpocock.diagnosing-bugs` | mattpocock `skills/engineering/diagnosing-bugs` (+ `scripts/hitl-loop.template.sh`) | verbatim, both, always | red-capable feedback loop before any hypothesis; no registry equivalent |
 | `mattpocock.grilling` | mattpocock `skills/productivity/grilling` | verbatim, both, tag `grilling` | frontier-of-the-design-tree interview with recommended answers |
 | `mattpocock.domain-modeling` | mattpocock `skills/engineering/domain-modeling` (+ ADR/GLOSSARY formats) | verbatim, both, tag `domain-modeling` | lazy GLOSSARY.md and the three-criteria ADR test; overlaps `ecc.architecture-decision-records` only on format |

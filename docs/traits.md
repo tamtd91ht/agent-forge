@@ -13,7 +13,7 @@ wrong for every project without it, whatever the stack, so `applicability.traits
 | `multi_tenant` | identifiers such as `tenantId`, `tenant_id`, `organizationId`, `workspaceId` across sampled source files | `forge.skill.tenant-isolation` |
 | `money` | `wallet`, `ledger`, `invoice`, `refund`, `payout`, `chargeback`, `settlement`, `billing`, `*MinorUnits` | `forge.skill.money-safety` |
 | `pii` | `nationalId`, `dateOfBirth`, `passportNumber`, `ssn`, `gdpr`, `pii`, `personalData` | (next round) |
-| `event_driven` | a detected broker integration: Kafka, RabbitMQ, Celery | (next round) |
+| `event_driven` | a detected broker integration: Kafka, RabbitMQ, Celery | `forge.skill.event-consumer-safety`, `forge.skill.event-contract` |
 | `telephony` | `SIP`, `dialplan`, `FreeSWITCH`, `FusionPBX`, `Asterisk`, `CDR`, `IVR`, `ringGroup`, `callerId` | (next round) |
 
 `agent-forge scan` prints a `traits:` line when any is detected, with confidence and the

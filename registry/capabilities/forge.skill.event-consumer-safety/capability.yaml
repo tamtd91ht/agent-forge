@@ -1,0 +1,73 @@
+schema_version: "1"
+id: forge.skill.event-consumer-safety
+name: Event consumer safety (nothing lost, doubled or stuck)
+description: Checklist for any consumer, listener or worker reading from a broker - acknowledge only after the work's own commit, deduplicate by message or operation id, classify failures into retryable and not, bound retries with backoff, dead-letter queue with context headers that is monitored and owned, ordering per business key with instances bounded by partitions, explicit group names and subscriptions, commit-then-close shutdown, lag alerts; broker-neutral (Kafka, RabbitMQ, SQS, Celery).
+version: 1.0.0
+kind: skill
+category: engineering.correctness
+purpose: Prevents the four standard consumer failures - a message lost by acknowledging too early, work done twice on redelivery, a queue stuck behind one poison message retried forever, and offsets replayed after a careless shutdown - by making the agent apply the same discipline whatever the broker's knob names are.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, generalised from a production platform's Kafka and RabbitMQ consumer
+    rules (consumer safety, retry and DLQ tiers, graceful shutdown; ADR-0010). Product-specific
+    constants modules, header names, alert thresholds and the Java code templates were removed;
+    the broker-neutral rules and the per-broker knob names remain. Pure markdown, one file.
+    Gated by the `event_driven` trait, which the scanner sets from a detected Kafka, RabbitMQ
+    or Celery dependency; on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "Trait-gated (ADR-0010). The companion forge.skill.event-contract covers the producing side and topology; the two are deliberately split so the model loads only the half it needs."
+    - "Evidence: in daily use in one production codebase; not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  traits: [event_driven]
+  tags: [kafka, rabbitmq, sqs, celery, consumer, messaging, dlq, idempotency]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/event-consumer-safety
+    dest: .claude/skills/event-consumer-safety
+    merge: create_only
+  - platform: codex
+    source: codex/event-consumer-safety
+    dest: .agents/skills/event-consumer-safety
+    merge: create_only
+  - platform: copilot
+    source: claude_code/event-consumer-safety
+    dest: .github/skills/event-consumer-safety
+    merge: create_only
+  - platform: gemini
+    source: claude_code/event-consumer-safety
+    dest: .gemini/skills/event-consumer-safety
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["consumer", "kafka", "rabbit", "worker", "listener"]
+    content_patterns: ["dead.?letter|DLQ", "auto.?commit|autoAck|acks_late", "idempoten"]
+    description: an existing message-consumer discipline skill
+  - kind: rule
+    name_patterns: ["kafka", "rabbit", "messag", "consumer"]
+    content_patterns: ["dead.?letter|DLQ", "auto.?commit|autoAck"]
+    description: consumer rules already present
+  - kind: instruction
+    content_patterns: ["commit (the )?offset (only )?after", "dead.?letter queue", "idempotent consumer"]
+    description: consumer rules already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/event-consumer-safety/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: 9a136732dc661754f8c8bf32bba6add8152d5c1d371d2d4d2ff3c49a671d33cb
+  pinned_at: "2026-10-22"

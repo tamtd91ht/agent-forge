@@ -15,6 +15,12 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
 - First trait-gated capabilities, generalised from a production multi-tenant platform's
   critical rules: `forge.skill.tenant-isolation` (`multi_tenant`) and
   `forge.skill.money-safety` (`money`), on-demand skills for all four platforms.
+- The `event_driven` pack, generalised from the same platform's Kafka and RabbitMQ rules:
+  `forge.skill.event-consumer-safety` (acknowledge after commit, dedup, failure classes,
+  bounded retries, owned DLQ, ordering per key, commit-then-close) and
+  `forge.skill.event-contract` (outbox, envelope, business keys, one type per topic with a
+  version, compatible evolution, reuse-before-create and retirement, producer-built payloads,
+  transport table); proposed when a Kafka, RabbitMQ or Celery dependency is detected.
 - `forge.hook.guard-secret-literals`: PreToolUse guard that refuses a credential *value* in
   the text about to be written (complements the by-name `guard-secrets-*` hooks); opt-in.
 - `agent-forge lint` gains four warning checks: `deadref` (a skill / agent / command / rule or

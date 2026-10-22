@@ -69,10 +69,11 @@ model.
 7. **The first two packs ship with the mechanism**, so it is exercised end to end:
    `forge.skill.tenant-isolation` (`multi_tenant`) and `forge.skill.money-safety` (`money`),
    both on-demand skills, both with identical Codex copies, both proposed to a fixture only
-   when its source shows the trait (`tests/unit/test_trait_packs.py`). Candidates for the next
-   round, in order of the catalog gap they close: event-driven consumer safety and retry /
-   DLQ (`event_driven`), PII encryption tiers and erasure (`pii`), telephony provisioning
-   and CDR (`telephony`).
+   when its source shows the trait (`tests/unit/test_trait_packs.py`). The `event_driven` pack
+   followed the same day: `forge.skill.event-consumer-safety` (consuming side) and
+   `forge.skill.event-contract` (producing side and topology), split so a change on one side
+   never loads the other. Candidates for the next round: PII encryption tiers and erasure
+   (`pii`), telephony provisioning and CDR (`telephony`).
 
 ## Consequences
 

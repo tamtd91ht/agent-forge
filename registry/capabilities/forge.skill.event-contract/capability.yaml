@@ -1,0 +1,73 @@
+schema_version: "1"
+id: forge.skill.event-contract
+name: Event contract (publishing side and topology)
+description: Checklist for producers, topics and the contract between them - transactional outbox so state and event commit together, durable producer settings, an envelope on every message, partition and routing keys that are business keys, topic naming with one message type per topic and a version, backward-compatible schema evolution, reuse-before-create and a five-phase retirement of replaced topics, producer-built payloads for dispatch flows, and the event / command / synchronous-call / delay transport table; broker-neutral.
+version: 1.0.0
+kind: skill
+category: engineering.architecture
+purpose: Stops the publishing-side defects that no consumer can repair - events published outside the state's transaction, topics carrying several message types, silent duplicate topics, breaking schema changes, consumers calling back for data the producer already had - by making the agent design the contract before the first message is sent.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, generalised from a production platform's message-integrity, topic
+    governance, topic lifecycle, durability, delay-messaging, dispatch-contract and
+    transport-choice rules (ADR-0010). Product domains, constants modules, header names,
+    cluster limits and the socket / notification service names were removed; what remains is
+    the contract any event-driven system needs. Pure markdown, one file. Gated by the
+    `event_driven` trait; on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "Trait-gated (ADR-0010). Companion of forge.skill.event-consumer-safety (the consuming side); split on purpose so a change to a producer does not load consumer rules and vice versa."
+    - "Evidence: in daily use in one production codebase; not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  traits: [event_driven]
+  tags: [kafka, rabbitmq, messaging, events, outbox, topics, schema, architecture]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/event-contract
+    dest: .claude/skills/event-contract
+    merge: create_only
+  - platform: codex
+    source: codex/event-contract
+    dest: .agents/skills/event-contract
+    merge: create_only
+  - platform: copilot
+    source: claude_code/event-contract
+    dest: .github/skills/event-contract
+    merge: create_only
+  - platform: gemini
+    source: claude_code/event-contract
+    dest: .gemini/skills/event-contract
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["outbox", "event-?(design|contract|schema)", "topic", "producer", "messaging"]
+    content_patterns: ["outbox", "partition key", "one (message|event) type per topic", "schema (registry|evolution)"]
+    description: an existing event-design or topic-governance skill
+  - kind: rule
+    name_patterns: ["kafka", "event", "messag", "topic"]
+    content_patterns: ["outbox", "partition key"]
+    description: event-design rules already present
+  - kind: instruction
+    content_patterns: ["transactional outbox", "one (message|event) type per topic", "partition key (is|=) (the )?(business|aggregate)"]
+    description: event-design rules already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/event-contract/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 8
+maintenance_cost: 1
+integrity:
+  assets_sha256: ee0832517350fb3b7837c54029e33e6f1771ca11c586e953b0562c4980ab9ac3
+  pinned_at: "2026-10-22"
