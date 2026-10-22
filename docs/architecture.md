@@ -51,6 +51,9 @@
 5. `approve` re-checks staleness and registry digest, then records the content digest.
 6. `apply` runs pre-flight (approval, digest, scope, hashes, shared-file approvals), creates
    a transaction, and for each operation: backup → atomic write → read-back → record.
+6b. `import` (ADR-0011) builds a plan whose only operation is the manifest write: hand-written
+   skills, subagents, rules and commands are recorded as `local.*` entries with their current
+   hashes, never copied or rewritten; the same approve / apply / rollback path applies.
 7. `validate` / `status` read the manifest and transaction records; `rollback` reverses only
    files that still hash to their post-apply state.
 

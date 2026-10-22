@@ -116,7 +116,14 @@ def validate_target(
     for rec in profile.managed:
         rep.checks_run += 1
         cap = reg.items.get(rec.capability_id)
-        if cap is None:
+        if rec.is_local:
+            rep.add(
+                "info",
+                "managed",
+                f"{rec.capability_id}: hand-written content adopted in place "
+                f"({len(rec.files)} file(s)); no registry source",
+            )
+        elif cap is None:
             rep.add(
                 "warning", "managed", f"{rec.capability_id}: not in registry (orphaned install)"
             )
@@ -172,14 +179,24 @@ def validate_target(
                 rep.add("error", "managed", f"{rec.capability_id}: {exc.message}")
                 continue
             if not p.is_file():
-                rep.add("error", "managed", f"{rec.capability_id}: managed file missing: {rel}")
+                if rec.is_local:
+                    rep.add(
+                        "warning",
+                        "managed",
+                        f"{rec.capability_id}: adopted file deleted: {rel} "
+                        "(re-run `agent-forge import`, or `repair --strategy unmanage`)",
+                    )
+                else:
+                    rep.add("error", "managed", f"{rec.capability_id}: managed file missing: {rel}")
                 continue
             text = normalize_newlines(p.read_text(encoding="utf-8", errors="replace"))
             if sha256_text(text) != expected:
                 rep.add(
-                    "warning",
+                    "info" if rec.is_local else "warning",
                     "managed",
-                    f"{rec.capability_id}: {rel} modified locally (drift); rollback will preserve it",
+                    f"{rec.capability_id}: {rel} edited since import (re-import to refresh)"
+                    if rec.is_local
+                    else f"{rec.capability_id}: {rel} modified locally (drift); rollback will preserve it",
                 )
             platform = _platform_for_path(rel)
             kind = cap.capability.kind if cap else None

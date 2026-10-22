@@ -40,6 +40,11 @@ copy this page, replace the roles with names, and link it from their repository.
    writes the approved ids, versions and classes. Commit it with the installed files and
    `.agent-forge/managed.json`. That commit is the review: a PR reviewer sees exactly what
    was allowed.
+2b. **Bring what the team already wrote under the same roof.** `agent-forge import . --yes`
+   records the project's hand-written skills, subagents, rules and commands in
+   `managed.json` as `local.*` entries, in place (ADR-0011): nothing is copied or
+   rewritten, `status` and `usage` now see them, and `check` never fails on the team editing
+   its own files. Re-run it after a batch of edits to refresh the recorded hashes.
 3. **Keep clones identical.** A developer who clones the repository installs Agent Forge
    once on their machine and runs `agent-forge sync .`. It restores any managed file that is
    missing or was edited, at the committed version, and writes nothing else. Target: under

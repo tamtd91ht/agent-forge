@@ -16,6 +16,7 @@ non-ASCII characters are supported everywhere.
 | `setup [PATH] [--platform]` | **yes** | Install or update only the `/agent-forge-upgrade` entry skill (`forge.skill.agent-forge-upgrade`) into the project (default: current directory) through a saved plan, an approval recorded as `agent-forge setup` and a transaction. Run by `install.ps1` / `install.sh` (ADR-0004); other managed capabilities are left untouched. |
 | `scan PATH [--report FILE]` | no | Read-only profile. Report goes to `state/reports/` unless `--report` (never inside the target). |
 | `assign PATH [--platform] [--want TAG] [--request ID] [--exclude ID] [--include-optional]` | no | Recommend and write a plan. |
+| `import PATH [--kind K] [--path P] [--yes]` | no (plan); **yes** with `--yes` | Record the project's hand-written skills, subagents, rules and commands in `.agent-forge/managed.json` as `local.<kind>.<name>` entries, in place (ADR-0011): files are never copied or rewritten, only their hashes are recorded, so `status`, `usage`, `drift`, `remove` and decision records see them. The plan's only operation is the manifest write; `--yes` approves and applies it. Re-run after edits to refresh hashes; `repair --strategy unmanage` stops tracking. |
 | `upgrade PATH [--platform]` | no | Compare managed capabilities with the registry; write a plan. |
 | `plans [--target P]` | no | List saved plans. |
 | `diff PLAN_ID [--full]` | no | Unified diffs against the current target; flags stale files and shared-file ops. |

@@ -160,8 +160,14 @@ def status(
                     "capability": m.capability_id,
                     "installed": m.version,
                     "registry": reg_ver,
-                    "status": cap.capability.status.value if cap else "missing",
-                    "drift": m.drift,
+                    "status": "local"
+                    if m.is_local
+                    else cap.capability.status.value
+                    if cap
+                    else "missing",
+                    "drift": [f"{d} (edited since import)" for d in m.drift]
+                    if m.is_local
+                    else m.drift,
                     "conflicts": conflicts,
                     "files": len(m.files),
                     "transaction": m.transaction_id,

@@ -543,6 +543,8 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
         )
     records = [r.model_copy(deep=True) for r in profile.managed]
     for rec in records:
+        if rec.is_local:
+            continue  # adopted hand-written content: no registry source to upgrade from
         if rec.capability_id not in reg.items:
             notes.append(
                 f"{rec.capability_id}: no longer in the registry; left untouched (remove manually or via rollback)"

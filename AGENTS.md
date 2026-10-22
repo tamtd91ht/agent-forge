@@ -35,7 +35,7 @@ agent-forge validate
 
 ## Layout
 
-- `src/agent_forge/{config,errors,util}.py` — entry points and shared helpers; `cli/` — one module per command group (`_app`, `_common`, `_envelope`, `_tables`, `registry`, `plans`, `forge`, `ops`, `doctor`, `team`, `decisions`, `lint`), no file above 600 lines
+- `src/agent_forge/{config,errors,util}.py` — entry points and shared helpers; `cli/` — one module per command group (`_app`, `_common`, `_envelope`, `_tables`, `registry`, `plans`, `forge`, `ops`, `doctor`, `team`, `decisions`, `lint`, `importer`), no file above 600 lines
 - `models/`, `registry/`, `sources/`, `scanner/`, `adapters/`, `matching/`, `planner/`,
   `apply/`, `validation/`, `rollback/`, `storage/` — see `docs/architecture.md`
 - `registry/capabilities/<id>/{capability.yaml,assets/}` — curated content

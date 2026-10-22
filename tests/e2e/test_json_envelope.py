@@ -65,6 +65,7 @@ def test_every_json_command_uses_the_envelope(real_workspace, make_project) -> N
         (["catalog", "show", "ecc.tdd-workflow", *w], "agent-forge catalog show", dict),
         (["scan", str(root), *w], "agent-forge scan", dict),
         (["assign", str(root), *w], "agent-forge assign", dict),
+        (["import", str(root), *w], "agent-forge import", dict),
         (["plans", *w], "agent-forge plans", list),
         (["policy", *w], "agent-forge policy", dict),
         (["doctor", *w], "agent-forge doctor", list),

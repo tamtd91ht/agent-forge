@@ -32,7 +32,7 @@ from agent_forge.models.plan import (
     RiskLevel,
     SelectedCapability,
 )
-from agent_forge.models.project import ProjectProfile
+from agent_forge.models.project import ProjectProfile, is_local
 from agent_forge.planner.builder import (
     _asset_files,
     _identity,
@@ -79,6 +79,8 @@ def drift_report(profile: ProjectProfile) -> DriftReport:
     reader = _TargetReader(root)
     rep = DriftReport(target=profile.canonical_path)
     for rec in profile.managed:
+        if rec.is_local:
+            continue  # the team edits its own files; `status` shows them as edited since import
         for rel, expected in rec.files.items():
             cur = reader.read(rel)
             actual = sha256_text(cur) if cur is not None else None
@@ -294,6 +296,12 @@ def build_repair_plan(
     unknown = [c for c in targets if c not in {r.capability_id for r in profile.managed}]
     if unknown:
         raise PlanError("not managed in this project: " + ", ".join(unknown))
+    if strategy == "restore" and (local := [c for c in targets if is_local(c)]):
+        raise PlanError(
+            "cannot restore " + ", ".join(local) + ": adopted content has no registry source",
+            hint="Re-run `agent-forge import` to record the current files, or "
+            "`repair --strategy unmanage` to stop tracking them.",
+        )
     records = {r.capability_id: r.model_copy(deep=True) for r in profile.managed}
     plan_id = new_id("plan")
     root = Path(profile.canonical_path)
@@ -305,6 +313,21 @@ def build_repair_plan(
     counter = [0]
     for cid in targets:
         rec = records[cid]
+        if is_local(cid):
+            # adopted content is never drifted; unmanage simply stops tracking it
+            del records[cid]
+            selected.append(
+                SelectedCapability(
+                    capability_id=cid,
+                    version=rec.version,
+                    platform=Platform.CLAUDE_CODE,
+                    score=0.0,
+                    risk=RiskLevel.LOW,
+                    reasons=["unmanage: adopted files stop being tracked; nothing is written"],
+                    rollback="re-run `agent-forge import` to track them again",
+                )
+            )
+            continue
         items = [i for i in report.items if i.capability_id == cid and i.state != "ok"]
         if not items:
             notes.append(f"{cid}: no drift")

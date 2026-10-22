@@ -3,7 +3,7 @@
 
 Layout: `_app` (Typer apps and root callback) · `_common` (consoles, option types, runner,
 accessors) · `_envelope` (JSON envelope) · `_tables` (Rich renderers) · `registry`, `plans`,
-`forge`, `ops`, `doctor`, `team`, `decisions`, `lint` (commands).
+`forge`, `ops`, `doctor`, `team`, `decisions`, `lint`, `importer` (commands).
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from agent_forge.cli import (  # noqa: F401
     decisions,
     doctor,
     forge,
+    importer,
     lint,
     ops,
     plans,

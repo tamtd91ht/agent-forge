@@ -33,6 +33,13 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
   provider with rotation, replay controls, body-free logging, compensating controls.
 - `forge.hook.changelog-gate` (opt-in): a feat / fix commit with no CHANGELOG.md staged is
   blocked before it exists; `[skip-changelog]` bypasses.
+- `agent-forge import PATH [--kind] [--path] [--yes]` (ADR-0011): hand-written skills,
+  subagents, rules and commands are adopted in place as `local.<kind>.<name>` entries of
+  `managed.json`, through an ordinary plan whose only operation is the manifest write.
+  Nothing is copied or rewritten. `upgrade` / `sync` / `restore` skip or refuse local entries,
+  `status` shows `local`, `check` never fails on the team's own edits, re-running `import`
+  refreshes the hashes, `remove` and `repair --strategy unmanage` work on them. The scanner
+  now hashes managed files on normalised text, so a CRLF file is not drift.
 - `lint` check `hook_output`: a hook script that writes to stdout only (print, echo,
   console.log without stderr or a hookSpecificOutput document) is reported, since the
   model never sees stdout. `examples/lint-messy` carries one.

@@ -3,7 +3,7 @@ name: agent-forge-upgrade
 description: Review this project and install or upgrade only the Agent Forge capabilities (skills, rules, agents, hooks, MCP servers) that really fit it.
 disable-model-invocation: true
 argument-hint: "[optional focus, e.g. 'testing and review only']"
-allowed-tools: Bash(~/.agent-forge/bin/agent-forge --version), Bash(~/.agent-forge/bin/agent-forge scan:*), Bash(~/.agent-forge/bin/agent-forge catalog:*), Bash(~/.agent-forge/bin/agent-forge status:*), Bash(~/.agent-forge/bin/agent-forge drift:*), Bash(~/.agent-forge/bin/agent-forge policy:*), Bash(~/.agent-forge/bin/agent-forge lint:*), Bash(~/.agent-forge/bin/agent-forge usage:*), Bash(~/.agent-forge/bin/agent-forge decisions:*), Bash(~/.agent-forge/bin/agent-forge forge --dry-run:*)
+allowed-tools: Bash(~/.agent-forge/bin/agent-forge --version), Bash(~/.agent-forge/bin/agent-forge scan:*), Bash(~/.agent-forge/bin/agent-forge catalog:*), Bash(~/.agent-forge/bin/agent-forge status:*), Bash(~/.agent-forge/bin/agent-forge drift:*), Bash(~/.agent-forge/bin/agent-forge policy:*), Bash(~/.agent-forge/bin/agent-forge lint:*), Bash(~/.agent-forge/bin/agent-forge usage:*), Bash(~/.agent-forge/bin/agent-forge decisions:*), Bash(~/.agent-forge/bin/agent-forge forge --dry-run:*), Bash(~/.agent-forge/bin/agent-forge import:*)
 ---
 
 # Agent Forge upgrade (assessed by you, verified and written by Agent Forge)
@@ -68,7 +68,10 @@ Write down the project's own conventions that a catalog item could contradict: i
 language, review process, forbidden tools, mandatory steps, how tests are run.
 
 If the project has hand-written agent config that no capability manages, do not propose
-rewriting it; it is the user's and it counts as coverage below.
+rewriting it; it is the user's and it counts as coverage below. When `scan` lists such
+skills, subagents, rules or commands with no `managed_by`, suggest `AF import .` (then
+`approve` + `apply`, or `--yes`): it records them in place as `local.*` entries so `status`,
+`usage` and your decision record can refer to them. It writes nothing but the manifest.
 
 **Review coverage.** Code review is how the team learns whether the code is going in the
 right direction, is safe, and will hold under traffic, so check it explicitly. List the

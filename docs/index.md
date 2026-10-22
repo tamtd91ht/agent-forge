@@ -8,8 +8,9 @@ that `rollback` can undo.
 - **Install:** run the one-line installer in a project root, then `/agent-forge-upgrade`
   ([getting started](getting-started.md), quickstarts for [Node](quickstart/node.md),
   [Python](quickstart/python.md), [Go](quickstart/go.md), [Java](quickstart/java.md)).
-- **Teams:** `sync` for fresh clones, `check` as a CI gate, committed approval files, a team
-  registry and policy ([team workflow](team-workflow.md)).
+- **Teams:** `import` to adopt what the team already wrote, `sync` for fresh clones, `check` as a
+  CI gate, committed approval files, a team registry and policy ([team workflow](team-workflow.md),
+  [ADR-0011](adr/0011-import-adopt-in-place.md)).
 - **Platforms:** one canonical content, rendered per tool ([adapters](adapters.md),
   [ADR-0006](adr/0006-canonical-format-and-adapters.md),
   [ADR-0007](adr/0007-decision-layer.md); [ADR-0008](adr/0008-default-catalog-criteria.md) is proposed).

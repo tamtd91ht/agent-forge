@@ -13,7 +13,7 @@ from agent_forge.apply.filesystem_safety import validate_relative_path
 from agent_forge.errors import SafetyViolation
 from agent_forge.models.project import AgentAsset, ManagedCapabilityRecord, PlatformDetection
 from agent_forge.scanner.filesystem import Walker
-from agent_forge.util import sha256_text
+from agent_forge.util import normalize_newlines, sha256_text
 
 MANAGED_DIR = ".agent-forge"
 MANAGED_MANIFEST = f"{MANAGED_DIR}/managed.json"
@@ -108,8 +108,8 @@ def _load_managed(walker: Walker, inv: AgentInventory) -> None:
             current = walker.read_text(rel)
             if current is None:
                 drift.append(f"{rel} (missing)")
-            elif sha256_text(current) != expected:
-                drift.append(rel)
+            elif sha256_text(normalize_newlines(current)) != expected:
+                drift.append(rel)  # hashes are of normalised text, like the planner's
         rec.drift = drift
         inv.managed.append(rec)
 

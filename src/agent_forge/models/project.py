@@ -63,6 +63,16 @@ class PlatformDetection(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
 
 
+# Hand-written assets adopted in place by `agent-forge import` (ADR-0011) carry this prefix:
+# tracked in the manifest like an install, but with no registry source to upgrade or restore.
+LOCAL_ID_PREFIX = "local."
+LOCAL_VERSION = "0.0.0"
+
+
+def is_local(capability_id: str) -> bool:
+    return capability_id.startswith(LOCAL_ID_PREFIX)
+
+
 class ManagedCapabilityRecord(BaseModel):
     """A capability recorded in the target's `.agent-forge/managed.json`."""
 
@@ -84,6 +94,10 @@ class ManagedCapabilityRecord(BaseModel):
     drift: list[str] = Field(
         default_factory=list, description="Files whose current hash differs (set by scan)"
     )
+
+    @property
+    def is_local(self) -> bool:
+        return is_local(self.capability_id)
 
 
 class ScanStats(BaseModel):
