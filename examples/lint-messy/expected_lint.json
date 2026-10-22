@@ -1,6 +1,6 @@
 {
   "reviewed": "2026-10-22",
-  "notes": "Every finding below was checked by a person. The rule `.claude/rules/no-tests.md` contradicts CLAUDE.md on purpose and must NOT appear here: contradictions need judgement and belong to the skill's `conflicts` ground, not to lint. `${API_KEY}` placeholders and the `ruff format` hook must not be flagged either. Since 2026-10-22 the fixture also carries one dead skill reference and one dead @import (`skills/release`, `@docs/release.md`), an overclaimed count ('4 rules', three exist), a second deploy skill whose description overlaps the first (reported on `deploy-prod`, never on `deploy`), and a `notes` skill without frontmatter.",
+  "notes": "Every finding below was checked by a person. The rule `.claude/rules/no-tests.md` contradicts CLAUDE.md on purpose and must NOT appear here: contradictions need judgement and belong to the skill's `conflicts` ground, not to lint. `${API_KEY}` placeholders and the `ruff format` hook must not be flagged either. Since 2026-10-22 the fixture also carries one dead skill reference and one dead @import (`skills/release`, `@docs/release.md`), an overclaimed count ('4 rules', three exist), a second deploy skill whose description overlaps the first (reported on `deploy-prod`, never on `deploy`), a `notes` skill without frontmatter, and a PostToolUse hook script (`notify.py`) that prints to stdout only, which the model never sees.",
   "always_on_total": 2797,
   "files": [
     {
@@ -36,7 +36,7 @@
     "assets": 10,
     "managed": 0,
     "hand_written": 11,
-    "hooks": 2,
+    "hooks": 3,
     "mcp_servers": 2
   },
   "findings": [
@@ -44,6 +44,11 @@
       "level": "error",
       "check": "hook",
       "path": ".claude/settings.json"
+    },
+    {
+      "level": "warning",
+      "check": "hook_output",
+      "path": ".claude/hooks/notify.py"
     },
     {
       "level": "warning",

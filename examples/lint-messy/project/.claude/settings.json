@@ -13,6 +13,11 @@
             "type": "command",
             "command": "ruff format \"$CLAUDE_PROJECT_DIR\"",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/notify.py\"",
+            "timeout": 10
           }
         ]
       }

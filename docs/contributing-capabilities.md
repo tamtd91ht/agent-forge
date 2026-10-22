@@ -44,6 +44,7 @@ looks installed and does nothing.
 
 - **Only stderr + exit 2 reaches the model.** Text on stdout with exit 0 is shown to the
   person and never to the agent. A guard that explains itself on stdout blocks silently.
+  `agent-forge lint` reports such a script as `hook_output`.
 - **PreToolUse exit 2 blocks the call; PostToolUse exit 2 does not undo the edit.** Use the
   first for refusals, the second for "this is already written, review it" warnings. Say in the
   message which one it is.

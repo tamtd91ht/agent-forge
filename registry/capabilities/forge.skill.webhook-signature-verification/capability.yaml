@@ -1,0 +1,73 @@
+schema_version: "1"
+id: forge.skill.webhook-signature-verification
+name: Webhook signature verification
+description: Checklist for any endpoint a third party calls into the system - verify the provider's signature over the raw request bytes before parsing or any side effect, constant-time comparison per language, one secret per provider from the environment with current + previous accepted during rotation, timestamp tolerance and event-id dedup against replays, generic 401 with a structured log that never holds the body, verification at the receiving edge only, written compensating controls when a provider cannot sign.
+version: 1.0.0
+kind: skill
+category: engineering.security
+purpose: Prevents forged and replayed provider callbacks - a fake "payment succeeded", a doubled "subscription cancelled" - which an unsigned or string-compared webhook endpoint accepts from anyone; the catalog had nothing on inbound webhooks although most backends receive them.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, generalised from a production platform's critical webhook rule
+    (ADR-0010 scouting); the product's gateway service, provider names, header constants and
+    Go reference file were removed, the language table and the compensating-controls section
+    were added. Pure markdown, one file, no scripts. Tag-only on purpose (ADR-0008, fewer is
+    better): not every backend receives callbacks, so it is installed on request
+    (`--want webhook`) or when /agent-forge-upgrade finds inbound callback endpoints and
+    names them as the gap; on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "Universal (no trait, no project type): any backend that receives callbacks needs it; proposed by the entry skill when it sees one. Complements forge.skill.money-safety (what to do with a verified payment event) and forge.hook.guard-secret-literals (keeps the provider secret out of source)."
+    - "Evidence: in daily use in one production codebase; not measured by the harness."
+applicability:
+  tags: [webhook, hmac, callback, security, integration]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/webhook-signature-verification
+    dest: .claude/skills/webhook-signature-verification
+    merge: create_only
+  - platform: codex
+    source: codex/webhook-signature-verification
+    dest: .agents/skills/webhook-signature-verification
+    merge: create_only
+  - platform: copilot
+    source: claude_code/webhook-signature-verification
+    dest: .github/skills/webhook-signature-verification
+    merge: create_only
+  - platform: gemini
+    source: claude_code/webhook-signature-verification
+    dest: .gemini/skills/webhook-signature-verification
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["webhook", "callback", "hmac", "signature"]
+    content_patterns: ["constant.?time|timingSafeEqual|compare_digest|hmac\\.Equal", "raw (request )?body"]
+    description: an existing webhook-verification skill
+  - kind: rule
+    name_patterns: ["webhook", "signature"]
+    content_patterns: ["hmac", "replay"]
+    description: a webhook rule already present
+  - kind: instruction
+    content_patterns: ["verify (the )?(webhook )?signature", "constant.?time compar"]
+    description: webhook rules already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/webhook-signature-verification/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 26ac7b854b3ff8c64d19ebffcaf1684592b819e24cc8d120d85022fb917e108d
+  pinned_at: "2026-10-22"

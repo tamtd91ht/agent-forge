@@ -354,6 +354,51 @@ def _exists_relative(root: Path, from_rel: str, target: str) -> bool:
     return False
 
 
+_SCRIPT_TOKEN_RE = re.compile(
+    r"""["']?(\$CLAUDE_PROJECT_DIR/|\./)?([\w./-]+\.(?:py|sh|js|mjs|ps1))["']?"""
+)
+_STDOUT_WRITES = {
+    ".py": (
+        re.compile(r"\bprint\s*\((?![^)]*file\s*=\s*sys\.stderr)"),
+        re.compile(r"sys\.stderr|hookSpecificOutput"),
+    ),
+    ".sh": (re.compile(r"^\s*echo\b(?![^\n]*>&2)", re.M), re.compile(r">&2|hookSpecificOutput")),
+    ".js": (
+        re.compile(r"console\.log\s*\("),
+        re.compile(r"console\.error|process\.stderr|hookSpecificOutput"),
+    ),
+    ".mjs": (
+        re.compile(r"console\.log\s*\("),
+        re.compile(r"console\.error|process\.stderr|hookSpecificOutput"),
+    ),
+    ".ps1": (
+        re.compile(r"Write-(Output|Host)\b"),
+        re.compile(r"Write-Error|\[Console\]::Error|hookSpecificOutput"),
+    ),
+}
+
+
+def _hook_script_path(command: str) -> str | None:
+    """The project-relative script a hook command runs, when one is named in it."""
+    for m in _SCRIPT_TOKEN_RE.finditer(command):
+        rel = m.group(2)
+        if rel.startswith(".claude/") or rel.startswith("scripts/") or m.group(1):
+            return rel
+    return None
+
+
+def _stdout_only(script: str, text: str) -> str | None:
+    """A reason when the script writes to stdout and never to stderr or a hook JSON document."""
+    suffix = "." + script.rsplit(".", 1)[-1].lower()
+    pair = _STDOUT_WRITES.get(suffix)
+    if pair is None:
+        return None
+    writes_stdout, reaches_model = pair
+    if writes_stdout.search(text) and not reaches_model.search(text):
+        return "writes to stdout and never to stderr"
+    return None
+
+
 def _description_words(text: str) -> set[str]:
     fm, _ = parse_frontmatter(text)
     desc = str(fm.get("description") or "")
@@ -483,6 +528,7 @@ def lint_project(
 
     # 4. hooks that run flagged commands; MCP servers defined but disabled
     hook_count = 0
+    hook_entries: list[tuple[str, str, str]] = []
     disabled: set[str] = set()
     for rel in (".claude/settings.json", ".claude/settings.local.json"):
         text = texts.get(rel)
@@ -496,6 +542,7 @@ def lint_project(
             disabled.add(str(name))
         for event, command in _hook_commands(data):
             hook_count += 1
+            hook_entries.append((rel, event, command))
             for rule in _HOOK_RULES:
                 if RULES[rule][0].search(command):
                     rep.findings.append(
@@ -623,6 +670,28 @@ def lint_project(
                     rel,
                     f"{kinds[rel]} frontmatter lacks {' and '.join(absent)}; "
                     "the tool cannot discover or describe it",
+                )
+            )
+
+    # 9. hook scripts whose only output goes to stdout: the model never sees it
+    for _rel, event, command in hook_entries:
+        if event not in ("PreToolUse", "PostToolUse", "Stop", "SubagentStop"):
+            continue
+        script = _hook_script_path(command)
+        if script is None:
+            continue
+        text = _read(root, script)
+        if text is None:
+            continue
+        verdict = _stdout_only(script, text)
+        if verdict:
+            rep.findings.append(
+                LintFinding(
+                    "warning",
+                    "hook_output",
+                    script,
+                    f"{event} hook {verdict}; only stderr with exit 2 (or a hookSpecificOutput "
+                    "JSON document) reaches the model",
                 )
             )
 

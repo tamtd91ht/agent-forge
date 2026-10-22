@@ -1,0 +1,56 @@
+schema_version: "1"
+id: forge.hook.changelog-gate
+name: Changelog gate for feat/fix commits (Python hook)
+description: PreToolUse hook on Bash that blocks a `git commit` whose message starts with feat or fix when no CHANGELOG.md is staged; `[skip-changelog]` in the message bypasses it for changes with no user-visible effect. Honours `git -C`, reads git state only. Stdlib Python.
+version: 1.0.0
+kind: hook
+category: engineering.git
+purpose: Turns "every feature ships with a changelog line" from a rule people forget into a gate the agent cannot skip, at the only moment it is cheap - before the commit exists.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-22"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored, patterned after a production team's commit gate (ADR-0010 scouting)
+    with the product's repository-name filter and doc-sync gate removed. Stdlib script that
+    parses the Bash command with shlex (segments split on && || ; | and newlines; a heredoc
+    message is read whole), runs only `git diff --cached --name-only` in the payload's cwd or
+    the `-C` path, and blocks with exit 2 only for a feat / fix subject with no staged
+    CHANGELOG.md. Fails open whenever it cannot parse the command or inspect the repository.
+    Opt-in by tag because it needs `python` on PATH and because teams without a changelog
+    convention would only be annoyed; gated by `approve --hooks`. Agent Forge's own
+    repository keeps the same rule by hand (AGENTS.md).
+  risk_rationale: "Runs before every Bash call and executes `git diff --cached` (read-only) when the call is a feat / fix commit; no network, no writes, fails open; gated by approve --hooks and opt-in by tag."
+  notes:
+    - "Only `-m` / `--message` and heredoc messages are inspected; `git commit -F file` and an editor session pass (the message is not in the payload)."
+    - "Pairs with ecc.conventional-commit-review (drafting the message) and the repository's CHANGELOG convention; it does not write the changelog line, the agent does."
+applicability:
+  tags: [changelog, git, commits, hooks, release]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-changelog-gate
+removal: delete_managed_files
+grants:
+  process_execute: true
+risk: medium
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: 1490b6397c4f1b714b1a227c63545202c72e900ef73b4961d971fbff0ee51d4c
+  pinned_at: "2026-10-22"

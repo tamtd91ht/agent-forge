@@ -27,6 +27,15 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
   re-encryption, erasure that scrubs in place and propagates to every copy).
 - Trait sampling spreads the 300 sampled source files round-robin across top-level
   directories, so a large first directory cannot hide tenant or money code elsewhere.
+- `forge.skill.webhook-signature-verification` (on request, or when the entry skill finds
+  inbound callback endpoints):
+  verify over raw bytes before parsing, constant-time compare per language, one secret per
+  provider with rotation, replay controls, body-free logging, compensating controls.
+- `forge.hook.changelog-gate` (opt-in): a feat / fix commit with no CHANGELOG.md staged is
+  blocked before it exists; `[skip-changelog]` bypasses.
+- `lint` check `hook_output`: a hook script that writes to stdout only (print, echo,
+  console.log without stderr or a hookSpecificOutput document) is reported, since the
+  model never sees stdout. `examples/lint-messy` carries one.
 - `forge.hook.guard-secret-literals`: PreToolUse guard that refuses a credential *value* in
   the text about to be written (complements the by-name `guard-secrets-*` hooks); opt-in.
 - `agent-forge lint` gains four warning checks: `deadref` (a skill / agent / command / rule or

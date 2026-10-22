@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-forge/changelog_gate.py\"",
+            "timeout": 15,
+            "statusMessage": "agent-forge: changelog gate"
+          }
+        ]
+      }
+    ]
+  }
+}
