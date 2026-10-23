@@ -2,12 +2,12 @@ schema_version: '1'
 id: ecc.django-patterns
 name: Django Patterns
 description: Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps. Use when building or reviewing Django apps, DRF APIs, ORM queries, or caching.
-version: 1.0.0
+version: 1.1.0
 kind: skill
 category: engineering.architecture
 purpose: Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps.
 status: curated
-provenance: upstream
+provenance: adapted
 source:
   source_id: ecc
   repository: https://github.com/affaan-m/ECC
@@ -22,7 +22,7 @@ license:
 review:
   reviewed_at: '2026-10-21'
   reviewer: agent-forge curation (automated session; human sign-off pending)
-  rationale: Upstream ECC skill, one SKILL.md (736 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks django. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  rationale: Upstream ECC skill, one SKILL.md (736 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks django. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
 applicability:
   frameworks:
   - django
@@ -69,5 +69,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: 610a41970f9587a8efd3d63f8954f7acab672ac3895b319b7107ce8636858fc7
-  pinned_at: "2026-10-21"
+  assets_sha256: b7ae9de05cca0b625a846733da259f9596cda7e99af440857f9f5fc5ab559426
+  pinned_at: "2026-10-23"

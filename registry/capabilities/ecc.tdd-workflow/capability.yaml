@@ -2,12 +2,12 @@ schema_version: "1"
 id: ecc.tdd-workflow
 name: TDD workflow
 description: Red-green-refactor test-driven development workflow with coverage targets and plan hand-off.
-version: 1.0.0
+version: 1.1.0
 kind: skill
 category: engineering.testing
 purpose: Gives the agent a concrete, repeatable procedure for writing a failing test first, implementing the smallest change to green, and refactoring with coverage across unit, integration and E2E tests.
 status: curated
-provenance: upstream
+provenance: adapted
 source:
   source_id: ecc
   repository: https://github.com/affaan-m/ECC
@@ -22,7 +22,7 @@ license:
 review:
   reviewed_at: "2026-10-16"
   reviewer: agent-forge curation (automated session; human sign-off pending)
-  rationale: Pure markdown (583 lines), no scripts, hooks or MCP dependencies. Mentions an optional `.claude/tdd/` plan location and an informational pre-commit hook section; both are harmless outside ECC. Frontmatter has name + description, so it is valid for both Claude Code and Codex Agent Skills.
+  rationale: Pure markdown (583 lines), no scripts, hooks or MCP dependencies. Mentions an optional `.claude/tdd/` plan location and an informational pre-commit hook section; both are harmless outside ECC. Frontmatter has name + description, so it is valid for both Claude Code and Codex Agent Skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
   acknowledged_findings:
     - rule: instruction-override
       path: "*/tdd-workflow/SKILL.md"
@@ -71,5 +71,5 @@ risk: low
 benefit_score: 7
 maintenance_cost: 2
 integrity:
-  assets_sha256: 0cec3e4aae40d174a20b56aafb31081c249759bb4ec3034510a21d2b3662167b
-  pinned_at: "2026-10-16"
+  assets_sha256: d02262c5626bf6c9fe47a34d6b83556a0816a735b39c857580c1c5a6d9efb959
+  pinned_at: "2026-10-23"

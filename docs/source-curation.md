@@ -55,7 +55,7 @@ skill and run nothing; the rest is under *Watching* or in `rejections/`.
 
 | Capability | From | Decision | Why |
 |---|---|---|---|
-| `ecc.tdd-workflow` | ECC `skills/tdd-workflow/SKILL.md` | verbatim, both platforms, always | pure markdown; optional `.claude/tdd/` mention is harmless |
+| `ecc.tdd-workflow` | ECC `skills/tdd-workflow/SKILL.md` | verbatim, both platforms, always; since 1.1.0 testing patterns and mocks split into `references/` | pure markdown; optional `.claude/tdd/` mention is harmless |
 | `ecc.verification-loop` | ECC `skills/verification-loop/SKILL.md` | verbatim, Claude only, always | wording is Claude-session specific; mentions hooks informationally |
 | `ecc.security-review` | ECC `skills/security-review/*` (2 files) | verbatim, both, backend/fullstack/service/infra or `--want security` | no external refs |
 | `ecc.coding-standards` | ECC `skills/coding-standards/SKILL.md` | verbatim, both, always; conflicts with `ecc.rules.common` | one mention of "narrower ECC skill"; harmless |
@@ -112,6 +112,12 @@ One record per item, with the reason and what would have to change, lives in
 | superpowers `writing-plans` / `executing-plans` / `subagent-driven-development` / `using-git-worktrees` / `finishing-a-development-branch` | one chain of 6+ skills with scripts that write `.superpowers/` into the working tree; revisit as a single capability if a chain with scripts is ever allowed |
 
 ## Re-curation workflow
+
+Skills at or above 20,000 bytes are split, not trimmed (ADR-0012): add `Split` entries to
+`ECC_SPLITS` in `scripts/curate.py` (heading, reference file, when to read it). Today:
+`ecc.cpp-coding-standards`, `ecc.django-patterns`, `ecc.django-tdd`,
+`ecc.flutter-dart-code-review`, `ecc.kotlin-exposed-patterns`, `ecc.kotlin-testing`,
+`ecc.kubernetes-patterns`, `ecc.laravel-security`, `ecc.tdd-workflow` (all 1.1.0, adapted).
 
 ```bash
 agent-forge sources sync --update        # moves checkouts to upstream HEAD

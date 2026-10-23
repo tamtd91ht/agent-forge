@@ -23,6 +23,7 @@ def test_real_registry_is_valid() -> None:
     assert len(reg.items) >= 10
     rep = validate_registry(reg)
     assert rep.ok, rep.errors
+    assert not [w for w in rep.warnings if "compaction" in w]  # split via scripts/curate.py
     for cap in reg.curated():
         if cap.source.source_id != "workspace":
             assert cap.source.revision and len(cap.source.revision) == 40

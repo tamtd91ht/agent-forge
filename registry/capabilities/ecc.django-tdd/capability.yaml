@@ -2,12 +2,12 @@ schema_version: '1'
 id: ecc.django-tdd
 name: Django TDD
 description: Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs. Use when writing Django or DRF tests with pytest-django, or driving a Django feature test-first.
-version: 1.0.0
+version: 1.1.0
 kind: skill
 category: engineering.testing
 purpose: Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs.
 status: curated
-provenance: upstream
+provenance: adapted
 source:
   source_id: ecc
   repository: https://github.com/affaan-m/ECC
@@ -22,7 +22,7 @@ license:
 review:
   reviewed_at: '2026-10-21'
   reviewer: agent-forge curation (automated session; human sign-off pending)
-  rationale: Upstream ECC skill, one SKILL.md (731 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks django. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  rationale: Upstream ECC skill, one SKILL.md (731 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks django. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
   notes:
   - Django counterpart of ecc.tdd-workflow; conflicts so a Django project gets one.
 applicability:
@@ -74,5 +74,5 @@ risk: low
 benefit_score: 8
 maintenance_cost: 1
 integrity:
-  assets_sha256: 0d4060f07e2000efc0450442f197bd2f58ef859016b517ad82defddc64ab37b4
-  pinned_at: "2026-10-21"
+  assets_sha256: ee55aee765817149815a0273c40fc01ba66f125a311184d9eb2e9a8bb339937f
+  pinned_at: "2026-10-23"

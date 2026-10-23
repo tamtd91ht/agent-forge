@@ -68,6 +68,10 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
 - The entry skill (2.3.0) reads `traits` from `scan --json`, treats a trait-gated capability
   on a project without the trait as `stack_mismatch`, and asks the user to confirm a missed
   trait in `profile.yaml` instead of asserting it.
+- Nine ECC skills over the 20,000-byte post-compaction cut are optimised, not shortened
+  (1.1.0, `adapted`): situational sections move verbatim into `references/` with a
+  "read when" pointer, anchors are re-pointed, nothing is removed (`Split` in
+  `scripts/curate.py`, ADR-0012). Every `SKILL.md` is now under 17,500 bytes.
 - `ecc.verification-loop`'s `verif` equivalence pattern no longer matches
   `verification-before-completion`.
 

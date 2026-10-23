@@ -2,12 +2,12 @@ schema_version: '1'
 id: ecc.flutter-dart-code-review
 name: Flutter Dart Code Review
 description: Library-agnostic Flutter/Dart code review checklist covering widget best practices, state management patterns (BLoC, Riverpod, Provider, GetX, MobX, Signals), Dart idioms, performance, accessibility, security, and clean architecture. Use when reviewing Flutter or Dart code, whatever state management
-version: 1.0.0
+version: 1.1.0
 kind: skill
 category: engineering.review
 purpose: Library-agnostic Flutter/Dart code review checklist covering widget best practices, state management patterns (BLoC, Riverpod, Provider, GetX, MobX, Signals), Dart idioms, performance, accessibility, security, and clean architecture.
 status: curated
-provenance: upstream
+provenance: adapted
 source:
   source_id: ecc
   repository: https://github.com/affaan-m/ECC
@@ -22,7 +22,7 @@ license:
 review:
   reviewed_at: '2026-10-21'
   reviewer: agent-forge curation (automated session; human sign-off pending)
-  rationale: Upstream ECC skill, one SKILL.md (437 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages dart. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  rationale: Upstream ECC skill, one SKILL.md (437 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages dart. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
 applicability:
   languages:
   - dart
@@ -69,5 +69,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: bcd1cf981ca67111daa0573aa4ab68e13ac45c89f597351a8fd206ff1aeac56f
-  pinned_at: "2026-10-21"
+  assets_sha256: 22da1bda77ee18c078ced76630ae8285955dad891436002b3f6e226c958d130a
+  pinned_at: "2026-10-23"

@@ -372,91 +372,7 @@ resources:
 
 ## RBAC — Roles and ServiceAccounts
 
-### Principle of Least Privilege
-
-**Two patterns depending on whether the app calls the Kubernetes API:**
-
-#### Pattern A — App does NOT need the Kubernetes API (most apps)
-
-Disable token automounting on the ServiceAccount. The Role/RoleBinding are not needed.
-
-```yaml
-# ServiceAccount with token disabled — safest default
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-app-sa
-  namespace: my-namespace
-automountServiceAccountToken: false   # No K8s API token injected into pods
-```
-
-```yaml
-# Reference in Deployment — no token, no API access
-spec:
-  template:
-    spec:
-      serviceAccountName: my-app-sa
-      automountServiceAccountToken: false   # Belt-and-suspenders: also set at pod level
-```
-
-#### Pattern B — App DOES need the Kubernetes API (operators, controllers, config watchers)
-
-Enable the token and grant only the permissions actually required.
-
-```yaml
-# 1. ServiceAccount — enable token for this SA
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-app-sa
-  namespace: my-namespace
-automountServiceAccountToken: true    # Token required: app calls K8s API
-```
-
-```yaml
-# 2. Role — grant only what the app needs (namespace-scoped)
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: my-app-role
-  namespace: my-namespace
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list", "watch"]    # Read-only, specific resource
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["my-app-secrets"]  # Restrict to specific secret by name
-    verbs: ["get"]
-```
-
-```yaml
-# 3. Bind Role to ServiceAccount
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: my-app-rolebinding
-  namespace: my-namespace
-subjects:
-  - kind: ServiceAccount
-    name: my-app-sa
-    namespace: my-namespace
-roleRef:
-  kind: Role
-  apiGroup: rbac.authorization.k8s.io
-  name: my-app-role
-```
-
-```yaml
-# 4. Reference SA in Deployment
-spec:
-  template:
-    spec:
-      serviceAccountName: my-app-sa
-      # automountServiceAccountToken defaults to true from SA — token is injected
-```
-
----
+Read [references/rbac.md](references/rbac.md) when setting up Roles, RoleBindings or ServiceAccounts.
 
 ## Horizontal Pod Autoscaler (HPA)
 
@@ -538,118 +454,11 @@ EOF
 
 ## Jobs and CronJobs
 
-```yaml
-# One-off Job (DB migration, data processing)
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: db-migrate
-  namespace: my-namespace
-spec:
-  backoffLimit: 3          # Retry up to 3 times on failure
-  ttlSecondsAfterFinished: 3600   # Auto-delete after 1h
-  template:
-    spec:
-      restartPolicy: OnFailure    # Never for Jobs (not Always)
-      containers:
-        - name: migrate
-          image: ghcr.io/org/my-app:1.0.0
-          command: ["python", "manage.py", "migrate"]
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-```
-
-```yaml
-# CronJob
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: cleanup-job
-  namespace: my-namespace
-spec:
-  schedule: "0 2 * * *"         # 2am daily
-  concurrencyPolicy: Forbid      # Don't run if previous still running
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 1
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          restartPolicy: OnFailure
-          containers:
-            - name: cleanup
-              image: ghcr.io/org/cleanup:1.0.0
-              resources:
-                requests:
-                  cpu: "50m"
-                  memory: "64Mi"
-```
-
----
+Read [references/jobs-and-cronjobs.md](references/jobs-and-cronjobs.md) when writing a Job or CronJob.
 
 ## kubectl Debugging Cheatsheet
 
-```bash
-# --- Pod status and logs ---
-kubectl get pods -n my-namespace
-kubectl get pods -n my-namespace -o wide          # Show node assignment
-kubectl describe pod <pod-name> -n my-namespace   # Events and state details
-kubectl logs <pod-name> -n my-namespace           # Current logs
-kubectl logs <pod-name> -n my-namespace --previous  # Logs from crashed container
-kubectl logs <pod-name> -n my-namespace -c <container>  # Multi-container pod
-
-# --- Execute into a running container ---
-kubectl exec -it <pod-name> -n my-namespace -- sh
-kubectl exec -it <pod-name> -n my-namespace -- bash
-
-# --- Check resource usage ---
-kubectl top pods -n my-namespace
-kubectl top nodes
-
-# --- Deployment operations ---
-kubectl rollout status deployment/my-app -n my-namespace
-kubectl rollout history deployment/my-app -n my-namespace
-kubectl rollout undo deployment/my-app -n my-namespace      # Rollback
-kubectl rollout undo deployment/my-app --to-revision=2 -n my-namespace
-
-# --- Scale manually ---
-kubectl scale deployment my-app --replicas=5 -n my-namespace
-
-# --- Inspect events (cluster-wide issues) ---
-kubectl get events -n my-namespace --sort-by='.lastTimestamp'
-
-# --- Port-forward for local debugging ---
-kubectl port-forward pod/<pod-name> 8080:8080 -n my-namespace
-kubectl port-forward svc/my-app 8080:80 -n my-namespace
-
-# --- Dry-run to validate YAML ---
-kubectl apply -f deployment.yaml --dry-run=client
-kubectl apply -f deployment.yaml --dry-run=server   # Validates against live cluster
-```
-
-### Diagnosing Common Errors
-
-```bash
-# CrashLoopBackOff: container keeps crashing
-kubectl logs <pod-name> --previous -n my-namespace  # Check crash logs
-kubectl describe pod <pod-name> -n my-namespace     # Check exit code & OOMKilled
-
-# ImagePullBackOff: can't pull image
-kubectl describe pod <pod-name> -n my-namespace     # Check Events section
-# Causes: wrong image tag, missing imagePullSecret, private registry
-
-# Pending pod: not scheduled
-kubectl describe pod <pod-name> -n my-namespace
-# Causes: insufficient resources, no matching node selector, taint/toleration mismatch
-
-# OOMKilled: out of memory
-# Increase memory limits, check for memory leaks
-kubectl describe pod <pod-name> -n my-namespace | grep -A5 "Last State"
-```
-
----
+Read [references/kubectl-debugging.md](references/kubectl-debugging.md) when diagnosing a failing pod or deployment (CrashLoopBackOff, ImagePullBackOff, Pending, OOMKilled).
 
 ## Anti-Patterns
 
@@ -754,3 +563,6 @@ spec:
 - `deployment-patterns` — CI/CD pipelines, rollback strategy, health check endpoints
 - `security-review` — Broader security hardening context
 - `git-workflow` — GitOps integration with K8s (ArgoCD / Flux patterns)
+
+---
+Adapted by Agent Forge from ECC skills/kubernetes-patterns/SKILL.md (MIT License, Copyright (c) 2026 Affaan Mustafa): the sections that say "Read references/..." were moved there verbatim, so the skill stays under Claude Code's post-compaction limit.

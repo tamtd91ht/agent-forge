@@ -191,6 +191,23 @@ class Item:
     # hand-adapted assets (edits not expressible as replacements): the run checks that the
     # upstream files still exist at the recorded revision but never overwrites the copies
     frozen: bool = False
+    # assets relative SKILL.md path -> sections moved verbatim into references/ (see Split)
+    splits: dict[str, list[Split]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class Split:
+    """Move one section of a SKILL.md verbatim into `references/<file>`.
+
+    The section runs from its exact heading line to the next heading of the same or a higher
+    level (fenced code ignored). The heading stays, followed by a pointer saying when to read
+    the file, so nothing is lost and the skill stays under the post-compaction cut (ADR-0012).
+    A heading that no longer exists upstream fails the run.
+    """
+
+    heading: str
+    file: str
+    when: str
 
 
 def _mp_skill(
@@ -487,6 +504,67 @@ def _rewrite_links(text: str) -> str:
     return _REL_LINK_RE.sub(sub, text)
 
 
+_HEADING_RE = re.compile(r"^(#{1,6}) +(.+?) *$")
+_ANCHOR_LINK_RE = re.compile(r"\]\(#([^)\s]+)\)")
+
+
+def _headings(lines: list[str]):
+    """(line index, level, title) of every markdown heading outside fenced code."""
+    fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith(("```", "~~~")):
+            fence = not fence
+        elif not fence and (m := _HEADING_RE.match(line)):
+            yield i, len(m.group(1)), m.group(2)
+
+
+def _slug(title: str) -> str:
+    """GitHub-style heading anchor."""
+    return re.sub(r"[^\w\- ]", "", title.strip().lower()).replace(" ", "-")
+
+
+def _split_sections(text: str, splits: list[Split]) -> tuple[str, dict[str, str]]:
+    """Apply `splits` to a SKILL.md; return the new body and {reference file: section}.
+
+    In-document anchor links are re-pointed at whichever file now holds the heading.
+    """
+    refs: dict[str, str] = {}
+    for sp in splits:
+        lines = text.split("\n")
+        heads = list(_headings(lines))
+        start = next((h for h in heads if lines[h[0]] == sp.heading), None)
+        if start is None:
+            raise ValueError(f"heading not found: {sp.heading!r}")
+        i, level, _ = start
+        end = next((j for j, lv, _ in heads if j > i and lv <= level), len(lines))
+        refs[sp.file] = "\n".join(lines[i:end]).rstrip("\n") + "\n"
+        pointer = f"Read [references/{sp.file}](references/{sp.file}) when {sp.when}."
+        text = "\n".join([*lines[:i], sp.heading, "", pointer, "", *lines[end:]])
+
+    docs: dict[str | None, str] = {None: text, **refs}
+    slugs = {k: {_slug(t) for _, _, t in _headings(v.split("\n"))} for k, v in docs.items()}
+
+    def repoint(key: str | None, doc: str) -> str:
+        def sub(m: re.Match[str]) -> str:
+            anchor = m.group(1)
+            if anchor in slugs[key]:
+                return m.group(0)
+            owner = next((k for k, s in slugs.items() if k != key and anchor in s), key)
+            if owner == key:
+                return m.group(0)
+            if owner is None:
+                path = "../SKILL.md"  # from a reference back to the skill
+            elif key is None:
+                path = f"references/{owner}"  # from the skill to a reference
+            else:
+                path = owner  # between two references in the same directory
+            return f"]({path}#{anchor})"
+
+        return _ANCHOR_LINK_RE.sub(sub, doc)
+
+    return repoint(None, text), {k: repoint(k, v) for k, v in refs.items()}
+
+
 def _rule_pack(suffix: str, upstream_dir: str, extra: tuple[str, ...]) -> Item:
     cid = f"ecc.rules.{suffix}"
     dest_dir = f"claude_code/ecc-{suffix}"
@@ -505,6 +583,92 @@ def _stack_skill(name: str) -> Item:
 
 ITEMS.extend(_rule_pack(s, d, extra) for s, d, extra in ECC_RULE_PACKS)
 ITEMS.extend(_stack_skill(n) for n in ECC_STACK_SKILLS)
+
+ECC_SPLIT_FOOTER = (
+    "\n\n---\n"
+    "Adapted by Agent Forge from ECC skills/{name}/SKILL.md (MIT License, Copyright (c) 2026 "
+    'Affaan Mustafa): the sections that say "Read references/..." were moved there verbatim, '
+    "so the skill stays under Claude Code's post-compaction limit.\n"
+)
+
+# SKILL.md files at or above 20,000 bytes (ADR-0012): situational sections - topic-specific
+# examples, cheat sheets, sources - move to references/; workflow, core rules and checklists
+# stay. Target: under 17,500 bytes.
+ECC_SPLITS: dict[str, list[Split]] = {
+    "cpp-coding-standards": [
+        Split("## Error Handling (E.*)", "error-handling.md",
+              "the code throws, catches or defines exceptions"),
+        Split("## Concurrency & Parallelism (CP.*)", "concurrency.md",
+              "the code shares data between threads or uses locks, atomics or async tasks"),
+        Split("## Templates & Generic Programming (T.*)", "templates.md",
+              "writing templates, concepts or other generic code"),
+        Split("## Performance (Per.*)", "performance.md",
+              "optimising code or reviewing a performance-sensitive path"),
+    ],
+    "django-patterns": [
+        Split("## Django REST Framework Patterns", "drf-patterns.md",
+              "the project uses Django REST Framework (serializers, viewsets, custom actions)"),
+    ],
+    "django-tdd": [
+        Split("## DRF API Testing", "drf-api-testing.md",
+              "testing Django REST Framework serializers or viewsets"),
+    ],
+    "flutter-dart-code-review": [
+        Split("## 4. State Management (Library-Agnostic)", "state-management.md",
+              "reviewing state management (BLoC, Riverpod, Provider, MobX, GetX, Signals, setState)"),
+        Split("## State Management Quick Reference", "state-management-quick-reference.md",
+              "you need the per-library state management cheat sheet"),
+        Split("## Sources", "sources.md",
+              "you need the upstream documentation behind a review point"),
+    ],
+    "kotlin-exposed-patterns": [
+        Split("## DSL Queries", "dsl-queries.md",
+              "writing Exposed DSL queries (CRUD, joins, aggregates, pagination, batch operations)"),
+        Split("## Repository Pattern", "repository-pattern.md",
+              "implementing a repository on top of Exposed"),
+    ],
+    "kotlin-testing": [
+        Split("### Kotest Spec Styles", "kotest-spec-styles.md",
+              "choosing or writing a Kotest spec style (StringSpec, FunSpec, BehaviorSpec, DescribeSpec)"),
+        Split("### Coroutine Testing", "coroutine-testing.md",
+              "testing suspend functions, Flows or coroutine dispatchers"),
+        Split("### Property-Based Testing", "property-based-testing.md",
+              "writing property-based tests with Kotest"),
+    ],
+    "kubernetes-patterns": [
+        Split("## RBAC — Roles and ServiceAccounts", "rbac.md",
+              "setting up Roles, RoleBindings or ServiceAccounts"),
+        Split("## Jobs and CronJobs", "jobs-and-cronjobs.md", "writing a Job or CronJob"),
+        Split("## kubectl Debugging Cheatsheet", "kubectl-debugging.md",
+              "diagnosing a failing pod or deployment (CrashLoopBackOff, ImagePullBackOff, Pending, OOMKilled)"),
+    ],
+    "laravel-security": [
+        Split("## Authentication", "authentication.md",
+              "working on login, Sanctum tokens, password handling or sessions"),
+        Split("## API Security", "api-security.md",
+              "building or securing an API (rate limiting, Sanctum vs Passport, CORS)"),
+        Split("## CSRF Protection", "csrf.md",
+              "handling CSRF for forms, excluded routes or JavaScript requests"),
+        Split("## File Upload Security", "file-uploads.md", "accepting or storing uploaded files"),
+        Split("## Queue Security", "queues.md", "dispatching or handling queued jobs"),
+        Split("## Logging Security Events", "security-logging.md",
+              "adding audit or security-event logging"),
+    ],
+    "tdd-workflow": [
+        Split("## Testing Patterns", "testing-patterns.md",
+              "writing a unit, Bun, API integration or Playwright E2E test and want the reference pattern"),
+        Split("## Mocking External Services", "mocking.md",
+              "mocking Supabase, Redis or OpenAI in tests"),
+    ],
+}  # fmt: skip
+
+for _item in ITEMS:
+    _name = _item.capability_id.removeprefix("ecc.")
+    if _item.source_id == "ecc" and _name in ECC_SPLITS:
+        for _up, _down in _item.files:
+            if _down.endswith("/SKILL.md"):
+                _item.splits[_down] = ECC_SPLITS[_name]
+                _item.footers[_down] = ECC_SPLIT_FOOTER.format(name=_name)
 
 
 def git_head(checkout: Path) -> str:
@@ -573,6 +737,16 @@ def main() -> int:
                 text = text.replace(old, new, 1)
             if item.rewrite_links and down.endswith(".md"):
                 text = _rewrite_links(text)
+            if down in item.splits:
+                try:
+                    text, refs = _split_sections(text, item.splits[down])
+                except ValueError as e:
+                    print(f"!! {item.capability_id}: {e} in {up}", file=sys.stderr)
+                    return 2
+                for ref_name, ref_text in refs.items():
+                    ref = dst.parent / "references" / ref_name
+                    ref.parent.mkdir(parents=True, exist_ok=True)
+                    ref.write_text(ref_text, encoding="utf-8", newline="\n")
             if down in item.footers:
                 text = text.rstrip("\n") + item.footers[down]
             dst.write_text(text, encoding="utf-8", newline="\n")

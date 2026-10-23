@@ -335,59 +335,7 @@ const auto config = [&] {
 
 ## Error Handling (E.*)
 
-### Key Rules
-
-| Rule | Summary |
-|------|---------|
-| **E.1** | Develop an error-handling strategy early in a design |
-| **E.2** | Throw an exception to signal that a function can't perform its assigned task |
-| **E.6** | Use RAII to prevent leaks |
-| **E.12** | Use `noexcept` when throwing is impossible or unacceptable |
-| **E.14** | Use purpose-designed user-defined types as exceptions |
-| **E.15** | Throw by value, catch by reference |
-| **E.16** | Destructors, deallocation, and swap must never fail |
-| **E.17** | Don't try to catch every exception in every function |
-
-### Exception Hierarchy
-
-```cpp
-// E.14 + E.15: Custom exception types, throw by value, catch by reference
-class AppError : public std::runtime_error {
-public:
-    using std::runtime_error::runtime_error;
-};
-
-class NetworkError : public AppError {
-public:
-    NetworkError(const std::string& msg, int code)
-        : AppError(msg), status_code(code) {}
-    int status_code;
-};
-
-void fetch_data(const std::string& url) {
-    // E.2: Throw to signal failure
-    throw NetworkError("connection refused", 503);
-}
-
-void run() {
-    try {
-        fetch_data("https://api.example.com");
-    } catch (const NetworkError& e) {
-        log_error(e.what(), e.status_code);
-    } catch (const AppError& e) {
-        log_error(e.what());
-    }
-    // E.17: Don't catch everything here -- let unexpected errors propagate
-}
-```
-
-### Anti-Patterns
-
-- Throwing built-in types like `int` or string literals (E.14)
-- Catching by value (slicing risk) (E.15)
-- Empty catch blocks that silently swallow errors
-- Using exceptions for flow control (E.3)
-- Error handling based on global state like `errno` (E.28)
+Read [references/error-handling.md](references/error-handling.md) when the code throws, catches or defines exceptions.
 
 ## Constants & Immutability (Con.*)
 
@@ -431,118 +379,11 @@ constexpr int MAX_SENSORS = 256;
 
 ## Concurrency & Parallelism (CP.*)
 
-### Key Rules
-
-| Rule | Summary |
-|------|---------|
-| **CP.2** | Avoid data races |
-| **CP.3** | Minimize explicit sharing of writable data |
-| **CP.4** | Think in terms of tasks, rather than threads |
-| **CP.8** | Don't use `volatile` for synchronization |
-| **CP.20** | Use RAII, never plain `lock()`/`unlock()` |
-| **CP.21** | Use `std::scoped_lock` to acquire multiple mutexes |
-| **CP.22** | Never call unknown code while holding a lock |
-| **CP.42** | Don't wait without a condition |
-| **CP.44** | Remember to name your `lock_guard`s and `unique_lock`s |
-| **CP.100** | Don't use lock-free programming unless you absolutely have to |
-
-### Safe Locking
-
-```cpp
-// CP.20 + CP.44: RAII locks, always named
-class ThreadSafeQueue {
-public:
-    void push(int value) {
-        std::lock_guard<std::mutex> lock(mutex_);  // CP.44: named!
-        queue_.push(value);
-        cv_.notify_one();
-    }
-
-    int pop() {
-        std::unique_lock<std::mutex> lock(mutex_);
-        // CP.42: Always wait with a condition
-        cv_.wait(lock, [this] { return !queue_.empty(); });
-        const int value = queue_.front();
-        queue_.pop();
-        return value;
-    }
-
-private:
-    std::mutex mutex_;             // CP.50: mutex with its data
-    std::condition_variable cv_;
-    std::queue<int> queue_;
-};
-```
-
-### Multiple Mutexes
-
-```cpp
-// CP.21: std::scoped_lock for multiple mutexes (deadlock-free)
-void transfer(Account& from, Account& to, double amount) {
-    std::scoped_lock lock(from.mutex_, to.mutex_);
-    from.balance_ -= amount;
-    to.balance_ += amount;
-}
-```
-
-### Anti-Patterns
-
-- `volatile` for synchronization (CP.8 -- it's for hardware I/O only)
-- Detaching threads (CP.26 -- lifetime management becomes nearly impossible)
-- Unnamed lock guards: `std::lock_guard<std::mutex>(m);` destroys immediately (CP.44)
-- Holding locks while calling callbacks (CP.22 -- deadlock risk)
-- Lock-free programming without deep expertise (CP.100)
+Read [references/concurrency.md](references/concurrency.md) when the code shares data between threads or uses locks, atomics or async tasks.
 
 ## Templates & Generic Programming (T.*)
 
-### Key Rules
-
-| Rule | Summary |
-|------|---------|
-| **T.1** | Use templates to raise the level of abstraction |
-| **T.2** | Use templates to express algorithms for many argument types |
-| **T.10** | Specify concepts for all template arguments |
-| **T.11** | Use standard concepts whenever possible |
-| **T.13** | Prefer shorthand notation for simple concepts |
-| **T.43** | Prefer `using` over `typedef` |
-| **T.120** | Use template metaprogramming only when you really need to |
-| **T.144** | Don't specialize function templates (overload instead) |
-
-### Concepts (C++20)
-
-```cpp
-#include <concepts>
-
-// T.10 + T.11: Constrain templates with standard concepts
-template<std::integral T>
-T gcd(T a, T b) {
-    while (b != 0) {
-        a = std::exchange(b, a % b);
-    }
-    return a;
-}
-
-// T.13: Shorthand concept syntax
-void sort(std::ranges::random_access_range auto& range) {
-    std::ranges::sort(range);
-}
-
-// Custom concept for domain-specific constraints
-template<typename T>
-concept Serializable = requires(const T& t) {
-    { t.serialize() } -> std::convertible_to<std::string>;
-};
-
-template<Serializable T>
-void save(const T& obj, const std::string& path);
-```
-
-### Anti-Patterns
-
-- Unconstrained templates in visible namespaces (T.47)
-- Specializing function templates instead of overloading (T.144)
-- Template metaprogramming where `constexpr` suffices (T.120)
-- `typedef` instead of `using` (T.43)
+Read [references/templates.md](references/templates.md) when writing templates, concepts or other generic code.
 
 ## Standard Library (SL.*)
 
@@ -665,40 +506,7 @@ private:
 
 ## Performance (Per.*)
 
-### Key Rules
-
-| Rule | Summary |
-|------|---------|
-| **Per.1** | Don't optimize without reason |
-| **Per.2** | Don't optimize prematurely |
-| **Per.6** | Don't make claims about performance without measurements |
-| **Per.7** | Design to enable optimization |
-| **Per.10** | Rely on the static type system |
-| **Per.11** | Move computation from run time to compile time |
-| **Per.19** | Access memory predictably |
-
-### Guidelines
-
-```cpp
-// Per.11: Compile-time computation where possible
-constexpr auto lookup_table = [] {
-    std::array<int, 256> table{};
-    for (int i = 0; i < 256; ++i) {
-        table[i] = i * i;
-    }
-    return table;
-}();
-
-// Per.19: Prefer contiguous data for cache-friendliness
-std::vector<Point> points;           // GOOD: contiguous
-std::vector<std::unique_ptr<Point>> indirect_points; // BAD: pointer chasing
-```
-
-### Anti-Patterns
-
-- Optimizing without profiling data (Per.1, Per.6)
-- Choosing "clever" low-level code over clear abstractions (Per.4, Per.5)
-- Ignoring data layout and cache behavior (Per.19)
+Read [references/performance.md](references/performance.md) when optimising code or reviewing a performance-sensitive path.
 
 ## Quick Reference Checklist
 
@@ -722,3 +530,6 @@ Before marking C++ work complete:
 - [ ] Exceptions are custom types, thrown by value, caught by reference (E.14, E.15)
 - [ ] `'\n'` instead of `std::endl` (SL.io.50)
 - [ ] No magic numbers (ES.45)
+
+---
+Adapted by Agent Forge from ECC skills/cpp-coding-standards/SKILL.md (MIT License, Copyright (c) 2026 Affaan Mustafa): the sections that say "Read references/..." were moved there verbatim, so the skill stays under Claude Code's post-compaction limit.

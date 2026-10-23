@@ -2,12 +2,12 @@ schema_version: '1'
 id: ecc.kotlin-testing
 name: Kotlin Testing
 description: Kotlin testing patterns with Kotest, MockK, coroutine testing, property-based testing, and Kover coverage. Follows TDD methodology with idiomatic Kotlin practices. Use when writing Kotlin tests with Kotest or MockK, or testing coroutines and checking coverage.
-version: 1.0.0
+version: 1.1.0
 kind: skill
 category: engineering.testing
 purpose: Kotlin testing patterns with Kotest, MockK, coroutine testing, property-based testing, and Kover coverage.
 status: curated
-provenance: upstream
+provenance: adapted
 source:
   source_id: ecc
   repository: https://github.com/affaan-m/ECC
@@ -22,7 +22,7 @@ license:
 review:
   reviewed_at: '2026-10-21'
   reviewer: agent-forge curation (automated session; human sign-off pending)
-  rationale: Upstream ECC skill, one SKILL.md (826 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages kotlin. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills.
+  rationale: Upstream ECC skill, one SKILL.md (826 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to languages kotlin. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
 applicability:
   languages:
   - kotlin
@@ -68,5 +68,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: 71c0ee274d4292d47547737c8caf52a7293e114469b347853a6c551229354bbc
-  pinned_at: "2026-10-21"
+  assets_sha256: 3b64ef1bec7886cf24a08acbb2652c30e5c4d67dce2e4d92c7175762c7387faa
+  pinned_at: "2026-10-23"

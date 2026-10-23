@@ -34,5 +34,14 @@ path or plan field; approval digests are unchanged.
 ## Out of scope
 
 Size limits of other harnesses; rewriting upstream text automatically (adaptation stays a
-reviewed `replacements` entry in `scripts/curate.py`); splitting `ecc.tdd-workflow`, which is
-a separate curation decision.
+reviewed entry in `scripts/curate.py`).
+
+## Follow-up (2026-10-23)
+
+Nine ECC skills were over the cut. They are optimised, not shortened: `scripts/curate.py`
+gains `Split` entries (`ECC_SPLITS`) that move situational sections - topic-specific
+examples, cheat sheets, sources - verbatim into `references/`, keep the heading with a
+"Read references/x.md when ..." pointer, and re-point in-document anchor links. A heading
+missing upstream fails the run. Every upstream line is still shipped; the capabilities are
+`adapted` at 1.1.0 and all `SKILL.md` files are under 17,500 bytes.
+`test_real_registry_is_valid` now fails on any size warning.
