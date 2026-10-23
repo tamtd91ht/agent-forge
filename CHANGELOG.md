@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-23
 
 Content for what a project *does*, not only what it is built with (ADR-0010).
 
