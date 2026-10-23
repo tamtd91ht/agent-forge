@@ -85,7 +85,7 @@ jobs:
           name: sbom
           path: release
       - name: Sign every release file with Sigstore (keyless, OIDC identity of this workflow)
-        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        uses: sigstore/gh-action-sigstore-python@v3.5.0
         with:
           inputs: release/*
       - name: Release notes from CHANGELOG.md
