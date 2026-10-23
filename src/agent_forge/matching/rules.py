@@ -35,7 +35,7 @@ from agent_forge.models.capability import (
     Platform,
     RiskLevel,
 )
-from agent_forge.models.project import ProjectProfile
+from agent_forge.models.project import Detection, ProjectProfile
 from agent_forge.policy.engine import Decision, PolicySet
 from agent_forge.registry.context_load import context_chars
 from agent_forge.registry.loader import Registry
@@ -56,6 +56,24 @@ class MatchContext:
     policy: PolicySet | None = None
 
 
+# Evidence levels of a recommendation, from the confidence of the detections it matched:
+#   confirmed          every matched dimension rests on a detection at >= 0.8 (a manifest
+#                      dependency, a confirmed profile.yaml entry) or the capability is `always`
+#   probable           at least one matched dimension rests on a weaker detection (0.5 - 0.8:
+#                      a source-token trait, a sparse language signal)
+#   needs_confirmation the capability was pulled in by request, tag or policy without the
+#                      project showing its conditions, or as a dependency of another
+CONFIRMED = "confirmed"
+PROBABLE = "probable"
+NEEDS_CONFIRMATION = "needs_confirmation"
+
+
+def evidence_level(min_confidence: float | None) -> str:
+    if min_confidence is None:
+        return NEEDS_CONFIRMATION
+    return CONFIRMED if min_confidence >= 0.8 else PROBABLE
+
+
 @dataclass
 class Candidate:
     capability: Capability
@@ -65,6 +83,8 @@ class Candidate:
     score: ScoreBreakdown = field(default_factory=ScoreBreakdown)
     optional: bool = False
     dependency_of: list[str] = field(default_factory=list)
+    # How strong the project evidence behind the match is (see `evidence_level`).
+    confidence: str = NEEDS_CONFIRMATION
 
 
 @dataclass
@@ -101,10 +121,29 @@ def choose_platforms(
     return [Platform.CLAUDE_CODE], notes
 
 
-def _applicability(
-    cap: Capability, profile: ProjectProfile, ctx: MatchContext
-) -> tuple[bool, int, list[str]]:
-    """Return (applies, specificity, reasons)."""
+@dataclass
+class Applies:
+    applies: bool
+    specificity: int
+    reasons: list[str]
+    # Weakest detection among the matched dimensions; None when nothing in the project
+    # matched (requested / tag / policy only). Feeds `evidence_level`.
+    min_confidence: float | None = None
+
+
+def _cite(dets: list[Detection], hit: set[str]) -> tuple[str, float]:
+    """`name (evidence path, confidence)` per hit, and the weakest confidence among them."""
+    parts: list[str] = []
+    weakest = 1.0
+    for name in sorted(hit):
+        d = next(x for x in dets if x.name == name)
+        where = d.evidence[0].path if d.evidence else "*"
+        parts.append(f"{name} ({where}, {d.confidence:.2f})")
+        weakest = min(weakest, d.confidence)
+    return ", ".join(parts), weakest
+
+
+def _applicability(cap: Capability, profile: ProjectProfile, ctx: MatchContext) -> Applies:
     app = cap.applicability
     reasons: list[str] = []
     requested = _is_requested(cap, ctx)
@@ -118,33 +157,32 @@ def _applicability(
         )
     if app.always:
         reasons.append("applies to every project")
-        return True, 0, reasons
+        return Applies(True, 0, reasons, 1.0)
     dims = 0
     matched = 0
-    if app.project_types:
+    weakest = 1.0
+    for label, wanted, dets, names in (
+        ("project type", app.project_types, profile.project_types, profile.project_type_names),
+        ("language", app.languages, profile.languages, profile.language_names),
+        ("framework", app.frameworks, profile.frameworks, profile.framework_names),
+    ):
+        if not wanted:
+            continue
         dims += 1
-        hit = profile.project_type_names & set(app.project_types)
+        hit = names & set(wanted)
         if hit:
             matched += 1
-            reasons.append("project type: " + ", ".join(sorted(hit)))
-    if app.languages:
-        dims += 1
-        hit = profile.language_names & set(app.languages)
-        if hit:
-            matched += 1
-            reasons.append("language: " + ", ".join(sorted(hit)))
-    if app.frameworks:
-        dims += 1
-        hit = profile.framework_names & set(app.frameworks)
-        if hit:
-            matched += 1
-            reasons.append("framework: " + ", ".join(sorted(hit)))
+            cited, conf = _cite(dets, hit)
+            weakest = min(weakest, conf)
+            reasons.append(f"{label}: {cited}")
     if app.traits:
         dims += 1
         hit = profile.trait_names & set(app.traits)
         if hit:
             matched += 1
-            reasons.append("trait: " + ", ".join(sorted(hit)))
+            cited, conf = _cite(profile.traits, hit)
+            weakest = min(weakest, conf)
+            reasons.append("trait: " + cited)
         else:
             reasons.append(
                 "trait not shown by the project: "
@@ -163,11 +201,16 @@ def _applicability(
             reasons.append("file present: " + ", ".join(present))
     if dims == 0:
         # only tags: applicable only when requested
-        return requested, 0, reasons or ["no applicability conditions; only installed on request"]
-    applies = matched == dims or requested
-    if not applies:
-        reasons.append("applicability conditions not met")
-    return applies, matched, reasons
+        return Applies(
+            requested, 0, reasons or ["no applicability conditions; only installed on request"]
+        )
+    if matched == dims:
+        return Applies(True, matched, reasons, weakest)
+    if requested:
+        reasons.append("applicability conditions not met; installed because it was requested")
+        return Applies(True, matched, reasons)
+    reasons.append("applicability conditions not met")
+    return Applies(False, matched, reasons)
 
 
 def _file_present(profile: ProjectProfile, rel: str) -> bool:
@@ -333,7 +376,7 @@ def evaluate(reg: Registry, profile: ProjectProfile, ctx: MatchContext) -> Match
 
 def applies_to(cap: Capability, profile: ProjectProfile, ctx: MatchContext) -> bool:
     """Public view of the applicability rule (used by `decisions verify` for `stack_mismatch`)."""
-    return _applicability(cap, profile, ctx)[0]
+    return _applicability(cap, profile, ctx).applies
 
 
 def _is_required(cap: Capability, ctx: MatchContext) -> bool:
@@ -455,12 +498,12 @@ def _evaluate_one(
             ],
         )
     if platform not in cap.platforms:
-        return Rejection(
-            cap,
-            platform,
-            "unsupported_platform",
-            [f"not available for {adapter.info.display_name}"],
-        )
+        why = f"not available for {adapter.info.display_name}"
+        if not adapter.supports(cap.kind):
+            # say which mechanism is missing, so a reader knows to look for a counterpart in
+            # another kind (e.g. a skill form of an agent) rather than for a curation gap
+            why += f": its adapter does not install kind {cap.kind.value!r}"
+        return Rejection(cap, platform, "unsupported_platform", [why])
     if not adapter.supports(cap.kind):
         return Rejection(
             cap,
@@ -479,8 +522,9 @@ def _evaluate_one(
                 [f"destination {d.dest} is outside the adapter's managed roots"],
             )
 
-    applies, specificity, reasons = _applicability(cap, profile, ctx)
-    if not applies:
+    verdict = _applicability(cap, profile, ctx)
+    reasons, specificity = verdict.reasons, verdict.specificity
+    if not verdict.applies:
         return Rejection(cap, platform, "not_applicable", reasons)
 
     # Policy runs after applicability only so that irrelevant capabilities read as
@@ -545,7 +589,13 @@ def _evaluate_one(
             ],
         )
 
-    cand = Candidate(cap, platform, reasons=reasons, existing=existing)
+    cand = Candidate(
+        cap,
+        platform,
+        reasons=reasons,
+        existing=existing,
+        confidence=evidence_level(verdict.min_confidence),
+    )
     cand.score = score(cap, profile, wanted_tags=set(ctx.wanted_tags), specificity=specificity)
     _apply_optional(cand, requested, ctx)
     return cand

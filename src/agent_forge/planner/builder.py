@@ -323,6 +323,7 @@ def _selected_entry(
         score=round(cand.score.total, 2),
         risk=cap.risk,
         reasons=[*cand.reasons, *cand.score.explain()],
+        confidence=cand.confidence,
         solves=cap.purpose,
         existing=cand.existing,
         adds=adds,
@@ -682,6 +683,7 @@ def build_upgrade_plan(reg: Registry, profile: ProjectProfile, ctx: MatchContext
                 version=cap.version,
                 platform=platforms[0],
                 score=0.0,
+                confidence="confirmed",  # acts on an existing install; the manifest is the evidence
                 risk=cap.risk,
                 reasons=[
                     f"upgrade {rec.capability_id}: installed {old_version} -> registry {cap.version}"

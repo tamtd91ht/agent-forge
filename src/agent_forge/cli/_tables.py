@@ -87,6 +87,11 @@ def _print_profile(profile) -> None:
 
 
 _SCORE_PART = re.compile(r": [+-]\d+\.\d$")  # lines produced by ScoreBreakdown.explain()
+_EVIDENCE_STYLE = {
+    "confirmed": "[green]confirmed[/]",
+    "probable": "[yellow]probable[/]",
+    "needs_confirmation": "[magenta]needs confirmation[/]",
+}
 
 
 def _summarize_adds(adds: list[str]) -> list[str]:
@@ -117,7 +122,9 @@ def _print_plan_summary(plan, *, hide: tuple[str, ...] = ()) -> None:
         console.print(f"[dim]note:[/] {n}")
     if plan.selected:
         t = Table(title=f"selected ({len(plan.selected)})")
-        for col in ("capability", "ver", "platform", "score", "risk", "ctx", "why", "adds"):
+        for col in (
+            "capability", "ver", "platform", "score", "risk", "ctx", "evidence", "why", "adds"
+        ):  # fmt: skip
             t.add_column(col, overflow="fold")
         for s in plan.selected:
             reasons = [r for r in s.reasons if not _SCORE_PART.search(r)]  # score: --json
@@ -131,6 +138,7 @@ def _print_plan_summary(plan, *, hide: tuple[str, ...] = ()) -> None:
                 f"{s.score:.1f}",
                 s.risk.value,
                 str(s.context_chars),
+                _EVIDENCE_STYLE.get(s.confidence, s.confidence),
                 why,
                 "\n".join(_summarize_adds(s.adds)),
             )

@@ -1,0 +1,72 @@
+schema_version: "1"
+id: forge.skill.elasticsearch-patterns
+name: Elasticsearch patterns (an index you can rebuild, a query that cannot take the cluster down)
+description: Checklist for any code that touches an Elasticsearch or OpenSearch index in any client - the index derived from a primary store and rebuildable, explicit mappings in versioned templates behind an alias with keyword vs text chosen per field, filter context and the tenant filter in every query, point-in-time with search_after for deep pages and exports instead of from/size, bounded sizes and track_total_hits, bulk indexing by bytes with per-item error handling and backoff on 429, a refresh policy chosen on purpose, timeouts plus bulkhead and circuit breaker so an overloaded cluster degrades the feature and not the service, slowlog and shard sizing checked before go-live.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: Prevents the Elasticsearch failures that only appear under production data and load - a mapping guessed from the first document, a deep page refused or slow on every shard, a bulk indexer that cascades 429s, a dual write that leaves the index and the database disagreeing, a search without a timeout that holds threads while the cluster is red - by making the agent apply the same discipline whatever the client.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-23"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored after a field test on a JVM / Node platform (Elasticsearch 8) whose search
+    layer had no curated counterpart and whose scanner missed the client dependency altogether.
+    Client-neutral rules; the knob names are the server's (`search_after`, `pit`, `refresh`,
+    `track_total_hits`), not a product's. No product identifiers, index names or module layouts.
+    Gated by the `elasticsearch` integration the scanner records from a manifest dependency (the
+    Java API client, Spring Data Elasticsearch, the REST client, @elastic/elasticsearch, the
+    Python and Go clients, their OpenSearch forks); on-demand, 0 always-loaded beyond name +
+    description.
+  notes:
+    - "Companion to forge.skill.event-contract / event-consumer-safety (the indexer is a consumer of the primary store's changes) and forge.skill.tenant-isolation (tenant filter in every query); loaded only when their traits are detected."
+    - "Evidence: not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  frameworks: [elasticsearch]
+  tags: [elasticsearch, opensearch, search, indexing, pagination, search_after]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/elasticsearch-patterns
+    dest: .claude/skills/elasticsearch-patterns
+    merge: create_only
+  - platform: codex
+    source: codex/elasticsearch-patterns
+    dest: .agents/skills/elasticsearch-patterns
+    merge: create_only
+  - platform: copilot
+    source: claude_code/elasticsearch-patterns
+    dest: .github/skills/elasticsearch-patterns
+    merge: create_only
+  - platform: gemini
+    source: claude_code/elasticsearch-patterns
+    dest: .gemini/skills/elasticsearch-patterns
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["elastic", "opensearch", "search.?index"]
+    content_patterns: ["search_after|point.?in.?time|pit", "alias", "bulk"]
+    description: an existing Elasticsearch discipline skill
+  - kind: rule
+    name_patterns: ["elastic", "opensearch", "search"]
+    content_patterns: ["search_after|point.?in.?time", "mapping"]
+    description: Elasticsearch rules already present
+validation:
+  - type: frontmatter
+    path: .claude/skills/elasticsearch-patterns/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 171287205a9dcff3bcaf29cc2b85920045e40cc3b8b2041b5f3110427d9b8fcf
+  pinned_at: "2026-10-23"

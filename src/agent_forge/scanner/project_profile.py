@@ -91,6 +91,7 @@ _JVM_FRAMEWORKS: dict[str, tuple[str, ...]] = {
     "spring": ("spring-boot", "org.springframework"),
     "quarkus": ("io.quarkus",),
     "micronaut": ("io.micronaut",),
+    "vertx": ("io.vertx",),
     "test:junit": ("junit",),
 }
 _GO_FRAMEWORKS: dict[str, tuple[str, ...]] = {
@@ -117,6 +118,7 @@ _NODE_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "postgres": ("pg", "postgres", "pg-promise"),
     "mysql": ("mysql", "mysql2"),
     "mongodb": ("mongodb", "mongoose"),
+    "elasticsearch": ("@elastic/elasticsearch", "@opensearch-project/opensearch"),
     "prisma": ("prisma", "@prisma/client"),
     "vite": ("vite",),
 }
@@ -127,15 +129,35 @@ _PY_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "postgres": ("psycopg", "psycopg2", "psycopg2-binary", "asyncpg"),
     "mysql": ("mysqlclient", "pymysql", "mysql-connector-python", "aiomysql"),
     "mongodb": ("pymongo", "motor"),
+    "elasticsearch": ("elasticsearch", "elasticsearch-dsl", "opensearch-py"),
     "celery": ("celery",),
 }
+# JVM markers are substrings of the build file. `jpa` deliberately omits `org.hibernate`: the
+# Bean Validation implementation lives at org.hibernate.validator and says nothing about ORM.
 _JVM_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "redis": ("spring-boot-starter-data-redis", "redis.clients", "io.lettuce"),
     "kafka": ("spring-kafka", "org.apache.kafka", "kafka-clients"),
     "rabbitmq": ("spring-boot-starter-amqp", "spring-rabbit", "com.rabbitmq"),
     "postgres": ("org.postgresql",),
     "mysql": ("mysql-connector", "com.mysql", "mariadb-java-client"),
-    "mongodb": ("spring-boot-starter-data-mongodb", "mongodb-driver"),
+    "mongodb": ("spring-boot-starter-data-mongodb", "mongodb-driver", "quarkus-mongodb"),
+    "elasticsearch": (
+        "co.elastic.clients",
+        "elasticsearch-java",
+        "spring-boot-starter-data-elasticsearch",
+        "spring-data-elasticsearch",
+        "org.elasticsearch.client",
+        "org.opensearch.client",
+    ),
+    "jpa": (
+        "spring-boot-starter-data-jpa",
+        "spring-data-jpa",
+        "hibernate-core",
+        "hibernate-orm",
+        "jakarta.persistence",
+        "javax.persistence",
+        "plugin.jpa",
+    ),
     "ktor": ("io.ktor",),
     "exposed": ("org.jetbrains.exposed",),
 }
@@ -151,6 +173,7 @@ _GO_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "postgres": ("github.com/jackc/pgx", "github.com/lib/pq"),
     "mysql": ("github.com/go-sql-driver/mysql",),
     "mongodb": ("go.mongodb.org/mongo-driver",),
+    "elasticsearch": ("github.com/elastic/go-elasticsearch", "github.com/olivere/elastic"),
 }
 _RUST_INTEGRATIONS: dict[str, tuple[str, ...]] = {
     "redis": ("redis",),
@@ -169,9 +192,53 @@ _DOCKER_FILES = (
 
 _BACKEND_FRAMEWORKS = {
     "express", "fastify", "nestjs", "django", "fastapi", "flask", "spring", "quarkus",
-    "micronaut", "gin", "echo", "fiber", "chi", "grpc", "aspnetcore", "axum", "actix-web",
-    "rocket", "rails", "laravel", "symfony",
+    "micronaut", "vertx", "gin", "echo", "fiber", "chi", "grpc", "aspnetcore", "axum",
+    "actix-web", "rocket", "rails", "laravel", "symfony",
 }  # fmt: skip
+
+# Kubernetes is recorded as a framework when a manifest is found anywhere in the tree (k8s/,
+# deploy/, manifests/, a service's own directory ...): a YAML document with `apiVersion:` and
+# one of these workload / networking kinds, a Helm chart, or a kustomization. Pipeline YAML
+# (.github/workflows) and compose files have neither, so a bare directory is never evidence.
+_K8S_KINDS = (
+    "Deployment", "StatefulSet", "DaemonSet", "Job", "CronJob", "Service", "Ingress",
+    "ConfigMap", "Secret", "Namespace", "HorizontalPodAutoscaler", "ServiceAccount",
+    "PersistentVolumeClaim", "NetworkPolicy", "Pod",
+)  # fmt: skip
+_K8S_DOC = re.compile(r"^apiVersion:\s*\S+", re.MULTILINE)
+_K8S_KIND = re.compile(r"^kind:\s*(" + "|".join(_K8S_KINDS) + r")\s*$", re.MULTILINE)
+# Directories whose YAML is read first, so the 300-file bound is spent where manifests live.
+_K8S_DIRS = frozenset(
+    {"k8s", "kubernetes", "kube", "deploy", "deployment", "deployments", "manifests", "helm",
+     "charts", "infra", "ops", "overlays", "base"}
+)  # fmt: skip
+_K8S_MAX_YAML = 300
+
+
+def _detect_kubernetes(walker: Walker, frameworks: dict[str, Detection]) -> None:
+    for entry in walker.find_by_name("Chart.yaml"):
+        text = walker.read_text(entry.rel) or ""
+        if re.search(r"^apiVersion:\s*v[12]\s*$", text, re.MULTILINE) and "name:" in text:
+            _add(frameworks, "kubernetes", 0.9, entry.rel, "Helm chart")
+    for name in ("kustomization.yaml", "kustomization.yml"):
+        for entry in walker.find_by_name(name):
+            _add(frameworks, "kubernetes", 0.9, entry.rel, "kustomization")
+    skip_names = (*_DOCKER_FILES, "Chart.yaml", "kustomization.yaml", "kustomization.yml")
+    candidates = [
+        e
+        for e in walker.find_by_suffix((".yaml", ".yml"))
+        if not e.rel.startswith((".github/", ".gitlab/"))
+        and e.rel.rsplit("/", 1)[-1] not in skip_names
+    ]
+    candidates.sort(key=lambda e: (not (set(e.rel.lower().split("/")[:-1]) & _K8S_DIRS), e.rel))
+    for entry in candidates[:_K8S_MAX_YAML]:
+        text = walker.read_text(entry.rel)
+        if text is None or not _K8S_DOC.search(text):
+            continue
+        m = _K8S_KIND.search(text)
+        if m:
+            _add(frameworks, "kubernetes", 0.9, entry.rel, f"manifest kind {m.group(1)}")
+
 
 _AGENT_DEPS = (
     "@anthropic-ai/sdk",
@@ -429,6 +496,7 @@ def _detect_project_types(
             _add(types, "service", 0.6, f, "container definition")
     if (
         "terraform" in languages
+        or "kubernetes" in fw
         or walker.under("helm")
         or walker.under("k8s")
         or walker.under(".github/workflows")
@@ -436,7 +504,7 @@ def _detect_project_types(
         _add(
             types,
             "infrastructure",
-            0.6 if "terraform" in languages else 0.4,
+            0.6 if "terraform" in languages or "kubernetes" in fw else 0.4,
             "*",
             "infra indicators",
         )
@@ -714,6 +782,7 @@ def scan_project(target: Path, *, limits: dict[str, int] | None = None) -> Proje
     agent_deps |= _detect_node(walker, frameworks, types, tests, warnings)
     agent_deps |= _detect_python(walker, frameworks, types, tests)
     _detect_jvm_go_rust_dotnet(walker, languages, frameworks, tests)
+    _detect_kubernetes(walker, frameworks)
     if walker.exists("Makefile"):
         mk = walker.read_text("Makefile") or ""
         for target in ("test", "lint", "format", "build"):

@@ -1,0 +1,7 @@
+services:
+  mongo:
+    image: mongo:7
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
+  kafka:
+    image: apache/kafka:3.8.0

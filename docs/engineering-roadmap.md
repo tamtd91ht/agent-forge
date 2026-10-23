@@ -142,6 +142,30 @@ Ordered by risk reduction. Each item: change → proving test. Status reflects t
 | F5 | Version from one source | packaging | done |
 | F6 | One roadmap; historical documents labelled | docs review | done |
 
+## Field-test audit (2026-10-23)
+
+Input: `agent-forge-upgrade-proposal.md` (a field test of 0.4.0 on a synthetic monorepo:
+Java 17 / Spring Boot, Vert.x, Kafka, RabbitMQ, Redis, MongoDB, Elasticsearch 8, Next.js,
+Playwright, Docker, Kubernetes, Terraform). Measured there: scanner recall 10/13 indicators
+(Elasticsearch, Vert.x, Kubernetes missed), recommendation precision 20/21 (`ecc.jpa-patterns`
+on a Spring service without JPA), architecture-need coverage 7 PASS + 3 PARTIAL + 4 FAIL / 14
+(no MongoDB, Elasticsearch, Vert.x content; backend reviewer unusable on Codex). Dry-run,
+apply, validate, rollback and partial rollback all passed. Those numbers describe one fixture,
+not a benchmark.
+
+| ID | Change | Proving test | Status |
+|---|---|---|---|
+| G1 | Scanner records `vertx`, `elasticsearch` (all ecosystems), `jpa` (never `hibernate-validator`) and `kubernetes` (manifest content, Helm chart, kustomization; not a directory name, pipeline YAML or compose) | `test_jvm_build_files_show_vertx_elasticsearch_and_persistence`, `test_kubernetes_is_detected_from_manifest_content_in_any_directory`, `test_yaml_without_kubernetes_kinds_is_not_kubernetes` | done |
+| G2 | Words in README / docs / comments are never dependencies | `test_words_in_docs_and_comments_are_not_dependencies` | done |
+| G3 | `ecc.jpa-patterns` gated on `jpa`, not `spring`; `ecc.kubernetes-patterns` gated on `kubernetes`, not tag-only | `test_jpa_patterns_need_a_jpa_dependency_not_only_spring`, `test_kubernetes_patterns_are_not_recommended_without_manifests` | done |
+| G4 | Reviewed fixture with the field-test shape; 13/13 indicators; precision and recall measured by `scripts/matching_report.py` | `examples/jvm-platform`, `test_example_projects_match_expected` | done |
+| G5 | Stack skills for MongoDB, Elasticsearch, Vert.x (on demand, identical Codex copies) | `test_stack_skills_follow_their_integrations_on_the_platform_fixture` | done |
+| G6 | Backend review on platforms without subagents (`forge.skill.backend-review`, body identical to the agent); `unsupported_platform` reason names the missing kind | `test_backend_review_skill_is_the_agent_body_for_platforms_without_agents`, `test_codex_gets_the_backend_review_skill_and_a_readable_rejection_for_the_agent` | done |
+| G7 | Evidence level per recommendation (`confirmed` / `probable` / `needs_confirmation`) with the evidence path and confidence in every reason; plan table and `--json` carry it | `test_recommendations_carry_an_evidence_level`, `test_confirmed_profile_entries_are_confirmed_evidence` | done |
+| G8 | Per-module profiles in a monorepo (a framework found in `services/a` is today a repository-wide fact with the manifest as evidence; a capability for one module is proposed to the whole repository) | needs an ADR: module-scoped applicability and destinations | open |
+| G9 | Kafka / RabbitMQ, DDD / modular-monolith and Terraform content beyond what exists (`event_driven` pack, `ecc.kubernetes-patterns`, `ecc.deployment-patterns`) | per the proposal's own rule, only with an owner, a trigger and a matching test; not written speculatively | open |
+| G10 | A/B measurement of coding uplift (10 tasks x 2 arms x 3 runs) | `tools/agent-forge-eval` is ready; needs a maintainer with the tool and a budget (Gate E) | open |
+
 ## Release gates
 
 Evidence for the production gates of [product-vision.md §11](product-vision.md#11-production-readiness-gates).
@@ -170,7 +194,7 @@ Evidence for the production gates of [product-vision.md §11](product-vision.md#
 | | existing configuration preserved | met | section/JSON merge tests, `test_setup_installs_only_the_entry_skill` |
 | | upgrade/downgrade documented | met | `docs/operations.md` |
 | | unsupported versions fail clearly | met | unknown `schema_version` refused; tool versions detected and bounded (`tests/unit/test_tool_versions.py`, exit 15); weekly docs watch |
-| E Value | representative fixture set | met | `examples/` (6 projects) |
+| E Value | representative fixture set | met | `examples/` (7 projects, incl. the 2026-10-23 field-test shape) |
 | | matching precision / missed measured | met | `scripts/matching_report.py` (examples exact; `--corpus` + thresholds for anonymised real repos), CI |
 | | baseline-vs-candidate evaluation | partial | harness `tools/agent-forge-eval` + 30 reviewed tasks + `review.evidence` field; no measurement run yet (needs a maintainer with the tool and a budget) |
 | | evidence vs AI explanation separated | met | plans carry evidence and reasons from rules; the agent's review is a separate conversation output |

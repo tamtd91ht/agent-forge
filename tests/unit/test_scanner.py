@@ -279,3 +279,98 @@ def test_trait_sampling_spreads_across_top_level_directories(make_project) -> No
     assert "multi_tenant" in profile.trait_names
     mt = next(d for d in profile.traits if d.name == "multi_tenant")
     assert mt.confidence >= 0.6
+
+
+_VERTX_POM = (
+    "<project><dependencies>"
+    "<dependency><groupId>io.vertx</groupId><artifactId>vertx-web</artifactId></dependency>"
+    "<dependency><groupId>co.elastic.clients</groupId>"
+    "<artifactId>elasticsearch-java</artifactId></dependency>"
+    "<dependency><groupId>org.mongodb</groupId>"
+    "<artifactId>mongodb-driver-sync</artifactId></dependency>"
+    "</dependencies></project>"
+)
+_GRADLE_KTS = (
+    'plugins { kotlin("plugin.jpa") version "2.0.0" }\n'
+    "dependencies {\n"
+    '  implementation("io.vertx:vertx-core:4.5.10")\n'
+    '  implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")\n'
+    '  implementation("org.hibernate.orm:hibernate-core:6.6.0.Final")\n'
+    "}\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("rel", "text"),
+    [("services/search/pom.xml", _VERTX_POM), ("build.gradle.kts", _GRADLE_KTS)],
+)
+def test_jvm_build_files_show_vertx_elasticsearch_and_persistence(
+    make_project, rel: str, text: str
+) -> None:
+    files = {rel: text, "src/main/java/App.java": "class App {}\n"}
+    profile = scan_project(make_project("jvm", files=files))
+    assert {"vertx", "elasticsearch"} <= profile.framework_names
+    assert ("jpa" in profile.framework_names) == rel.endswith(".kts")
+    assert ("mongodb" in profile.framework_names) == rel.endswith("pom.xml")
+    assert "backend" in profile.project_type_names  # Vert.x is a backend framework
+    for d in profile.frameworks:
+        if d.name in ("vertx", "elasticsearch", "jpa", "mongodb"):
+            assert d.confidence >= 0.8 and d.evidence[0].path == rel, d
+
+
+def test_words_in_docs_and_comments_are_not_dependencies(make_project) -> None:
+    files = {
+        "README.md": "# Platform\n\nWe use Elasticsearch, Hibernate / JPA, Vert.x, Kubernetes "
+        "and Redis in production; see docs/adr.\n",
+        "docs/adr/0001.md": "kind: Deployment\napiVersion: apps/v1\n(rejected: io.vertx)\n",
+        "src/main/java/App.java": "// TODO move to spring-boot-starter-data-jpa\nclass App {}\n",
+        "pom.xml": "<project><dependencies></dependencies></project>",
+    }
+    profile = scan_project(make_project("docs-only", files=files))
+    assert not profile.framework_names & {"elasticsearch", "jpa", "vertx", "kubernetes", "redis"}
+    assert "java" in profile.language_names
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        "k8s/deployment.yaml",
+        "deploy/prod/api.yml",
+        "services/api/manifests/statefulset.yaml",
+        "ops/cronjob.yaml",
+    ],
+)
+def test_kubernetes_is_detected_from_manifest_content_in_any_directory(
+    make_project, rel: str
+) -> None:
+    kind = (
+        "StatefulSet" if "statefulset" in rel else "CronJob" if "cronjob" in rel else "Deployment"
+    )
+    files = {rel: f"apiVersion: apps/v1\nkind: {kind}\nmetadata:\n  name: api\n"}
+    profile = scan_project(make_project("k8s", files=files))
+    k8s = next(d for d in profile.frameworks if d.name == "kubernetes")
+    assert k8s.confidence >= 0.8
+    assert k8s.evidence[0].path == rel and kind in k8s.evidence[0].detail
+    assert "infrastructure" in profile.project_type_names
+
+
+def test_helm_chart_and_kustomization_count_as_kubernetes(make_project) -> None:
+    files = {
+        "charts/api/Chart.yaml": "apiVersion: v2\nname: api\nversion: 0.1.0\n",
+        "deploy/overlays/prod/kustomization.yaml": "resources:\n  - ../../base\n",
+    }
+    profile = scan_project(make_project("helm", files=files))
+    k8s = next(d for d in profile.frameworks if d.name == "kubernetes")
+    assert {e.path for e in k8s.evidence} == set(files)
+
+
+def test_yaml_without_kubernetes_kinds_is_not_kubernetes(make_project) -> None:
+    files = {
+        "k8s/.keep": "",  # an empty directory name is not evidence
+        ".github/workflows/ci.yml": "on: push\njobs:\n  test:\n    runs-on: ubuntu\n",
+        "docker-compose.yml": "services:\n  api:\n    image: x\n",
+        "config/app.yaml": "kind: Deployment\n",  # no apiVersion: a config file, not a manifest
+        "deploy/notes.yaml": "apiVersion: v1\nkind: Note\n",  # not a workload kind
+    }
+    profile = scan_project(make_project("not-k8s", files=files))
+    assert "kubernetes" not in {d.name for d in profile.frameworks}

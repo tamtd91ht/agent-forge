@@ -22,10 +22,12 @@ license:
 review:
   reviewed_at: '2026-10-21'
   reviewer: agent-forge curation (automated session; human sign-off pending)
-  rationale: Upstream ECC skill, one SKILL.md (757 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to an explicit request only (tags kubernetes, k8s, deploy). Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
+  rationale: Upstream ECC skill, one SKILL.md (757 lines), no scripts, hooks or MCP dependencies; byte-identical copy with the licence notice. Applies to frameworks kubernetes (1.1.0; was tag-only) - the scanner records `kubernetes` when it finds a manifest (apiVersion + a workload / networking kind), a Helm chart or a kustomization anywhere in the tree, so the skill follows the manifests wherever a team keeps them; still requestable by tag. Stack-specific content curated in 0.4.0 so a project is served in its own stack instead of only by the generic, TypeScript-flavoured skills. Since 1.1.0 situational sections are moved verbatim into references/ so SKILL.md stays under Claude Code's post-compaction limit (ADR-0012); nothing is removed.
   notes:
-  - 'Tag-only: manifests have no fixed location.'
+  - 'Gated by the scanner''s kubernetes detection since 1.1.0; manifests have no fixed location, so the scanner reads YAML content rather than a directory name.'
 applicability:
+  frameworks:
+  - kubernetes
   tags:
   - kubernetes
   - k8s

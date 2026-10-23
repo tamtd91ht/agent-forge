@@ -31,7 +31,7 @@
 | `registry/` | load manifests, cross-validate (incl. skill-to-skill calls and the content-safety scan), catalog queries, registry digest (incl. shipped policies), always-loaded context cost | no |
 | `scanner/` | bounded read-only walker, language/framework/type detection, agent inventory, managed-manifest validation | no |
 | `adapters/` | per-platform conventions: detection, inventory, managed roots, shared files, content rules | no |
-| `matching/` | hard rules, equivalence/conflict detection, scoring | no |
+| `matching/` | hard rules, equivalence/conflict detection, scoring; each selection carries its evidence level (`confirmed` / `probable` / `needs_confirmation`, from the confidence of the detections it matched) and reasons that cite the evidence path | no |
 | `planner/` | plan construction (file operations with before/after hashes), unified diffs | no |
 | `apply/` | path safety, section merge, backups, transactional apply | **yes, only here** |
 | `rollback/` | conflict-aware reversal of a transaction | **yes** |

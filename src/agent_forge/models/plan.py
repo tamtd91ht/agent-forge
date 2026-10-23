@@ -73,6 +73,15 @@ class SelectedCapability(BaseModel):
     score: float
     risk: RiskLevel
     reasons: list[str] = Field(default_factory=list)
+    confidence: Literal["confirmed", "probable", "needs_confirmation"] = Field(
+        default="needs_confirmation",
+        description=(
+            "Strength of the project evidence behind the selection: confirmed (every matched "
+            "condition rests on a detection at >= 0.8 or the capability applies everywhere), "
+            "probable (a weaker detection such as a source-token trait), needs_confirmation "
+            "(selected by request, tag, policy or as a dependency, not by the project)"
+        ),
+    )
     solves: str = ""
     existing: list[str] = Field(
         default_factory=list, description="What already exists in the target"

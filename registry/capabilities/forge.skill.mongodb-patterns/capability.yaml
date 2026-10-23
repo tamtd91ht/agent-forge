@@ -1,0 +1,70 @@
+schema_version: "1"
+id: forge.skill.mongodb-patterns
+name: MongoDB patterns (documents shaped by their queries, every query indexed)
+description: Checklist for any code that touches a MongoDB collection in any driver - documents shaped around their reads with bounded arrays and a server-side validator, a compound index per query shape in equality-sort-range order with the tenant field first and an explain plan read before shipping, range pagination on an indexed key instead of deep skip, write and read concerns chosen per operation with idempotent retries and no read-modify-write races, short retried transactions only across documents that must change together, one bounded client per process, resumable change streams, additive versioned schema migration.
+version: 1.0.0
+kind: skill
+category: engineering.data
+purpose: Prevents the MongoDB failures that pass every unit test - a query that scans the collection in production, an array that grows into the document size limit, a page-2000 request that times out on skip, a write acknowledged by a primary that steps down, a lost update between find and save, a transaction that holds a snapshot across a network call - by making the agent apply the same discipline whatever the driver.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-23"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored after a field test on a JVM / Node platform whose MongoDB usage had no
+    curated counterpart (the catalog had postgres, mysql and prisma patterns only). Driver-neutral
+    rules with the driver-specific knob names in brackets; no product identifiers, module names
+    or storage layouts. Gated by the `mongodb` integration the scanner records from a manifest
+    dependency (Spring Data MongoDB, the Java driver, mongodb / mongoose, pymongo / motor, the Go
+    driver); on-demand, 0 always-loaded beyond name + description.
+  notes:
+    - "Companion to forge.skill.tenant-isolation (tenant field first in every index and filter) and forge.skill.event-consumer-safety (change-stream handlers are consumers); those are only loaded when their traits are detected."
+    - "Evidence: not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  frameworks: [mongodb]
+  tags: [mongodb, mongo, mongoose, database, nosql, indexes, pagination]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/mongodb-patterns
+    dest: .claude/skills/mongodb-patterns
+    merge: create_only
+  - platform: codex
+    source: codex/mongodb-patterns
+    dest: .agents/skills/mongodb-patterns
+    merge: create_only
+  - platform: copilot
+    source: claude_code/mongodb-patterns
+    dest: .github/skills/mongodb-patterns
+    merge: create_only
+  - platform: gemini
+    source: claude_code/mongodb-patterns
+    dest: .gemini/skills/mongodb-patterns
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["mongo", "mongoose", "document.?db"]
+    content_patterns: ["compound index|explain", "skip\\(|pagination", "writeConcern|write concern"]
+    description: an existing MongoDB discipline skill
+  - kind: rule
+    name_patterns: ["mongo", "database", "persistence"]
+    content_patterns: ["compound index", "writeConcern|write concern|majority"]
+    description: MongoDB rules already present
+validation:
+  - type: frontmatter
+    path: .claude/skills/mongodb-patterns/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 1980d51d066b98b291985df7966e246fbae49a4c2418b1c64bc226b99dc9f652
+  pinned_at: "2026-10-23"

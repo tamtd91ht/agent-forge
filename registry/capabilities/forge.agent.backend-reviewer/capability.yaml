@@ -20,6 +20,7 @@ review:
   rationale: >-
     Workspace-authored, stack-neutral review checklist for services and APIs (security, idempotent money flows and transactions, constraints and migrations, N+1 / caching / timeouts / backpressure, contract, clarity). Frontmatter uses documented fields only (name, description, tools "Read, Grep, Glob"); read-only, no Bash, so it needs no permission flag. Applies to backend, fullstack and service projects. Declares an existing reviewer subagent as an equivalent, so /agent-forge-upgrade opens the project's own reviewer and judges coverage instead of adding a second one blindly (see the skill's review-coverage step).
   notes:
+    - "forge.skill.backend-review carries the same body as an on-demand skill for Codex, Copilot and Gemini, whose adapters install skills but not agents; a test keeps the two identical."
     - "Complements ecc.agent.code-reviewer (generic quality, has Bash) and the stack-specific security skills (springboot-security, django-security, …); this one is the domain checklist for backends regardless of stack."
 applicability:
   project_types: [backend, fullstack, service]

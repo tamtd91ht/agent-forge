@@ -1,0 +1,79 @@
+{
+  "reviewed": "2026-10-23",
+  "notes": "Field-test fixture (2026-10-23): a monorepo with a Spring Boot + Spring Data MongoDB + Kafka service, a Vert.x + Elasticsearch Java client + MongoDB driver + Kafka service, a Next.js app with Playwright, Kubernetes manifests under deploy/k8s, Terraform under infra and a compose file. All thirteen stack indicators must be detected (java, typescript, terraform, docker, spring, vertx, elasticsearch, mongodb, kafka, kubernetes, nextjs, react, playwright); the README names Hibernate / JPA / Redis as documentation only and none of them may be detected. Reviewed decisions: ecc.jpa-patterns is NOT recommended (Spring without a JPA / Hibernate dependency; it is gated on the jpa integration since 1.1.0); ecc.kubernetes-patterns IS recommended from the manifests (gated on the kubernetes detection since 1.1.0); the stack skills forge.skill.{mongodb,elasticsearch,vertx}-patterns follow their integrations; the event_driven pack follows Kafka; both reviewer subagents apply (backend + fullstack web); forge.skill.backend-review is for Codex/Copilot/Gemini only, so it is not_applicable on claude_code here.",
+  "languages": [
+    "java",
+    "javascript",
+    "terraform",
+    "typescript"
+  ],
+  "frameworks": [
+    "docker",
+    "elasticsearch",
+    "kafka",
+    "kubernetes",
+    "mongodb",
+    "nextjs",
+    "react",
+    "spring",
+    "test:@playwright/test",
+    "test:junit",
+    "vertx"
+  ],
+  "project_types": [
+    "backend",
+    "frontend",
+    "fullstack",
+    "infrastructure",
+    "monorepo",
+    "service"
+  ],
+  "test_commands": [
+    "cd apps/web && npm run test",
+    "cd apps/web && npm run lint",
+    "cd apps/web && npm run build",
+    "cd services/orders && mvn test",
+    "cd services/search && mvn test"
+  ],
+  "recommended": [
+    "ecc.agent.planner",
+    "ecc.deployment-patterns",
+    "ecc.error-handling",
+    "ecc.frontend-a11y",
+    "ecc.frontend-patterns",
+    "ecc.java-coding-standards",
+    "ecc.kubernetes-patterns",
+    "ecc.nextjs-turbopack",
+    "ecc.react-patterns",
+    "ecc.react-performance",
+    "ecc.react-testing",
+    "ecc.rules.common",
+    "ecc.rules.java",
+    "ecc.rules.react",
+    "ecc.rules.typescript",
+    "ecc.rules.web",
+    "ecc.springboot-patterns",
+    "ecc.springboot-security",
+    "ecc.springboot-tdd",
+    "ecc.springboot-verification",
+    "forge.agent.backend-reviewer",
+    "forge.agent.frontend-reviewer",
+    "forge.hook.guard-secrets-node",
+    "forge.hook.node-prettier-format",
+    "forge.managed-notice",
+    "forge.skill.elasticsearch-patterns",
+    "forge.skill.event-consumer-safety",
+    "forge.skill.event-contract",
+    "forge.skill.mongodb-patterns",
+    "forge.skill.vertx-patterns",
+    "forge.skill.view-data-loading",
+    "karpathy.principles",
+    "mattpocock.diagnosing-bugs",
+    "mcp.context7",
+    "uiux.guidelines"
+  ],
+  "optional": [
+    "ecc.agent.code-reviewer",
+    "mcp.playwright"
+  ]
+}

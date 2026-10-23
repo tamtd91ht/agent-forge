@@ -1,0 +1,19 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>search</artifactId>
+  <version>0.1.0</version>
+  <properties>
+    <vertx.version>4.5.10</vertx.version>
+  </properties>
+  <dependencies>
+    <dependency><groupId>io.vertx</groupId><artifactId>vertx-core</artifactId><version>${vertx.version}</version></dependency>
+    <dependency><groupId>io.vertx</groupId><artifactId>vertx-web</artifactId><version>${vertx.version}</version></dependency>
+    <dependency><groupId>io.vertx</groupId><artifactId>vertx-kafka-client</artifactId><version>${vertx.version}</version></dependency>
+    <dependency><groupId>co.elastic.clients</groupId><artifactId>elasticsearch-java</artifactId><version>8.15.5</version></dependency>
+    <dependency><groupId>org.mongodb</groupId><artifactId>mongodb-driver-reactivestreams</artifactId><version>5.2.0</version></dependency>
+    <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-clients</artifactId><version>3.8.0</version></dependency>
+    <dependency><groupId>io.vertx</groupId><artifactId>vertx-junit5</artifactId><version>${vertx.version}</version><scope>test</scope></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.11.0</version><scope>test</scope></dependency>
+  </dependencies>
+</project>

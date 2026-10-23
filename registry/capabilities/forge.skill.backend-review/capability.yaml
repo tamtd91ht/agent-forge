@@ -1,0 +1,67 @@
+schema_version: "1"
+id: forge.skill.backend-review
+name: Backend review checklist (skill form of the backend reviewer)
+description: The backend reviewer's six fixed dimensions - security, money and transaction safety, data integrity and concurrency, readiness for high traffic, API contract, correctness and clarity - delivered as an on-demand skill for platforms that cannot install a subagent file (Codex, Copilot, Gemini); same checklist, same evidence-backed findings with severity, verdict and what was not checked.
+version: 1.0.0
+kind: skill
+category: agents.review
+purpose: Gives a backend service on Codex, Copilot or Gemini the same review discipline forge.agent.backend-reviewer gives Claude Code, instead of silently leaving those platforms without a backend review; the body is byte-identical to the subagent's so the two never drift.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-23"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored after a field test on a Codex project reported the backend reviewer as
+    unusable there: the Codex adapter does not install agents, so the plan rejected it as
+    unsupported_platform and the project got no backend review at all. The checklist does not
+    depend on the model or on subagent mechanics, so it is offered as a skill on the platforms
+    whose adapters support skills but not agents. The body is generated from the agent asset and
+    a test asserts they are identical, so there is one checklist, not two. Not offered on Claude
+    Code, where the subagent form is installed instead (no overlap on any one platform).
+  notes:
+    - "Platform-neutral content, platform-specific delivery: the engine still reports forge.agent.backend-reviewer as unsupported_platform on Codex (machine-readable, not silent); this capability is what Codex gets instead."
+    - "Evidence: not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  project_types: [backend, fullstack, service]
+  tags: [review, backend, security, transactions, performance]
+platforms: [codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: codex
+    source: codex/backend-review
+    dest: .agents/skills/backend-review
+    merge: create_only
+  - platform: copilot
+    source: claude_code/backend-review
+    dest: .github/skills/backend-review
+    merge: create_only
+  - platform: gemini
+    source: claude_code/backend-review
+    dest: .gemini/skills/backend-review
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["backend.*review", "api.*review", "service.*review", "review.*backend", "security.*review"]
+    content_patterns: ["idempoten", "transaction", "N\\+1", "rate limit"]
+    description: an existing backend / API review skill
+  - kind: agent
+    name_patterns: ["backend.*review", "api.*review", "service.*review", "review.*backend", "security.*review"]
+    content_patterns: ["idempoten", "transaction", "N\\+1", "rate limit"]
+    description: an existing backend / API reviewer subagent
+validation:
+  - type: frontmatter
+    path: .agents/skills/backend-review/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 13ffa2d102d66121b21c54e953eeefa45a5d0fe44a9d11d42759afb12e0fd242
+  pinned_at: "2026-10-23"

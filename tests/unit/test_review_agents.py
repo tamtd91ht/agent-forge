@@ -114,3 +114,46 @@ def test_entry_skill_carries_the_review_coverage_step() -> None:
     assert "**Review coverage.**" in skill
     assert BACKEND in skill and FRONTEND in skill
     assert "SKIP as `covered`" in skill and "ASK: name the missing dimensions" in skill
+
+
+BACKEND_SKILL = "forge.skill.backend-review"
+
+
+def test_backend_review_skill_is_the_agent_body_for_platforms_without_agents() -> None:
+    agent = REG.get(BACKEND)
+    skill = REG.get(BACKEND_SKILL)
+    assert skill.capability.kind == CapabilityKind.SKILL
+    assert Platform.CLAUDE_CODE not in skill.capability.platforms  # the agent serves there
+    assert set(skill.capability.platforms) == {Platform.CODEX, Platform.COPILOT, Platform.GEMINI}
+    assert skill.capability.applicability.project_types == (
+        agent.capability.applicability.project_types
+    )
+    _, agent_body = parse_frontmatter(
+        (agent.assets_dir / agent.capability.destinations[0].source).read_text(encoding="utf-8")
+    )
+    for dest in skill.capability.destinations:
+        fm, body = parse_frontmatter(
+            (skill.assets_dir / dest.source / "SKILL.md").read_text(encoding="utf-8")
+        )
+        assert fm["name"] == "backend-review" and fm["description"]
+        assert body.strip() == agent_body.strip(), dest.platform  # one checklist, never two
+
+
+def test_codex_gets_the_backend_review_skill_and_a_readable_rejection_for_the_agent() -> None:
+    root = REPO_ROOT / "examples" / "java-spring" / "project"
+    profile = scan_project(root)
+    for platform, expect_agent, expect_skill in (
+        (Platform.CODEX, "unsupported_platform", "recommended"),
+        (Platform.CLAUDE_CODE, "recommended", "unsupported_platform"),
+    ):
+        res = evaluate(REG, profile, MatchContext(platforms=(platform,), policy=POLICY))
+        got = {c.capability.id: "recommended" for c in res.recommended}
+        rejected = {r.capability.id: r for r in res.rejected if r.capability.id not in got}
+        got.update({cid: r.category for cid, r in rejected.items()})
+        assert got[BACKEND] == expect_agent and got[BACKEND_SKILL] == expect_skill, (
+            platform,
+            got[BACKEND],
+            got[BACKEND_SKILL],
+        )
+        if expect_agent == "unsupported_platform":
+            assert "does not install kind 'agent'" in rejected[BACKEND].reasons[0]

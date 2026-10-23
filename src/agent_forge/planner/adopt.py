@@ -101,6 +101,7 @@ def _entry(
         version=LOCAL_VERSION,
         platform=first.platform if first is not None and first.platform else Platform.CLAUDE_CODE,
         score=0.0,
+        confidence="confirmed",  # acts on an existing install; the manifest is the evidence
         risk=RiskLevel.LOW,
         reasons=[why],
         solves=f"tracks the project's own {kind} '{name}'",

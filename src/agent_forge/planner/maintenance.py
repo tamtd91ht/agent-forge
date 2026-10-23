@@ -236,6 +236,7 @@ def build_remove_plan(
                 version=rec.version,
                 platform=Platform.CLAUDE_CODE,
                 score=0.0,
+                confidence="confirmed",  # acts on an existing install; the manifest is the evidence
                 risk=RiskLevel.LOW,
                 reasons=["requested removal"],
                 adds=[f"{o.kind.value} {o.path}" for o in cap_ops],
@@ -322,6 +323,7 @@ def build_repair_plan(
                     version=rec.version,
                     platform=Platform.CLAUDE_CODE,
                     score=0.0,
+                    confidence="confirmed",  # acts on an existing install; the manifest is the evidence
                     risk=RiskLevel.LOW,
                     reasons=["unmanage: adopted files stop being tracked; nothing is written"],
                     rollback="re-run `agent-forge import` to track them again",
@@ -340,6 +342,7 @@ def build_repair_plan(
                     version=rec.version,
                     platform=Platform.CLAUDE_CODE,
                     score=0.0,
+                    confidence="confirmed",  # acts on an existing install; the manifest is the evidence
                     risk=RiskLevel.LOW,
                     reasons=[f"unmanage: {len(items)} drifted item(s) become user-owned"],
                     rollback="re-run assign to manage again",
@@ -437,6 +440,7 @@ def build_repair_plan(
                 version=cap.version,
                 platform=cap.platforms[0],
                 score=0.0,
+                confidence="confirmed",  # acts on an existing install; the manifest is the evidence
                 risk=cap.risk,
                 reasons=[f"restore {len(cap_ops)} drifted file(s) — your edits will be replaced"],
                 adds=[f"{o.kind.value} {o.path}" for o in cap_ops],

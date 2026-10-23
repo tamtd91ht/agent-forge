@@ -201,3 +201,52 @@ def test_trait_gated_capability_applies_only_when_the_trait_is_shown(
     )
     _rec, _opt, rej = _result_ids(evaluate(reg, ruled_out, _ctx()))
     assert rej["t.tenant-only"] == "not_applicable"
+
+
+_SPRING_POM = (
+    "<project><dependencies><dependency><groupId>org.springframework.boot</groupId>"
+    "<artifactId>spring-boot-starter-web</artifactId></dependency></dependencies></project>"
+)
+_TENANT = "def get(tenant_id):\n    return tenant_id\n"
+
+
+def test_recommendations_carry_an_evidence_level(make_project) -> None:
+    from agent_forge.planner.builder import build_assign_plan
+    from agent_forge.policy.engine import load_policies
+    from tests.conftest import REAL_REGISTRY
+
+    reg = load_registry(REAL_REGISTRY)
+    # 2 tenant files of 20: share 0.10 -> trait at 0.6 (probable); the pom is a 0.85 detection
+    files = {f"src/m{i}.py": "x = 1\n" for i in range(18)}
+    files.update({f"src/t{i}.py": _TENANT for i in range(2)})
+    files["pom.xml"] = _SPRING_POM
+    files["src/App.java"] = "class App {}\n"
+    root = make_project("levels", files=files)
+    profile = scan_project(root)
+    ctx = _ctx(wanted_tags=frozenset({"k8s"}), policy=load_policies(REAL_REGISTRY))
+    result = evaluate(reg, profile, ctx)
+    levels = {c.capability.id: c.confidence for c in (*result.recommended, *result.optional)}
+    assert levels["ecc.springboot-patterns"] == "confirmed"  # manifest dependency, 0.85
+    assert levels["karpathy.principles"] == "confirmed"  # applies to every project
+    assert levels["forge.skill.tenant-isolation"] == "probable"  # source-token trait at 0.6
+    assert levels["ecc.kubernetes-patterns"] == "needs_confirmation"  # tag only, no manifest
+    spring = next(c for c in result.recommended if c.capability.id == "ecc.springboot-patterns")
+    assert any(r.startswith("framework: spring (pom.xml, 0.85)") for r in spring.reasons)
+    plan, _ = build_assign_plan(reg, profile, ctx)
+    by_id = {s.capability_id: s.confidence for s in plan.selected}
+    assert by_id["ecc.springboot-patterns"] == "confirmed"
+    assert by_id["ecc.kubernetes-patterns"] == "needs_confirmation"
+
+
+def test_confirmed_profile_entries_are_confirmed_evidence(make_project) -> None:
+    from tests.conftest import REAL_REGISTRY
+
+    reg = load_registry(REAL_REGISTRY)
+    root = make_project(
+        "override",
+        files={".agent-forge/profile.yaml": "frameworks: [vertx]\ntraits: [money]\n"},
+    )
+    result = evaluate(reg, scan_project(root), _ctx())
+    levels = {c.capability.id: c.confidence for c in (*result.recommended, *result.optional)}
+    assert levels["forge.skill.vertx-patterns"] == "confirmed"
+    assert levels["forge.skill.money-safety"] == "confirmed"

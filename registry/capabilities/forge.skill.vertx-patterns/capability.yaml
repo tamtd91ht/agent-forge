@@ -1,0 +1,71 @@
+schema_version: "1"
+id: forge.skill.vertx-patterns
+name: Vert.x patterns (nothing blocks the loop, every call has a timeout)
+description: Checklist for any Vert.x verticle, handler, route, event-bus consumer, outbound call or test in Java or Kotlin - nothing blocks the event loop and blocking work runs in executeBlocking or a named worker pool with the blocked-thread checker on, Futures composed with a failure handler at the end and never result() or join(), a timeout on every outbound call and request/reply with bounded sized pools, state on the verticle's own context and sharing through the event bus with codecs and named addresses, explicit deployment options and server limits, shutdown that closes in reverse order inside stop(Promise), and vertx-junit5 tests with checkpoints and timeouts.
+version: 1.0.0
+kind: skill
+category: engineering.reliability
+purpose: Prevents the Vert.x failures that only show under load - an event loop stalled by a JDBC call or a join(), a Future chain whose failure is never handled, an outbound call with no timeout that leaks a connection per request, state shared between verticle instances through a static map, a stop() that returns before its resources close - by making the agent apply the toolkit's one rule and its consequences on every change.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-23"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored after a field test on a JVM platform that mixes Spring Boot and Vert.x
+    services; the catalog served Spring and the scanner did not record Vert.x at all, so the
+    reactive services received only generic guidance. Toolkit rules only (event loop, Futures,
+    timeouts, context affinity, deployment, vertx-junit5); no product identifiers, verticle
+    names, addresses or module layouts. Gated by the `vertx` framework the scanner records from
+    an `io.vertx` build dependency (Maven or Gradle); on-demand, 0 always-loaded beyond name +
+    description.
+  notes:
+    - "Complements ecc.java-coding-standards / ecc.rules.java (language) and the stack-neutral forge.agent.backend-reviewer; a Spring Boot module in the same repository keeps its springboot-* skills, this one speaks only about the Vert.x parts."
+    - "Evidence: not measured by the harness (review.evidence empty on purpose)."
+applicability:
+  frameworks: [vertx]
+  tags: [vertx, vert.x, reactive, event-loop, java, kotlin, backend]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/vertx-patterns
+    dest: .claude/skills/vertx-patterns
+    merge: create_only
+  - platform: codex
+    source: codex/vertx-patterns
+    dest: .agents/skills/vertx-patterns
+    merge: create_only
+  - platform: copilot
+    source: claude_code/vertx-patterns
+    dest: .github/skills/vertx-patterns
+    merge: create_only
+  - platform: gemini
+    source: claude_code/vertx-patterns
+    dest: .gemini/skills/vertx-patterns
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["vert\\.?x", "verticle", "event.?loop"]
+    content_patterns: ["executeBlocking|worker verticle", "event loop", "timeout"]
+    description: an existing Vert.x discipline skill
+  - kind: rule
+    name_patterns: ["vert\\.?x", "reactive", "verticle"]
+    content_patterns: ["executeBlocking|block(ing)? the event loop"]
+    description: Vert.x rules already present
+validation:
+  - type: frontmatter
+    path: .claude/skills/vertx-patterns/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: d2f6e0d625b885ac9e3230cbd4f76dd5bfcca25cd14c257f83c52fa4e14ad090
+  pinned_at: "2026-10-23"

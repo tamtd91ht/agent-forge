@@ -61,7 +61,41 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
 - `validate` (ADR-0012) warns when a curated `SKILL.md` reaches 20,000 bytes (Claude Code's
   post-compaction cut) and errors on plugin-namespaced skill references (`superpowers:x`)
   that a project install cannot resolve.
+- **Field-test fixes (2026-10-23).** A field test on a JVM / Next.js monorepo (Spring Boot,
+  Vert.x, Kafka, MongoDB, Elasticsearch, Kubernetes, Terraform) measured scanner recall
+  10/13 and one false positive; the misses and the false positive are closed:
+  - the scanner records `vertx` (an `io.vertx` build dependency; a backend framework),
+    `elasticsearch` (Java API client, Spring Data Elasticsearch, the REST client,
+    `@elastic/elasticsearch`, the Python and Go clients, OpenSearch forks), `jpa`
+    (`spring-boot-starter-data-jpa`, `hibernate-core`, `jakarta.persistence`, Kotlin
+    `plugin.jpa`; never `org.hibernate.validator`) and `kubernetes` (a YAML document with
+    `apiVersion:` and a workload / networking `kind:` anywhere in the tree, a Helm chart or a
+    kustomization; pipeline YAML, compose files and bare directory names are not evidence).
+    Words in README, docs or comments were never dependencies and a test now proves it.
+  - `examples/jvm-platform`: the field-test shape as a reviewed fixture (13/13 indicators).
+  - `forge.skill.mongodb-patterns` (`mongodb`), `forge.skill.elasticsearch-patterns`
+    (`elasticsearch`) and `forge.skill.vertx-patterns` (`vertx`): on-demand stack skills
+    with identical Codex copies, proposed only when the integration is a real dependency.
+  - `forge.skill.backend-review`: the backend reviewer's checklist as a skill for Codex,
+    Copilot and Gemini, whose adapters install skills but not agents; the body is generated
+    from the agent asset and a test keeps the two identical. On Claude Code the subagent is
+    installed instead, so no platform gets both.
+- **Evidence level per recommendation.** Every selected capability carries `confidence`:
+  `confirmed` (each matched condition rests on a detection at >= 0.8, or the capability
+  applies everywhere), `probable` (a weaker detection, e.g. a source-token trait at 0.6) or
+  `needs_confirmation` (selected by `--want` / `--request` / policy or as a dependency, not
+  by the project). Reasons now cite the evidence (`framework: spring (pom.xml, 0.85)`), the
+  plan table has an `evidence` column, `--json` carries the field. Plans approved before this
+  change no longer verify (their digest predates the field) and must be re-planned.
+
 ### Changed
+- `ecc.jpa-patterns` 1.1.0 is gated on the `jpa` integration instead of `spring` (a Spring
+  Boot service on JDBC, R2DBC or MongoDB no longer gets JPA patterns); `ecc.kubernetes-patterns`
+  1.1.0 is gated on the `kubernetes` detection instead of tag-only. `examples/java-spring`
+  expectations reviewed accordingly.
+- An `unsupported_platform` rejection says when the platform's adapter does not install the
+  capability's kind (`its adapter does not install kind 'agent'`), so a reader looks for a
+  counterpart in another kind rather than for a curation gap.
 - Frontmatter that is not valid YAML (a description containing `Triggered by: …`) is read
   leniently as `key: value` lines, as the tools do; `lint` now counts such skills' context
   instead of reporting 0, and no longer calls them undiscoverable.
