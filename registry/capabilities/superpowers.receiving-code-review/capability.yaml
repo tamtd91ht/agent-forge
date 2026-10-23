@@ -1,0 +1,60 @@
+schema_version: "1"
+id: superpowers.receiving-code-review
+name: Receiving code review
+description: Handle review feedback with technical rigour - restate, verify each item against the codebase, push back with reasons or YAGNI checks, clarify unclear items before implementing any, then fix one at a time.
+version: 1.0.0
+kind: skill
+category: engineering.review
+purpose: Covers the receiving side of review, which the registry otherwise lacks - no performative agreement, no blind implementation of suggestions that break the codebase or add unused features, partner instructions trusted but external reviewers checked, inline GitHub comments answered in their thread.
+status: curated
+provenance: upstream
+source:
+  source_id: superpowers
+  repository: https://github.com/obra/superpowers
+  revision: 2ce8aa15d05bd57213e6f746f953aafb7ded7a8b
+  paths:
+    - skills/receiving-code-review/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Superpowers (obra/superpowers), Copyright (c) 2025 Jesse Vincent"
+  notice_file: claude_code/receiving-code-review/LICENSE-SUPERPOWERS.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-23"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 205 lines of markdown (6.2 KB), verbatim from tag v7.0.1, model-invoked. Names no other skill and ships no scripts; one line shows a `gh api` call for replying to inline PR comments, used only when the agent already works with GitHub. Complements mattpocock.two-axis-review and ecc.agent.code-reviewer, which produce reviews.
+applicability:
+  tags: [code-review, review, receiving-code-review, superpowers]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/receiving-code-review
+    dest: .claude/skills/receiving-code-review
+    merge: create_only
+  - platform: codex
+    source: codex/receiving-code-review
+    dest: .agents/skills/receiving-code-review
+    merge: create_only
+  - platform: copilot
+    source: claude_code/receiving-code-review
+    dest: .github/skills/receiving-code-review
+    merge: create_only
+  - platform: gemini
+    source: claude_code/receiving-code-review
+    dest: .gemini/skills/receiving-code-review
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["receiving-code-review", "review-feedback", "respond.*review"]
+    description: an existing skill for handling review feedback
+validation:
+  - type: frontmatter
+    path: .claude/skills/receiving-code-review/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: f5e6ec3a6af2243ab55a54534959ccb1636463c78bae683ae52824be4fc1a965
+  pinned_at: "2026-10-23"

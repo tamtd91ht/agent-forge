@@ -59,6 +59,7 @@ Status: ✅ done in the repo · 🟡 done in the repo, needs a human action to c
 | 3.4 | Evaluation results in the manifest (`review.evidence`) | ✅ | model + schema + `catalog show` table |
 | 3.5 | Scanner precision/recall on ≥ 20 anonymised real repos | 🟡 | `matching_report.py --corpus --min-precision --min-recall`. **Left:** build the anonymised corpus (outside the repo) |
 | 3.6 | Context cost shown in plans, warning above policy | ✅ | `ctx` column + total; `max_total_context_chars` note and decision line |
+| 3.7 | Measure `superpowers.verification-before-completion` before making it always-on | 👤 | curated tag-only (`verification`) on 2026-10-23; overlaps `ecc.verification-loop` and `karpathy.principles`. **Left:** run the harness; switch to `always: true` only on an `improved` verdict |
 
 ## Phase 4 · Open it to projects outside the team (months 5–6)
 

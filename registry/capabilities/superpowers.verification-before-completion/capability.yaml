@@ -1,0 +1,60 @@
+schema_version: "1"
+id: superpowers.verification-before-completion
+name: Verification before completion
+description: Gate every "done", "fixed" or "passing" claim on a verification command run in the same turn, with the evidence quoted - no claims from earlier runs, partial checks or sub-agent reports.
+version: 1.0.0
+kind: skill
+category: engineering.verification
+purpose: Stops unverified success claims - the agent names the command that proves the claim, runs it fresh, reads the output and only then reports, including for regression tests (red-green) and delegated work (check the diff, not the report). Complements ecc.verification-loop, which runs the checks; this skill governs what may be claimed from them.
+status: curated
+provenance: upstream
+source:
+  source_id: superpowers
+  repository: https://github.com/obra/superpowers
+  revision: 2ce8aa15d05bd57213e6f746f953aafb7ded7a8b
+  paths:
+    - skills/verification-before-completion/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Superpowers (obra/superpowers), Copyright (c) 2025 Jesse Vincent"
+  notice_file: claude_code/verification-before-completion/LICENSE-SUPERPOWERS.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-23"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 120 lines of markdown (3.6 KB), verbatim from tag v7.0.1, model-invoked. Names no other skill, ships no scripts, assumes no tools beyond running the project's own commands and reading VCS diffs. Not an equivalent of ecc.verification-loop (which prescribes the checks); the two can be installed together. Tag-only until the evaluation harness shows a benefit (roadmap 3.7).
+applicability:
+  tags: [verification, evidence, quality, superpowers]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/verification-before-completion
+    dest: .claude/skills/verification-before-completion
+    merge: create_only
+  - platform: codex
+    source: codex/verification-before-completion
+    dest: .agents/skills/verification-before-completion
+    merge: create_only
+  - platform: copilot
+    source: claude_code/verification-before-completion
+    dest: .github/skills/verification-before-completion
+    merge: create_only
+  - platform: gemini
+    source: claude_code/verification-before-completion
+    dest: .gemini/skills/verification-before-completion
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["verification-before-completion", "evidence-before"]
+    description: an existing evidence-before-claims skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/verification-before-completion/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 8088191bca969720b2c87754b161207cbfb4c9eb571ed0442a2ccb97788fd6ab
+  pinned_at: "2026-10-23"

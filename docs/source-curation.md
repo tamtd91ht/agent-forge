@@ -1,9 +1,9 @@
-# Source curation record (initial catalog 2026-10-16, last update 2026-10-22)
+# Source curation record (initial catalog 2026-10-16, last update 2026-10-23)
 
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (134)
+## Curated (136)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -40,6 +40,16 @@ overwritten by a re-run.
 | `forge.agent.backend-reviewer` | subagent (Claude Code), `project_types` backend / fullstack / service, read-only (Read, Grep, Glob) | six fixed dimensions: security, money and transactions (idempotency, atomicity, ledger), data integrity and concurrency, readiness for traffic (N+1, caching, timeouts, backpressure), API contract, clarity; evidence-backed findings with severity and "not checked" |
 | `forge.agent.frontend-reviewer` | subagent (Claude Code), `project_types` frontend / fullstack / mobile-or-desktop, read-only | seven dimensions: backend contract, how the view loads its data (request map), state and races, client security, performance, resilience and a11y, clarity; declares existing reviewer agents as equivalents so the skill's review-coverage step judges before adding |
 | `forge.skill.view-data-loading` | skill, both platforms, `project_types` frontend / fullstack / mobile-or-desktop | request discipline for a screen: request map (first paint vs enhancement vs on interaction), one request per resource, parallel independent calls, nothing secondary blocking the first render, fetch on need, dedupe / cache / cancel; written from a recurring client-project finding |
+
+### Superpowers (2026-10-23)
+
+Scout report on obra/superpowers (MIT, v7.0.1): only the two skills that name no other
+skill and run nothing; the rest is under *Watching* or in `rejections/`.
+
+| Capability | From | Decision | Why |
+|---|---|---|---|
+| `superpowers.verification-before-completion` | superpowers `skills/verification-before-completion` (v7.0.1) | verbatim, both, tag `verification` (always-on only after eval evidence) | claim gate (fresh evidence before "done"); complements `ecc.verification-loop`, whose `verif` equivalence pattern now excludes it |
+| `superpowers.receiving-code-review` | superpowers `skills/receiving-code-review` (v7.0.1) | verbatim, both, tag `code-review` | the receiving side of review (verify, push back, YAGNI check); no registry equivalent |
 
 ### Initial catalog (34)
 
@@ -98,6 +108,8 @@ One record per item, with the reason and what would have to change, lives in
 | mattpocock `skills/engineering/pr` | reproduced almost word for word from humanlayer `show-me` (`pr/CREDITS.md`); that upstream licence is not verified yet |
 | mattpocock `skills/engineering/improve-codebase-architecture` | user-invoked and useful, but its HTML report template loads Tailwind and Mermaid from CDNs; curate once the report is optional or offline |
 | mattpocock `skills/engineering/retro` | depends only on `writing-for-agents`; reads session logs on the machine; wait for an observed need |
+| superpowers `skills/systematic-debugging` (+ root-cause-tracing, defense-in-depth, condition-based-waiting) | overlaps `mattpocock.diagnosing-bugs`; names `superpowers:` skills (validate rejects); curate adapted and tag-only if a project asks for it |
+| superpowers `writing-plans` / `executing-plans` / `subagent-driven-development` / `using-git-worktrees` / `finishing-a-development-branch` | one chain of 6+ skills with scripts that write `.superpowers/` into the working tree; revisit as a single capability if a chain with scripts is ever allowed |
 
 ## Re-curation workflow
 

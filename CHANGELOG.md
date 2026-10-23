@@ -53,6 +53,14 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
 - `docs/contributing-capabilities.md#writing-a-hook`: the stderr / exit-code, Stop-hook,
   marker-confirmation, fail-open and Bash-bypass lessons every hook must follow.
 
+- New source `superpowers` (obra/superpowers, MIT, pinned to v7.0.1). Curated verbatim:
+  `superpowers.verification-before-completion` (tag `verification`; always-on only after
+  eval evidence) and `superpowers.receiving-code-review` (tag `code-review`). Bootstrap
+  hook, brainstorming companion and session diagnosis rejected
+  (`docs/rejections/superpowers-bootstrap-and-runtime.md`).
+- `validate` (ADR-0012) warns when a curated `SKILL.md` reaches 20,000 bytes (Claude Code's
+  post-compaction cut) and errors on plugin-namespaced skill references (`superpowers:x`)
+  that a project install cannot resolve.
 ### Changed
 - Frontmatter that is not valid YAML (a description containing `Triggered by: …`) is read
   leniently as `key: value` lines, as the tools do; `lint` now counts such skills' context
@@ -60,6 +68,8 @@ Content for what a project *does*, not only what it is built with (ADR-0010).
 - The entry skill (2.3.0) reads `traits` from `scan --json`, treats a trait-gated capability
   on a project without the trait as `stack_mismatch`, and asks the user to confirm a missed
   trait in `profile.yaml` instead of asserting it.
+- `ecc.verification-loop`'s `verif` equivalence pattern no longer matches
+  `verification-before-completion`.
 
 ## 0.4.0 — 2026-10-21
 

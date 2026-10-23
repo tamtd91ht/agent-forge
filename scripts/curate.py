@@ -135,6 +135,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+SUPERPOWERS_NOTICE = """This directory contains content from Superpowers
+https://github.com/obra/superpowers — MIT License, Copyright (c) 2025 Jesse Vincent.
+Installed and tracked by Agent Forge; see .agent-forge/managed.json in your project.
+
+MIT License
+
+Copyright (c) 2025 Jesse Vincent
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 MATTPOCOCK_FOOTER = (
     "\n\n---\n"
     "Adapted by Agent Forge from mattpocock/skills {path} (MIT License, "
@@ -195,6 +222,15 @@ def _mp_skill(
         if edits:
             item.replacements[f"{base}/SKILL.md"] = edits
             item.footers[f"{base}/SKILL.md"] = MATTPOCOCK_FOOTER.format(path=f"{up}/SKILL.md")
+    return item
+
+
+def _sp_skill(cid: str, name: str) -> Item:
+    """A self-contained obra/superpowers skill, verbatim, for both platforms."""
+    item = Item(cid, "superpowers", [])
+    for plat in ("claude_code", "codex"):
+        item.files.append((f"skills/{name}/SKILL.md", f"{plat}/{name}/SKILL.md"))
+        item.notices.append((f"{plat}/{name}/LICENSE-SUPERPOWERS.txt", SUPERPOWERS_NOTICE))
     return item
 
 
@@ -339,6 +375,9 @@ ITEMS: list[Item] = [
             )
         ],
     ),
+    # obra/superpowers: only skills that name no other skill and run nothing.
+    _sp_skill("superpowers.verification-before-completion", "verification-before-completion"),
+    _sp_skill("superpowers.receiving-code-review", "receiving-code-review"),
     # Karpathy guidelines: verbatim skill. The always-on CLAUDE.md/AGENTS.md section
     # (karpathy.principles) is adapted by hand from upstream CLAUDE.md, not copied here.
     Item(

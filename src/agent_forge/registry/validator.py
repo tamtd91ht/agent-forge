@@ -164,6 +164,12 @@ _SKILL_CALL_RE = re.compile(
     r"((?:[\"`][\w.-]+[\"`](?:,?\s+(?:and|or)\s+|,\s*)?)+)"
 )
 _QUOTED_RE = re.compile(r"[\"`]([\w.-]+)[\"`]")
+# `superpowers:test-driven-development`: a plugin-namespaced skill name. Only flagged when the
+# namespace is the capability's own source or the name is a registry skill, so module
+# specifiers such as `bun:test` pass.
+_NAMESPACED_RE = re.compile(r"(?<![\w/.:-])([a-z][a-z0-9-]*):([a-z][a-z0-9-]+)\b(?!:)")
+# Claude Code keeps only the first 20,000 characters of an invoked skill after compaction.
+_SKILL_SIZE_LIMIT = 20_000
 
 
 def _shipped_skills(assets_dir: Path) -> dict[str, bool]:
@@ -183,9 +189,12 @@ def _check_skill_calls(reg: Registry, rep: RegistryReport) -> None:
 
     The called skill has to come from the same capability or one of its (transitive)
     dependencies, and it must be model-invoked: a user-invoked skill cannot be reached
-    through the Skill tool, only by the human typing its name.
+    through the Skill tool, only by the human typing its name. A plugin-namespaced name
+    (`plugin:skill`) never resolves after a project install. A SKILL.md at or above the
+    compaction cut is a warning.
     """
     shipped = {cid: _shipped_skills(lc.assets_dir) for cid, lc in reg.items.items()}
+    all_skills = {name for names in shipped.values() for name in names}
     for cid, lc in sorted(reg.items.items()):
         if not shipped[cid]:
             continue
@@ -201,6 +210,19 @@ def _check_skill_calls(reg: Registry, rep: RegistryReport) -> None:
         for md in sorted(lc.assets_dir.rglob("SKILL.md")):
             text = _FENCE_RE.sub("", md.read_text(encoding="utf-8", errors="replace"))
             rel = md.relative_to(lc.assets_dir).as_posix()
+            size = md.stat().st_size
+            if size >= _SKILL_SIZE_LIMIT:
+                rep.warnings.append(
+                    f"{cid}: assets/{rel} is {size} bytes; Claude Code keeps only the first "
+                    f"{_SKILL_SIZE_LIMIT} characters of a skill after compaction (move content "
+                    "needed only sometimes into reference files)"
+                )
+            for ns, name in dict.fromkeys(_NAMESPACED_RE.findall(text)):
+                if ns == lc.capability.source.source_id or name in all_skills:
+                    rep.errors.append(
+                        f"{cid}: assets/{rel} names skill '{ns}:{name}'; a project install has "
+                        f"no {ns!r} namespace (refer to {name!r} and ship it)"
+                    )
             for group in _SKILL_CALL_RE.findall(text):
                 for name in _QUOTED_RE.findall(group):
                     if name not in provided:

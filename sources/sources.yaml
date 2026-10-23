@@ -73,3 +73,19 @@ sources:
       - "scripts/link-skills.sh symlinks into ~/.claude/skills and ~/.agents/skills: never run."
       - "Pinned to release tags; main carries unreleased changesets."
     redistribution_notes: "MIT (c) 2026 Matt Pocock; keep LICENSE. skills/engineering/pr is adapted from humanlayer `show-me` (see pr/CREDITS.md); upstream licence unverified, not curated."
+
+  - id: superpowers
+    name: Superpowers (obra)
+    url: https://github.com/obra/superpowers
+    license: MIT
+    default_branch: main
+    pinned_revision: 2ce8aa15d05bd57213e6f746f953aafb7ded7a8b  # tag v7.0.1
+    trust: untrusted
+    homepage: https://github.com/obra/superpowers
+    notes:
+      - "Agent Skills workflow pack (brainstorm -> plan -> subagent-driven development -> TDD -> review); plugin manifests for ~15 harnesses."
+      - "Bootstrap is a SessionStart hook (hooks/session-start via run-hook.cmd) injecting using-superpowers every session: never installed."
+      - "brainstorming visual companion is a Node server that loads a remote logo as default-on telemetry (opt-out env vars): not curated."
+      - "Cross-skill references are namespaced (`superpowers:<skill>`); they dangle after a project-scoped install unless adapted (validate flags them)."
+      - "diagnosing-superpowers reads session transcripts and files issues to obra/superpowers via gh: not curated."
+    redistribution_notes: "MIT (c) 2025 Jesse Vincent; keep LICENSE. writing-skills/references/anthropic-best-practices.md origin unverified: do not curate."

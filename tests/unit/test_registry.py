@@ -133,6 +133,50 @@ def test_skill_tool_call_to_undeclared_dependency_is_an_error(tmp_path: Path) ->
     assert any("calls skill 'base'" in e for e in rep.errors)
 
 
+def test_namespaced_skill_references_are_errors(tmp_path: Path) -> None:
+    reg = tmp_path / "r"
+    write_capability(reg, base_manifest("t.tdd"), skill_assets("tdd"))
+    body = (
+        "Use the `plugin:tdd` skill first.\n"
+        "REQUIRED SUB-SKILL: Use upstream:anything-else\n"
+        "Import from `bun:test` and read https://example.com/skills.\n\n"
+        "```markdown\nUse the `upstream:not-checked` skill.\n```\n"
+    )
+    up = {"source_id": "upstream", "repository": "https://example.com/u", "revision": "a" * 40}
+    write_capability(reg, base_manifest("t.ns", source=up), skill_assets("ns", body))
+    rep = validate_registry(load_registry(reg))
+    refs = sorted(e for e in rep.errors if "namespace" in e and "/codex/" not in e)
+    assert refs == [
+        "t.ns: assets/claude_code/ns/SKILL.md names skill 'plugin:tdd'; a project install has "
+        "no 'plugin' namespace (refer to 'tdd' and ship it)",
+        "t.ns: assets/claude_code/ns/SKILL.md names skill 'upstream:anything-else'; a project "
+        "install has no 'upstream' namespace (refer to 'anything-else' and ship it)",
+    ]
+
+
+def test_oversized_skill_is_a_warning(tmp_path: Path) -> None:
+    reg = tmp_path / "r"
+    write_capability(reg, base_manifest("t.big"), skill_assets("big", "x" * 20_000))
+    rep = validate_registry(load_registry(reg))
+    assert rep.ok, rep.errors
+    big = [w for w in rep.warnings if "compaction" in w]
+    assert len(big) == 2 and "assets/claude_code/big/SKILL.md" in big[0]
+
+
+def test_verification_skills_are_not_equivalents_of_each_other() -> None:
+    import re
+
+    reg = load_registry(REAL_REGISTRY)
+
+    def matches(cid: str, name: str) -> bool:
+        pats = [p for e in reg.get(cid).capability.equivalents for p in e.name_patterns]
+        return any(re.search(p, name, re.IGNORECASE) for p in pats)
+
+    assert not matches("ecc.verification-loop", "verification-before-completion")
+    assert not matches("superpowers.verification-before-completion", "verification-loop")
+    assert matches("ecc.verification-loop", "verify")
+
+
 @pytest.mark.parametrize("name", ["agent-forge-upgrade", "agent-forge-scout"])
 def test_repo_copy_of_meta_skill_matches_registry(name: str) -> None:
     # these skills are shipped twice on purpose (registry asset + the repo's own .claude/skills)
