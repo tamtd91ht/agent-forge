@@ -25,6 +25,12 @@ SCAN ──► ASSIGN / UPGRADE ──► DIFF ──► APPROVE ──► APPLY
 
 ## What `upgrade` does and does not do
 
+First: when the install was made by the installer and a newer release exists, hands that
+release to the launcher (exit 16, tag in `~/.agent-forge/UPDATE_TO`), which installs it
+(verified) and re-runs the command, so the comparison below is with the current catalog;
+`--no-self-update` keeps the installed one. New capabilities a newer catalog recommends are
+not upgrades: `forge` (or `/agent-forge-upgrade`) adds them.
+
 Does: compare each record in `.agent-forge/managed.json` with the registry; for a newer
 version with **no local drift**, emit replace/create/remove operations and section updates.
 Does not: touch capabilities with local drift (listed under *decisions needed*), deprecated or

@@ -10,6 +10,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from agent_forge import selfupdate
 from agent_forge.config import (
     WorkspaceConfig,
     require_workspace,
@@ -116,4 +117,4 @@ APPROVAL_FLAGS = {"shared_file": "--shared-files", "hook": "--hooks", "mcp": "--
 
 ENTRY_CAPABILITY = "forge.skill.agent-forge-upgrade"
 
-INSTALLER_REPO = "tamtd91ht/agent-forge"
+INSTALLER_REPO = selfupdate.INSTALLER_REPO

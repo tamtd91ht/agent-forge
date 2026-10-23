@@ -31,6 +31,7 @@ from agent_forge.cli._common import (
 )
 from agent_forge.cli._envelope import _print_json
 from agent_forge.cli._tables import _print_plan_summary
+from agent_forge.cli.doctor import NoSelfUpdateOpt, _self_update_gate
 from agent_forge.errors import PlanError
 from agent_forge.models.plan import PlanStatus
 from agent_forge.util import dump_yaml, now_iso
@@ -114,20 +115,27 @@ def upgrade(
     path: Annotated[Path, typer.Argument(help="Target project directory.")],
     workspace: WorkspaceOpt = None,
     platform: Annotated[list[str] | None, typer.Option("--platform", "-p")] = None,
+    no_self_update: NoSelfUpdateOpt = False,
     as_json: JsonOpt = False,
 ) -> None:
-    """Compare managed capabilities with the registry and write an upgrade plan. Never modifies the target."""
+    """Compare managed capabilities with the registry and write an upgrade plan. Never modifies
+    the target. Installs the latest Agent Forge release first when one exists (so the plan
+    compares with the current catalog), unless --no-self-update."""
 
-    def body() -> None:
+    def body() -> int | None:
         from agent_forge.matching.rules import choose_platforms
         from agent_forge.planner import build_upgrade_plan
         from agent_forge.scanner.project_profile import scan_project
 
         ws = _ws(workspace)
+        update_notes: list[str] = []
+        code = _self_update_gate(ws, enabled=not no_self_update, act=True, notes=update_notes)
+        if code is not None:
+            return code
         reg = _registry(ws)
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
-        notes = [*notes, *_tool_notes(platforms)]
+        notes = [*update_notes, *notes, *_tool_notes(platforms)]
         plan = build_upgrade_plan(
             reg,
             profile,

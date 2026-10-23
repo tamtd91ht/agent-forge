@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import shutil
 import sys
-from pathlib import Path
 from typing import Annotated, Any
 
 import typer
 
+from agent_forge import selfupdate
 from agent_forge.cli._app import app
 from agent_forge.cli._common import (
-    INSTALLER_REPO,
     JsonOpt,
     WorkspaceOpt,
     _policies,
@@ -21,38 +19,113 @@ from agent_forge.cli._common import (
     _store,
     _ws,
     console,
+    err_console,
 )
 from agent_forge.cli._envelope import _print_json
-from agent_forge.errors import AgentForgeError
+from agent_forge.config import WorkspaceConfig
+from agent_forge.errors import AgentForgeError, SourceError
+
+NoSelfUpdateOpt = Annotated[
+    bool,
+    typer.Option(
+        selfupdate.NO_SELF_UPDATE_FLAG,
+        help="Plan with the installed Agent Forge even when a newer release exists "
+        "(the check needs api.github.com; it is skipped silently offline).",
+    ),
+]
 
 
-def _installed_release(root: Path) -> dict[str, str] | None:
-    """The `VERSION` file the installer writes next to the workspace (ref, verified, date)."""
-    path = root / "VERSION"
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError:
+def _self_update_gate(
+    ws: WorkspaceConfig, *, enabled: bool, act: bool, notes: list[str]
+) -> int | None:
+    """Before `upgrade` / `forge` plan against the packaged catalog, make sure that catalog
+    is the latest release's. Returns `EXIT_UPDATE_REQUESTED` when a newer release exists and
+    the launcher will install it and re-run the command (the tag is left in UPDATE_TO);
+    None to carry on with the installed version (current, offline, opted out, dry run, not
+    an installer install, or started without the launcher). The reason is appended to
+    `notes` either way."""
+    if not enabled:
+        notes.append("self-update check skipped (--no-self-update)")
         return None
-    out: dict[str, str] = {}
-    for line in text.splitlines():
-        key, sep, value = line.partition("=")
-        if sep:
-            out[key.strip()] = value.strip()
-    return out or None
-
-
-def _latest_release_tag(timeout: float = 5.0) -> str | None:
-    import urllib.error
-    import urllib.request
-
-    url = f"https://api.github.com/repos/{INSTALLER_REPO}/releases/latest"
-    try:
-        with urllib.request.urlopen(url, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except (urllib.error.URLError, OSError, ValueError):
+    check = selfupdate.check_for_update(ws.root)
+    notes.append(check.note)
+    if not check.available:
         return None
-    tag = data.get("tag_name") if isinstance(data, dict) else None
-    return tag if isinstance(tag, str) and tag else None
+    if not act:
+        err_console.print(
+            f"[yellow]update available:[/] {check.note}. This dry run uses the installed "
+            "version; a real run (or `agent-forge self-update`) installs the new one first."
+        )
+        return None
+    if not selfupdate.launcher_can_update():
+        err_console.print(
+            f"[yellow]update available:[/] {check.note}; this engine was not started by the "
+            "installer's launcher, so it cannot update itself. Re-run the install command "
+            "from the project root, then this command."
+        )
+        return None
+    assert check.latest is not None
+    selfupdate.request_update(ws.root, check.latest)
+    err_console.print(
+        f"[bold]{check.note}:[/] installing it (verified) and re-running this command."
+    )
+    return selfupdate.EXIT_UPDATE_REQUESTED
+
+
+@app.command("self-update")
+def self_update(
+    workspace: WorkspaceOpt = None,
+    check: Annotated[
+        bool, typer.Option("--check", help="Only compare installed and latest; install nothing.")
+    ] = False,
+    release: Annotated[
+        str | None,
+        typer.Option("--release", help="Install this release tag (vX.Y.Z) instead of the latest."),
+    ] = None,
+    no_self_update: Annotated[
+        bool, typer.Option(selfupdate.NO_SELF_UPDATE_FLAG, hidden=True)
+    ] = False,
+    as_json: JsonOpt = False,
+) -> int:
+    """Update Agent Forge itself (engine + packaged catalog) to the latest release through the
+    launcher and the same verified installer that put it here. Installs nothing when current.
+    Development installs (a branch or a checkout) use the installer with AGENT_FORGE_REF /
+    AGENT_FORGE_SOURCE instead."""
+
+    def body() -> int:
+        ws = _ws(workspace)
+        result = selfupdate.check_for_update(ws.root)
+        if no_self_update:  # the launcher's re-run after installing
+            after = selfupdate.installed_release(ws.root) or {}
+            if as_json:
+                _print_json({"installed": after.get("ref")})
+            else:
+                console.print(f"[green]installed {after.get('ref', '?')}[/]")
+            return 0
+        if check or (not result.available and not release):
+            if as_json:
+                _print_json(result.as_dict())
+            else:
+                console.print(f"[{'yellow' if result.available else 'green'}]{result.note}[/]")
+                if result.available and check:
+                    console.print("run `agent-forge self-update` to install it")
+            return 0
+        tag = release or result.latest
+        assert tag is not None
+        if not selfupdate.launcher_can_update():
+            raise SourceError(
+                "this engine was not started by the installer's launcher, so it cannot "
+                "update itself",
+                hint="Run the install command from the project root (it updates in place), "
+                "or run `~/.agent-forge/bin/agent-forge self-update`.",
+            )
+        selfupdate.request_update(ws.root, tag)
+        if not as_json:
+            console.print(f"[bold]installing {tag}[/] (was {result.installed}; verified installer)")
+        return selfupdate.EXIT_UPDATE_REQUESTED
+
+    _run(body)
+    return 0
 
 
 @app.command()
@@ -177,7 +250,7 @@ def doctor(
             )
             # What the installer put here (ref, how it was verified), compared with the latest
             # release only when asked: doctor never touches the network by default.
-            installed = _installed_release(ws.root)
+            installed = selfupdate.installed_release(ws.root)
             if installed is None:
                 add("installed release", True, "not installed by install.sh / install.ps1")
             else:
@@ -189,7 +262,7 @@ def doctor(
                     level="warning",
                 )
             if check_latest:
-                latest = _latest_release_tag()
+                latest = selfupdate.latest_release_tag()
                 if latest is None:
                     add("latest release", False, "could not reach api.github.com", level="warning")
                 else:
@@ -202,7 +275,7 @@ def doctor(
                             ""
                             if current == latest
                             else f" (installed: {current or 'unknown'}; "
-                            "re-run the install command to update)"
+                            "run `agent-forge self-update`)"
                         ),
                         level="warning",
                     )

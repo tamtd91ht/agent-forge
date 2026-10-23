@@ -219,3 +219,63 @@ def test_forge_git_guard_shares_settings_with_secret_guard(real_workspace, make_
     assert any("guard_git.py" in c for c in commands)
     assert any("guard_secrets.py" in c for c in commands)
     assert (root / ".claude" / "hooks" / "agent-forge" / "guard_git.py").is_file()
+
+
+def _update_available(monkeypatch, latest: str = "v9.9.9"):
+    from agent_forge import selfupdate
+
+    monkeypatch.setattr(
+        selfupdate,
+        "check_for_update",
+        lambda home, timeout=5.0: selfupdate.UpdateCheck(
+            installed="v0.4.0", latest=latest, available=True, note=f"{latest} is available"
+        ),
+    )
+    return selfupdate
+
+
+def test_forge_dry_run_only_reports_an_available_update(
+    real_workspace, make_project, monkeypatch
+) -> None:
+    selfupdate = _update_available(monkeypatch)
+    monkeypatch.setenv(selfupdate.ENV_LAUNCHER, selfupdate.LAUNCHER_PROTOCOL)
+    root = make_project("dry-update", kind="claude", files=BACKEND_FILES)
+    report = run_json(
+        "forge", str(root), "--workspace", str(real_workspace.root), "--dry-run", "--json"
+    )
+    assert report["self_update"] == "v9.9.9 is available"
+    assert not (real_workspace.root / selfupdate.UPDATE_FILE).exists()
+
+
+def test_forge_real_run_hands_the_update_to_the_launcher(
+    real_workspace, make_project, monkeypatch
+) -> None:
+    selfupdate = _update_available(monkeypatch)
+    monkeypatch.setenv(selfupdate.ENV_LAUNCHER, selfupdate.LAUNCHER_PROTOCOL)
+    root = make_project("real-update", kind="claude", files=BACKEND_FILES)
+    ws = str(real_workspace.root)
+    result = run("forge", str(root), "--workspace", ws, "--yes", expect=16)
+    assert "installing it" in " ".join(result.output.split())
+    marker = real_workspace.root / selfupdate.UPDATE_FILE
+    assert marker.read_text(encoding="utf-8") == "v9.9.9"  # the launcher installs exactly this
+    assert not (root / ".agent-forge" / "managed.json").exists()  # the old engine wrote nothing
+    marker.unlink()
+    # the launcher's re-run carries --no-self-update: planned with the (new) installed version
+    run("forge", str(root), "--workspace", ws, "--dry-run", "--no-self-update")
+    assert not marker.exists()
+
+
+def test_forge_without_the_launcher_reports_and_carries_on(
+    real_workspace, make_project, monkeypatch
+) -> None:
+    selfupdate = _update_available(monkeypatch)
+    monkeypatch.delenv(selfupdate.ENV_LAUNCHER, raising=False)
+    root = make_project("no-launcher", kind="claude", files=BACKEND_FILES)
+    result = run("forge", str(root), "--workspace", str(real_workspace.root), "--dry-run")
+    assert "cannot update itself" not in " ".join(
+        result.output.split()
+    )  # dry run: the plain notice
+    result = run("forge", str(root), "--workspace", str(real_workspace.root), "--yes")
+    assert "cannot update itself" in " ".join(result.output.split())
+    assert (root / ".agent-forge" / "managed.json").exists()  # planned with the installed one
+    assert not (real_workspace.root / selfupdate.UPDATE_FILE).exists()

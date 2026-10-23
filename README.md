@@ -80,7 +80,12 @@ because it also wires the launcher the skill expects.
 
 ## Update
 
-Run the install command again in the project root, then `/agent-forge-upgrade`.
+`AF forge .` and `AF upgrade .` check for a newer release first; when one exists the launcher
+installs it through the same verified installer and re-runs the command, so a project upgraded
+months ago is compared with the current catalog, not the one installed back then.
+`AF self-update --check` only looks, `AF self-update` only installs, `--no-self-update` plans
+with the installed version. Running the install command again in the project root does the
+same by hand (and is the way to update an install made before this launcher existed).
 
 Teammates who clone a project that already has `/agent-forge-upgrade` run the install command
 once on their machine.

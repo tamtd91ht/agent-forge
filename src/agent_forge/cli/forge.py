@@ -28,6 +28,7 @@ from agent_forge.cli._common import (
 )
 from agent_forge.cli._envelope import _print_json
 from agent_forge.cli._tables import _print_plan_summary, _print_profile, _print_verify_report
+from agent_forge.cli.doctor import NoSelfUpdateOpt, _self_update_gate
 from agent_forge.cli.plans import _approve_plan
 from agent_forge.errors import PlanError, ValidationFailed
 
@@ -104,10 +105,13 @@ def forge(
             "(--exclude/--request override per id). The record's digest is bound to the plan.",
         ),
     ] = None,
+    no_self_update: NoSelfUpdateOpt = False,
     as_json: JsonOpt = False,
 ) -> None:
     """One-shot upgrade: scan the project, upgrade what Agent Forge already manages, add the
-    capabilities that fit, show the diff, ask once, then apply and validate.
+    capabilities that fit, show the diff, ask once, then apply and validate. A real run first
+    installs the latest Agent Forge release when one exists (--no-self-update to skip); a dry
+    run only reports it.
 
     Still approval-first: every write is a saved plan with a digest-bound approval and a
     recoverable transaction. Hooks and MCP servers are separate approval classes: they are
@@ -123,6 +127,12 @@ def forge(
         from agent_forge.validation.engine import validate_target
 
         ws = _ws(workspace)
+        update_notes: list[str] = []
+        code = _self_update_gate(
+            ws, enabled=not no_self_update, act=not dry_run, notes=update_notes
+        )
+        if code is not None:
+            return code
         reg = _registry(ws)
         store = _store(ws)
         out = err_console if as_json else console
@@ -141,7 +151,8 @@ def forge(
         # 1. scan
         profile = scan_project(path, limits=ws.scan_limits)
         platforms, notes = choose_platforms(profile, _platform_list(platform))
-        notes = [*notes, *_tool_notes(platforms)]
+        notes = [*update_notes, *notes, *_tool_notes(platforms)]
+        report["self_update"] = update_notes[0] if update_notes else None
         if not as_json:
             _print_profile(profile)
             for n in notes:

@@ -58,6 +58,7 @@ verified documentation page changes; the adapter update is gated by the conforma
 | Channel | Command | Notes |
 |---|---|---|
 | Installer (recommended) | `install.ps1` / `install.sh` in a project root | latest release, checksum (+ Sigstore with `cosign`) verified, venv in `~/.agent-forge`, launcher, `VERSION`, `setup`; `AGENT_FORGE_REF=<branch>` installs an **unverified** archive for development only |
+| Self-update | `agent-forge self-update`, or automatically before `upgrade` / a real `forge` run | the engine compares `VERSION` with the latest release and, through the launcher (v2: `AGENT_FORGE_LAUNCHER=2`, exit 16, `UPDATE_TO`), runs the same installer for that tag; the engine never reinstalls over its own running files (on Windows that broke the venv). Launchers are rewritten only when their content changes, so a launcher running the installer is never rewritten under itself. `AGENT_FORGE_INSTALLER=<path>` makes the launcher run that installer file instead of downloading `main`'s (CI and development) |
 | uvx | `uvx --from "git+https://github.com/tamtd91ht/agent-forge@vX.Y.Z" agent-forge …` | no Python management by the team; run `init --workspace` once |
 | pipx | `pipx install "git+https://github.com/tamtd91ht/agent-forge@vX.Y.Z"` | same |
 | CI | `.github/actions/check` | installs a release into the runner, runs `check` (and `forge --approval-file`) |

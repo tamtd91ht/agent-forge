@@ -3,7 +3,7 @@ name: agent-forge-upgrade
 description: Review this project and install or upgrade only the Agent Forge capabilities (skills, rules, agents, hooks, MCP servers) that really fit it.
 disable-model-invocation: true
 argument-hint: "[optional focus, e.g. 'testing and review only']"
-allowed-tools: Bash(~/.agent-forge/bin/agent-forge --version), Bash(~/.agent-forge/bin/agent-forge scan:*), Bash(~/.agent-forge/bin/agent-forge catalog:*), Bash(~/.agent-forge/bin/agent-forge status:*), Bash(~/.agent-forge/bin/agent-forge drift:*), Bash(~/.agent-forge/bin/agent-forge policy:*), Bash(~/.agent-forge/bin/agent-forge lint:*), Bash(~/.agent-forge/bin/agent-forge usage:*), Bash(~/.agent-forge/bin/agent-forge decisions:*), Bash(~/.agent-forge/bin/agent-forge forge --dry-run:*), Bash(~/.agent-forge/bin/agent-forge import:*)
+allowed-tools: Bash(~/.agent-forge/bin/agent-forge --version), Bash(~/.agent-forge/bin/agent-forge self-update --check:*), Bash(~/.agent-forge/bin/agent-forge scan:*), Bash(~/.agent-forge/bin/agent-forge catalog:*), Bash(~/.agent-forge/bin/agent-forge status:*), Bash(~/.agent-forge/bin/agent-forge drift:*), Bash(~/.agent-forge/bin/agent-forge policy:*), Bash(~/.agent-forge/bin/agent-forge lint:*), Bash(~/.agent-forge/bin/agent-forge usage:*), Bash(~/.agent-forge/bin/agent-forge decisions:*), Bash(~/.agent-forge/bin/agent-forge forge --dry-run:*), Bash(~/.agent-forge/bin/agent-forge import:*)
 ---
 
 # Agent Forge upgrade (assessed by you, verified and written by Agent Forge)
@@ -38,9 +38,21 @@ Windows (PowerShell):  irm https://raw.githubusercontent.com/tamtd91ht/agent-for
 macOS / Linux:         curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh | bash
 ```
 
-The same command updates Agent Forge and its catalog. Use `--json` on every call below. Every
-`--json` output is an envelope `{envelope: 1, command, ok, data}`; the fields named below live
-under `data`.
+Then check that the installed catalog is the current one:
+
+```bash
+~/.agent-forge/bin/agent-forge self-update --check --json
+```
+
+If `data.available` is true, tell the user which release is waiting (`data.latest`, installed
+`data.installed`) before anything else: the facts below would otherwise come from an old
+catalog. The real `AF forge` run at the end installs it first by itself (the launcher runs the
+verified installer and re-runs the command); the user can also run
+`~/.agent-forge/bin/agent-forge self-update` now. Offline, or for a pipx / checkout install,
+the check says so in `data.note`; carry on.
+
+Use `--json` on every call below. Every `--json` output is an envelope
+`{envelope: 1, command, ok, data}`; the fields named below live under `data`.
 
 ## 1. Facts from Agent Forge (all read-only)
 

@@ -124,3 +124,47 @@ def test_drift_remove_repair_audit_cycle(real_workspace, make_project) -> None:
     events = [r["event"] for r in run_json("audit", "--workspace", ws, "--json")]
     assert "PlanCreated" in events and "PlanApproved" in events and "TransactionCompleted" in events
     run("remove", str(root), "not.managed", "--workspace", ws, expect=6)
+
+
+def test_self_update_check_and_upgrade_gate(real_workspace, make_project, monkeypatch) -> None:
+    from agent_forge import selfupdate
+
+    ws = real_workspace.root
+    monkeypatch.setenv(selfupdate.ENV_LAUNCHER, selfupdate.LAUNCHER_PROTOCOL)
+    # not an installer install: the check says so and nothing is requested
+    out = run_json("self-update", "--check", "--workspace", str(ws), "--json")
+    assert out["available"] is False and "no VERSION file" in out["note"]
+    (ws / "VERSION").write_text("ref=v0.4.0\nverified=sha256\n", encoding="utf-8")
+    monkeypatch.setattr(selfupdate, "latest_release_tag", lambda timeout=5.0: "v0.4.0")
+    out = run_json("self-update", "--check", "--workspace", str(ws), "--json")
+    assert out == {
+        "installed": "v0.4.0",
+        "latest": "v0.4.0",
+        "available": False,
+        "note": "Agent Forge is current",
+    }
+    # current: self-update requests nothing; upgrade plans with the installed version
+    run("self-update", "--workspace", str(ws))
+    root = make_project("gate", kind="claude", files=BACKEND)
+    plan = run_json("upgrade", str(root), "--workspace", str(ws), "--json")
+    assert "Agent Forge is current" in plan["notes"]
+    assert not (ws / selfupdate.UPDATE_FILE).exists()
+    # newer: upgrade leaves the compared tag for the launcher and exits 16
+    monkeypatch.setattr(selfupdate, "latest_release_tag", lambda timeout=5.0: "v0.5.0")
+    run("upgrade", str(root), "--workspace", str(ws), expect=16)
+    assert (ws / selfupdate.UPDATE_FILE).read_text(encoding="utf-8") == "v0.5.0"
+    (ws / selfupdate.UPDATE_FILE).unlink()
+    plan = run_json("upgrade", str(root), "--workspace", str(ws), "--no-self-update", "--json")
+    assert "self-update check skipped (--no-self-update)" in plan["notes"]
+    assert not (ws / selfupdate.UPDATE_FILE).exists()
+    # self-update itself: an explicit release is requested even when current
+    run("self-update", "--workspace", str(ws), "--release", "v0.4.0", expect=16)
+    assert (ws / selfupdate.UPDATE_FILE).read_text(encoding="utf-8") == "v0.4.0"
+    (ws / selfupdate.UPDATE_FILE).unlink()
+    # without the launcher the engine refuses to pretend
+    monkeypatch.delenv(selfupdate.ENV_LAUNCHER)
+    result = run("self-update", "--workspace", str(ws), expect=13)
+    assert "cannot update itself" in " ".join(result.output.split())
+    # the launcher's re-run only reports what is installed now
+    out = run_json("self-update", "--workspace", str(ws), "--no-self-update", "--json")
+    assert out == {"installed": "v0.4.0"}

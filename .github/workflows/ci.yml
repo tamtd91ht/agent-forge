@@ -95,6 +95,11 @@ jobs:
           "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" validate --no-provenance
           "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" doctor --json > /dev/null
           grep -q '^verified=' "$AGENT_FORGE_INSTALL_DIR/VERSION"
+          # self-update through the launcher (exit 16 handshake): the launcher runs the
+          # installer (this checkout, via AGENT_FORGE_INSTALLER) and re-runs the command
+          AGENT_FORGE_INSTALLER="$GITHUB_WORKSPACE/install.sh" "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge" self-update --release v0.0.1 --json | grep -q '"installed": "source"'
+          test ! -e "$AGENT_FORGE_INSTALL_DIR/UPDATE_TO"
+          grep -q 'launcher v2' "$AGENT_FORGE_INSTALL_DIR/bin/agent-forge"
       - name: A release that cannot be verified is never installed (POSIX)
         if: runner.os != 'Windows'
         env:
@@ -123,6 +128,12 @@ jobs:
           & "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" validate --no-provenance
           if ($LASTEXITCODE -ne 0) { throw "installed catalog fails validate" }
           if (-not (Select-String -Path "$env:AGENT_FORGE_INSTALL_DIR\VERSION" -Pattern '^verified=' -Quiet)) { throw "VERSION file missing" }
+          # self-update through the launcher (exit 16 handshake), installer = this checkout
+          $env:AGENT_FORGE_INSTALLER = "$env:GITHUB_WORKSPACE\install.ps1"
+          $out = & "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" self-update --release v0.0.1 --json
+          if ($LASTEXITCODE -ne 0 -or -not ("$out" -match '"installed": "source"')) { throw "self-update through the launcher failed: $out" }
+          if (Test-Path "$env:AGENT_FORGE_INSTALL_DIR\UPDATE_TO") { throw "UPDATE_TO not consumed" }
+          if (-not (Select-String -Path "$env:AGENT_FORGE_INSTALL_DIR\bin\agent-forge.cmd" -Pattern 'launcher v2' -Quiet)) { throw "launcher rewritten" }
       - name: A release that cannot be verified is never installed (Windows)
         if: runner.os == 'Windows'
         shell: pwsh

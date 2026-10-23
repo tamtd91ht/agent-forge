@@ -11,8 +11,14 @@ read secrets, or write outside the approved scope.
 - Modify `~/.claude`, `~/.codex`, `~/.agents`, or any directory outside the target root and
   its own workspace.
 - Upload anything. The only network calls are `git clone/fetch` when you run
-  `sources clone` / `sources sync`, and the installer's download of Agent Forge itself
-  (`pip install` of the GitHub archive into `~/.agent-forge/.venv`, ADR-0004).
+  `sources clone` / `sources sync`, the installer's download of Agent Forge itself
+  (`pip install` of the GitHub archive into `~/.agent-forge/.venv`, ADR-0004), and the
+  release lookup (`api.github.com`, nothing sent) that `upgrade`, `forge` and `self-update`
+  do before planning so an installer install plans against the current catalog. The engine
+  never installs over itself: it leaves the tag in `~/.agent-forge/UPDATE_TO` and exits 16,
+  and the launcher runs the same verified installer. `--no-self-update` or
+  `AGENT_FORGE_NO_SELF_UPDATE=1` switches the lookup off; `doctor` asks only with
+  `--check-latest`.
 - Read files that look like secrets (`.env*`, `*.pem`, `id_rsa`, `credentials*`…); they are
   listed by name in the profile and never opened.
 
