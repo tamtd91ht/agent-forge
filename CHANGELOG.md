@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.1 — 2026-10-24
+
+Content from a new source, and a registry check that the content it ships is what it says.
+
+### Added
+- Source `ponytail` (dietrichgebert/ponytail, MIT, pinned to v5.3.2) and three skills curated
+  verbatim, on request only: `ponytail.lazy-senior-dev` (read the code the change touches,
+  then the reuse-first ladder: does it need to exist, already in this codebase, standard library
+  or platform, installed dependency, one readable line, the minimum that works; one small test
+  where the logic needs it; `shortcut:` comments for deliberate limits; a reply that names what
+  was skipped), `ponytail.shortcut-debt` (read-only ledger of those comments; depends on the
+  core skill) and `ponytail.review` (correct, safe, holds under load, tested, fast, lean, with
+  the callers read and every finding carrying a concrete failing case). Upstream's hooks, band,
+  statusline, gain and help are recorded in `docs/rejections/ponytail-hooks-and-runtime.md`.
+- `validate` errors when a `provenance: upstream` capability ships two platform copies of the
+  same file with different bytes (ADR-0013); adapted and workspace capabilities are not
+  checked, their per-platform differences are the adaptation.
+
 ## 0.5.0 — 2026-10-23
 
 Content for what a project *does*, not only what it is built with (ADR-0010).
