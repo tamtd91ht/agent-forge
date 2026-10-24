@@ -31,3 +31,4 @@ merely interesting but not ready are listed under *Watching* in
 - [mattpocock-git-guardrails.md](mattpocock-git-guardrails.md)
 - [mattpocock-dev-scripts.md](mattpocock-dev-scripts.md)
 - [superpowers-bootstrap-and-runtime.md](superpowers-bootstrap-and-runtime.md)
+- [ponytail-hooks-and-runtime.md](ponytail-hooks-and-runtime.md)

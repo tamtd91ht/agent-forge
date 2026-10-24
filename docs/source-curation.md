@@ -1,9 +1,9 @@
-# Source curation record (initial catalog 2026-10-16, last update 2026-10-23)
+# Source curation record (initial catalog 2026-10-16, last update 2026-10-24)
 
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (136)
+## Curated (139)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -40,6 +40,17 @@ overwritten by a re-run.
 | `forge.agent.backend-reviewer` | subagent (Claude Code), `project_types` backend / fullstack / service, read-only (Read, Grep, Glob) | six fixed dimensions: security, money and transactions (idempotency, atomicity, ledger), data integrity and concurrency, readiness for traffic (N+1, caching, timeouts, backpressure), API contract, clarity; evidence-backed findings with severity and "not checked" |
 | `forge.agent.frontend-reviewer` | subagent (Claude Code), `project_types` frontend / fullstack / mobile-or-desktop, read-only | seven dimensions: backend contract, how the view loads its data (request map), state and races, client security, performance, resilience and a11y, clarity; declares existing reviewer agents as equivalents so the skill's review-coverage step judges before adding |
 | `forge.skill.view-data-loading` | skill, both platforms, `project_types` frontend / fullstack / mobile-or-desktop | request discipline for a screen: request map (first paint vs enhancement vs on interaction), one request per resource, parallel independent calls, nothing secondary blocking the first render, fetch on need, dedupe / cache / cancel; written from a recurring client-project finding |
+
+### Ponytail (2026-10-24)
+
+Scout report on dietrichgebert/ponytail (MIT, v5.3.2): the three skills that run nothing and
+need no plugin runtime, verbatim. Hooks, band, gain and help are in `rejections/`.
+
+| Capability | From | Decision | Why |
+|---|---|---|---|
+| `ponytail.lazy-senior-dev` | ponytail `skills/ponytail` (v5.3.2) | verbatim, both, tags `yagni` / `lazy` / `simplicity`; not always-on | reuse-first ladder after reading the code the change touches, test where the logic needs one, `shortcut:` marker, "never cut" list; upstream's paired benchmark (39 tasks x 5 runs) is the evidence, the project's own evaluation decides always-on; overlaps `karpathy.principles` on simplicity only |
+| `ponytail.shortcut-debt` | ponytail `skills/ponytail-debt` | verbatim, both, tag `shortcut-debt`; depends on lazy-senior-dev | read-only `git grep` ledger of the `shortcut:` comments the ruleset leaves |
+| `ponytail.review` | ponytail `skills/ponytail-review` | verbatim, both, tag `code-review`; equivalent to any generic review skill | fixed order correct / safe / load / tested / fast / lean, callers read not only the diff, four-part findings in plain English |
 
 ### Superpowers (2026-10-23)
 
@@ -109,6 +120,9 @@ One record per item, with the reason and what would have to change, lives in
 | mattpocock `skills/engineering/improve-codebase-architecture` | user-invoked and useful, but its HTML report template loads Tailwind and Mermaid from CDNs; curate once the report is optional or offline |
 | mattpocock `skills/engineering/retro` | depends only on `writing-for-agents`; reads session logs on the machine; wait for an observed need |
 | superpowers `skills/systematic-debugging` (+ root-cause-tracing, defense-in-depth, condition-based-waiting) | overlaps `mattpocock.diagnosing-bugs`; names `superpowers:` skills (validate rejects); curate adapted and tag-only if a project asks for it |
+| ponytail `skills/ponytail-audit` | the review checklist applied to a whole repo; curate when a project asks for a repo audit |
+| ponytail `hooks/ponytail-map.js` | 2,000-character codebase map at session start (reuse-first costs no search); a hook, so revisit as a workspace-authored stdlib hook once `context_load` counts hook-injected context |
+| ponytail `benchmarks/agentic/` | the design reference for the deferred evaluation engine (ADR-0002): paired arms in one run, deterministic checks with good / bad references self-tested before any API spend, LLM judges gated by a self-test and never a curation gate, geometric mean of per-task medians with a bootstrap interval |
 | superpowers `writing-plans` / `executing-plans` / `subagent-driven-development` / `using-git-worktrees` / `finishing-a-development-branch` | one chain of 6+ skills with scripts that write `.superpowers/` into the working tree; revisit as a single capability if a chain with scripts is ever allowed |
 
 ## Re-curation workflow

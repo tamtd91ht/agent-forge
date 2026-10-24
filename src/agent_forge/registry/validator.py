@@ -11,6 +11,8 @@ from agent_forge.models.capability import (
     CapabilityStatus,
     InstallStrategy,
     MergeStrategy,
+    Platform,
+    Provenance,
     RiskLevel,
 )
 from agent_forge.registry.content_safety import scan_assets
@@ -57,6 +59,8 @@ def validate_registry(reg: Registry) -> RegistryReport:
             else:
                 _check_markdown_links(cid, lc.assets_dir, rep)
                 _check_license_notice(cid, cap, lc.assets_dir, rep)
+                if cap.provenance == Provenance.UPSTREAM:
+                    _check_platform_copies(cid, lc.assets_dir, rep)
             for dest in cap.destinations:
                 src = lc.assets_dir / dest.source
                 if not src.exists():
@@ -117,6 +121,26 @@ def _check_license_notice(cid: str, cap, assets_dir: Path, rep: RegistryReport) 
     nf = cap.license.notice_file
     if nf and not (assets_dir / nf).is_file():
         rep.errors.append(f"{cid}: license.notice_file {nf!r} is missing from assets/")
+
+
+def _check_platform_copies(cid: str, assets_dir: Path, rep: RegistryReport) -> None:
+    """An `upstream` capability ships the same upstream file once per platform directory;
+    the copies must be byte-identical, or one of them is not upstream (ADR-0013)."""
+    platforms = {p.value for p in Platform}
+    seen: dict[str, tuple[str, bytes]] = {}
+    for plat_dir in sorted(d for d in assets_dir.iterdir() if d.is_dir() and d.name in platforms):
+        for f in sorted(plat_dir.rglob("*")):
+            if not f.is_file():
+                continue
+            rel = f.relative_to(plat_dir).as_posix()
+            data = f.read_bytes()
+            first = seen.setdefault(rel, (plat_dir.name, data))
+            if first[1] != data:
+                rep.errors.append(
+                    f"{cid}: assets/{plat_dir.name}/{rel} differs from assets/{first[0]}/{rel} "
+                    "(an upstream capability ships identical copies per platform; adapt it or "
+                    "re-run scripts/curate.py)"
+                )
 
 
 def _check_markdown_links(cid: str, assets_dir: Path, rep: RegistryReport) -> None:

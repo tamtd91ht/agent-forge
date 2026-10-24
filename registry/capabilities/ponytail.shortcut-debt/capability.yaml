@@ -1,0 +1,61 @@
+schema_version: "1"
+id: ponytail.shortcut-debt
+name: Shortcut debt ledger (Ponytail)
+description: List every `shortcut:` comment in the repo as a debt ledger - file and line, what was simplified, the ceiling it names, the trigger to revisit - and tag the ones with no trigger as the ones that silently rot. Read-only, one-shot; another marker word can be given as the argument.
+version: 1.0.0
+kind: skill
+category: engineering.standards
+purpose: Makes the deliberate simplifications of the lazy-senior-dev ruleset auditable - a `git grep` over the comment markers, one ledger row per hit with ceiling and upgrade trigger - so a deferral cannot quietly become permanent.
+status: curated
+provenance: upstream
+source:
+  source_id: ponytail
+  repository: https://github.com/dietrichgebert/ponytail
+  revision: 16352ac229eb08a9598dcae48fe9f2b342567d86
+  paths:
+    - skills/ponytail-debt/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Ponytail (dietrichgebert/ponytail), Copyright (c) 2026 DietrichGebert"
+  notice_file: claude_code/ponytail-debt/LICENSE-PONYTAIL.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-24"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 41 lines of markdown (1.8 KB), verbatim from tag v5.3.2. The only command it shows is a read-only `git grep --no-index --exclude-standard`; writing the ledger to a file happens only when the user asks. Depends on ponytail.lazy-senior-dev, which introduces the `shortcut:` convention it harvests.
+applicability:
+  tags: [ponytail, shortcut-debt, tech-debt]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/ponytail-debt
+    dest: .claude/skills/ponytail-debt
+    merge: create_only
+  - platform: codex
+    source: codex/ponytail-debt
+    dest: .agents/skills/ponytail-debt
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ponytail-debt
+    dest: .github/skills/ponytail-debt
+    merge: create_only
+  - platform: gemini
+    source: claude_code/ponytail-debt
+    dest: .gemini/skills/ponytail-debt
+    merge: create_only
+dependencies: [ponytail.lazy-senior-dev]
+equivalents:
+  - kind: skill
+    name_patterns: ["ponytail-debt", "tech-debt", "debt-ledger"]
+    description: an existing technical-debt ledger skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/ponytail-debt/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: fe5e68fe53e8d58dd4b79fe90c5750e092f49e6b50876fb16410fe8476992b98
+  pinned_at: "2026-10-24"

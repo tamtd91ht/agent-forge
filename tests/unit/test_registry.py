@@ -184,3 +184,23 @@ def test_repo_copy_of_meta_skill_matches_registry(name: str) -> None:
     asset = REAL_REGISTRY / f"capabilities/forge.skill.{name}/assets/claude_code/{name}/SKILL.md"
     repo_copy = REAL_REGISTRY.parent / f".claude/skills/{name}/SKILL.md"
     assert repo_copy.read_text(encoding="utf-8") == asset.read_text(encoding="utf-8")
+
+
+def test_upstream_platform_copies_must_be_identical(tmp_path: Path) -> None:
+    # ADR-0013: an `upstream` capability ships the same file once per platform directory
+    reg = tmp_path / "r"
+    up = {"source_id": "upstream", "repository": "https://example.com/u", "revision": "b" * 40}
+    assets = skill_assets("same")
+    assets["codex/same/SKILL.md"] = assets["codex/same/SKILL.md"] + "\nextra line\n"
+    write_capability(reg, base_manifest("t.copies", provenance="upstream", source=up), assets)
+    rep = validate_registry(load_registry(reg))
+    drift = [e for e in rep.errors if "differs from" in e]
+    assert drift == [
+        "t.copies: assets/codex/same/SKILL.md differs from assets/claude_code/same/SKILL.md "
+        "(an upstream capability ships identical copies per platform; adapt it or re-run "
+        "scripts/curate.py)"
+    ]
+    # adapted and workspace content may legitimately differ per platform
+    write_capability(reg, base_manifest("t.adapted", provenance="adapted", source=up), assets)
+    rep = validate_registry(load_registry(reg))
+    assert not [e for e in rep.errors if "differs from" in e and "t.adapted" in e]

@@ -89,3 +89,19 @@ sources:
       - "Cross-skill references are namespaced (`superpowers:<skill>`); they dangle after a project-scoped install unless adapted (validate flags them)."
       - "diagnosing-superpowers reads session transcripts and files issues to obra/superpowers via gh: not curated."
     redistribution_notes: "MIT (c) 2025 Jesse Vincent; keep LICENSE. writing-skills/references/anthropic-best-practices.md origin unverified: do not curate."
+
+  - id: ponytail
+    name: Ponytail (lazy senior dev mode)
+    url: https://github.com/dietrichgebert/ponytail
+    license: MIT
+    default_branch: main
+    pinned_revision: 16352ac229eb08a9598dcae48fe9f2b342567d86  # tag v5.3.2
+    trust: untrusted
+    homepage: https://github.com/dietrichgebert/ponytail
+    notes:
+      - "Six pure-markdown skills (21.6 KB total) + an AGENTS.md compact ruleset; adapters for ~30 hosts; a Node plugin runtime around them."
+      - "Claude/Codex hooks write ~/.claude/.ponytail-active, copy statusline scripts into ~/.claude and tell the model to edit settings.json: never installed."
+      - "Band module (Claude Code 2.1.290+) writes ~/.config/ponytail/band/*.csv and has an opt-in webhook that sends task names: not curated."
+      - "skills/ponytail/SKILL.md carries level-switch lines that depend on the mode-tracker hook; AGENTS.md is the level-free body upstream checks against it (scripts/check-rule-copies.js)."
+      - "ponytail-gain and ponytail-help describe the plugin runtime and the benchmark: not curated."
+    redistribution_notes: "MIT (c) 2026 DietrichGebert; keep LICENSE. The core SKILL.md declares license: MIT in its frontmatter."

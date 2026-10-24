@@ -1,0 +1,63 @@
+schema_version: "1"
+id: ponytail.lazy-senior-dev
+name: Lazy senior dev mode (Ponytail)
+description: The smallest change that fully solves the task - read the code the change touches first, then take the first rung that holds (does it need to exist, already in this codebase, standard library or platform, installed dependency, one readable line, the minimum that works), leave one small test where the logic needs it, mark deliberate limits with a `shortcut:` comment, and end the reply with what was skipped and the risks.
+version: 1.0.0
+kind: skill
+category: engineering.behavior
+purpose: Counters over-building (a hand-rolled calendar where the repo's Input with type=date would do), unrequested abstractions and a dependency for a few lines, while keeping the change complete (callers, tests, fixtures) and never cutting validation at trust boundaries, data-loss handling, security or accessibility. Upstream's paired benchmark (39 tasks x 5 runs, headless Claude Code, Opus 5.5) measured 53% fewer lines and 98% of risky logic shipped with a test against 68% for the same agent without the skill.
+status: curated
+provenance: upstream
+source:
+  source_id: ponytail
+  repository: https://github.com/dietrichgebert/ponytail
+  revision: 16352ac229eb08a9598dcae48fe9f2b342567d86
+  paths:
+    - skills/ponytail/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Ponytail (dietrichgebert/ponytail), Copyright (c) 2026 DietrichGebert"
+  notice_file: claude_code/ponytail/LICENSE-PONYTAIL.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-24"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 53 lines of markdown (3.5 KB), verbatim from tag v5.3.2, model-invoked; declares MIT in its own frontmatter. Names no other skill and ships no scripts. Upstream injects it through SessionStart / SubagentStart hooks that write under ~/.claude; here it is an ordinary project skill, so the lite / full / ultra levels work as skill arguments for one invocation instead of a persisted mode - the only lines that assume the hook runtime. Tag-only, not always-on, until the project's own evaluation confirms the upstream numbers (source-curation rule). Overlaps karpathy.principles on "simplicity first" but is operational (ladder, test reflex, shortcut marker), so no conflict is declared.
+applicability:
+  tags: [yagni, lazy, ponytail, simplicity, behavior]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/ponytail
+    dest: .claude/skills/ponytail
+    merge: create_only
+  - platform: codex
+    source: codex/ponytail
+    dest: .agents/skills/ponytail
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ponytail
+    dest: .github/skills/ponytail
+    merge: create_only
+  - platform: gemini
+    source: claude_code/ponytail
+    dest: .gemini/skills/ponytail
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["ponytail", "yagni", "lazy-senior"]
+    description: a Ponytail or YAGNI skill is already installed
+  - kind: instruction
+    content_patterns: ["smallest complete change", "lazy senior dev"]
+    description: the Ponytail ruleset is already in the project instructions
+validation:
+  - type: frontmatter
+    path: .claude/skills/ponytail/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 1
+integrity:
+  assets_sha256: 0cbcee4e21c127b5161f1db26d38da405f1883bf926ef7b774923a6b7a84dd30
+  pinned_at: "2026-10-24"

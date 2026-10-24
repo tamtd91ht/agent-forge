@@ -1,0 +1,60 @@
+schema_version: "1"
+id: ponytail.review
+name: Paged-senior review (Ponytail)
+description: Review a change in a fixed order of importance - correct, safe, holds under the expected load, tested, fast, lean - reading the callers and tests the diff touches, not only the diff. Every finding needs a concrete failing case and is written in plain English as what this is, problem, fix, if we skip it, grouped must fix / should fix / nice to have, with a verdict and what was not checked.
+version: 1.0.0
+kind: skill
+category: engineering.review
+purpose: Gives a review that a reader who has never seen the code can act on, and that catches what a diff-only review misses (a renamed field crashing an untouched caller, a fix applied in one caller while the shared function stays broken). A `shortcut:` comment that names its limit is treated as a decision, not a finding, so it pairs with the lazy-senior-dev ruleset without requiring it.
+status: curated
+provenance: upstream
+source:
+  source_id: ponytail
+  repository: https://github.com/dietrichgebert/ponytail
+  revision: 16352ac229eb08a9598dcae48fe9f2b342567d86
+  paths:
+    - skills/ponytail-review/SKILL.md
+license:
+  spdx: MIT
+  attribution: "Ponytail (dietrichgebert/ponytail), Copyright (c) 2026 DietrichGebert"
+  notice_file: claude_code/ponytail-review/LICENSE-PONYTAIL.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-24"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: 101 lines of markdown (5.2 KB), verbatim from tag v5.3.2, model-invoked ("review this", "review my PR"). Names no other skill, ships no scripts, changes no code. Upstream's benchmark reports 100% of planted problems found and 100% of problems outside the diff, against 87% and 78% without the skill. Complements mattpocock.two-axis-review (standards vs spec) and the forge reviewer agents (fixed backend / frontend dimensions); declared equivalent to any existing generic review skill so the planner proposes one, not three.
+applicability:
+  tags: [code-review, review, ponytail]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/ponytail-review
+    dest: .claude/skills/ponytail-review
+    merge: create_only
+  - platform: codex
+    source: codex/ponytail-review
+    dest: .agents/skills/ponytail-review
+    merge: create_only
+  - platform: copilot
+    source: claude_code/ponytail-review
+    dest: .github/skills/ponytail-review
+    merge: create_only
+  - platform: gemini
+    source: claude_code/ponytail-review
+    dest: .gemini/skills/ponytail-review
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["ponytail-review", "^code-review", "^review", "two-axis"]
+    description: an existing code-review skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/ponytail-review/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: df6d44fe5fa33a41cb980c2a79ebae4d1f0c8921105cb60f4cd92a499b6f566a
+  pinned_at: "2026-10-24"
