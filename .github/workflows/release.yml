@@ -44,7 +44,7 @@ jobs:
           cp dist/* install.sh install.ps1 uv.lock release/
           (cd release && sha256sum * > SHA256SUMS)
           cat release/SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-files
           path: release/
@@ -65,7 +65,7 @@ jobs:
           uv pip install cyclonedx-bom
           uv run cyclonedx-py environment --of JSON -o agent-forge-${GITHUB_REF_NAME}.cdx.json
           test -s agent-forge-${GITHUB_REF_NAME}.cdx.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: "*.cdx.json"
