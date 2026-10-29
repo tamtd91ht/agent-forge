@@ -32,3 +32,4 @@ merely interesting but not ready are listed under *Watching* in
 - [mattpocock-dev-scripts.md](mattpocock-dev-scripts.md)
 - [superpowers-bootstrap-and-runtime.md](superpowers-bootstrap-and-runtime.md)
 - [ponytail-hooks-and-runtime.md](ponytail-hooks-and-runtime.md)
+- [kwp-role-plugins.md](kwp-role-plugins.md)

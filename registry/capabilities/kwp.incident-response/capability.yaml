@@ -1,0 +1,65 @@
+schema_version: "1"
+id: kwp.incident-response
+name: Incident response (Knowledge Work Plugins)
+description: Run a production incident from triage to blameless postmortem - SEV1-4 classification with response times, roles, status updates at a fixed cadence, a timeline, 5 whys and owned action items - using whatever monitoring, paging and chat tools are connected.
+version: 1.0.0
+kind: skill
+category: engineering.operations
+purpose: Gives a service team one shared shape for incidents (severity table, status-update and postmortem templates) so an outage is communicated and learned from the same way every time; the registry had no incident or postmortem content.
+status: curated
+provenance: adapted
+source:
+  source_id: kwp
+  repository: https://github.com/anthropics/knowledge-work-plugins
+  revision: 33d3dea41a341b341d4f5da2e8801ae0c89be2b8
+  paths:
+    - engineering/skills/incident-response/SKILL.md
+    - LICENSE
+license:
+  spdx: Apache-2.0
+  attribution: "Knowledge Work Plugins (anthropics/knowledge-work-plugins), Copyright Anthropic; modified by Agent Forge (see the SKILL.md footer)"
+  notice_file: claude_code/incident-response/LICENSE-KWP.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-25"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: >-
+    165 lines of markdown (5.8 KB), user- or model-invoked ("we have an incident", "production is down", "write the postmortem"). One adaptation, applied by scripts/curate.py and declared in a footer as Apache-2.0 section 4(b) requires - the pointer to the plugin's CONNECTORS.md (not installed, so a dangling link) is replaced by one line explaining `~~category` placeholders. Names no other skill, ships no scripts. Tag-only until an evaluation shows it belongs in the default set of service projects (ADR-0008).
+  notes:
+    - "The connector sections suggest paging on-call or posting to an incident channel when those MCP tools are connected; whether the agent asks first depends on the user's permission settings."
+    - "Usage block shows `/incident-response $ARGUMENTS` (Claude Code skill invocation); harmless text on the other platforms."
+applicability:
+  tags: [incident, incident-response, oncall, postmortem, sre]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/incident-response
+    dest: .claude/skills/incident-response
+    merge: create_only
+  - platform: codex
+    source: codex/incident-response
+    dest: .agents/skills/incident-response
+    merge: create_only
+  - platform: copilot
+    source: claude_code/incident-response
+    dest: .github/skills/incident-response
+    merge: create_only
+  - platform: gemini
+    source: claude_code/incident-response
+    dest: .gemini/skills/incident-response
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["incident", "postmortem", "post-mortem", "on-?call"]
+    description: an existing incident or postmortem skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/incident-response/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: f48e2cf41bfb28ee33f2846196a0299b082f37467dfee9cd99a64b0b622ff132
+  pinned_at: "2026-10-25"

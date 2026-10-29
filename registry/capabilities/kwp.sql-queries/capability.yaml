@@ -1,0 +1,62 @@
+schema_version: "1"
+id: kwp.sql-queries
+name: Analytical SQL across warehouse dialects (Knowledge Work Plugins)
+description: Write correct, performant analytical SQL for PostgreSQL, Snowflake, BigQuery, Redshift and Databricks - dialect-specific date, string, JSON and array syntax, window functions, CTEs, cohort retention, funnels, deduplication and debugging of slow or wrong queries.
+version: 1.0.0
+kind: skill
+category: data.sql
+purpose: Covers the analytical-SQL side the registry lacked (ecc.postgres-patterns / mysql-patterns are about schema, indexes and OLTP use from an application); useful in dbt, analytics and reporting repositories where queries, not services, are the product.
+status: curated
+provenance: upstream
+source:
+  source_id: kwp
+  repository: https://github.com/anthropics/knowledge-work-plugins
+  revision: 33d3dea41a341b341d4f5da2e8801ae0c89be2b8
+  paths:
+    - data/skills/sql-queries/SKILL.md
+    - LICENSE
+license:
+  spdx: Apache-2.0
+  attribution: "Knowledge Work Plugins (anthropics/knowledge-work-plugins), Copyright Anthropic"
+  notice_file: claude_code/sql-queries/LICENSE-KWP.txt
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-25"
+  reviewer: agent-forge curation (automated session; human sign-off pending)
+  rationale: >-
+    427 lines of markdown (11.5 KB), verbatim. Model-invoked reference (`user-invocable: false` hides it from the slash menu only, so its description still counts as always-loaded context). No connector placeholders, no links, names no other skill, ships no scripts. The scanner records no warehouse or dbt marker yet, so it is tag-only.
+applicability:
+  tags: [sql, analytics, data-warehouse, dbt, snowflake, bigquery, redshift, databricks]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/sql-queries
+    dest: .claude/skills/sql-queries
+    merge: create_only
+  - platform: codex
+    source: codex/sql-queries
+    dest: .agents/skills/sql-queries
+    merge: create_only
+  - platform: copilot
+    source: claude_code/sql-queries
+    dest: .github/skills/sql-queries
+    merge: create_only
+  - platform: gemini
+    source: claude_code/sql-queries
+    dest: .gemini/skills/sql-queries
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["^sql", "sql-queries", "write-query", "analytics-sql"]
+    description: an existing SQL-writing skill
+validation:
+  - type: frontmatter
+    path: .claude/skills/sql-queries/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: e0eab1d04fd149a315aa4b74189d182f1e6e480130669f344bf96df48a39c93e
+  pinned_at: "2026-10-25"

@@ -11,7 +11,8 @@ python scripts/export_schemas.py              # after changing models (commit th
 
 ## Updating upstream sources
 
-1. `agent-forge sources sync` — shows how many commits behind and which files changed.
+1. `agent-forge sources sync` — shows how many commits behind, which files changed, and which curated
+   capabilities those changes touch (compared from each capability's `source.revision`).
 2. `agent-forge sources sync --update` — moves the checkout (refused if dirty or pinned).
 3. `python scripts/curate.py --allow-revision-drift` — re-copies the explicit file list.
 4. `git diff registry/` — read every change; decide per capability.

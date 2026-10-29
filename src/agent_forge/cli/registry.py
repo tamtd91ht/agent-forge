@@ -257,13 +257,26 @@ def sources_sync(
 
     def body() -> None:
         from agent_forge.sources.manager import SourceManager
+        from agent_forge.sources.provenance import upstream_drift
 
-        mgr = SourceManager(_ws(workspace))
+        ws = _ws(workspace)
+        mgr = SourceManager(ws)
+        caps = _registry(ws).capabilities()
         specs = [mgr.get(source_id)] if source_id else mgr.manifest.sources
         out = []
         for spec in specs:
             st = mgr.sync(spec, update=update)
-            out.append(st.to_dict())
+            # Which curated capabilities would a re-curation touch? Compared from each
+            # capability's own revision, not the checkout head.
+            stale = []
+            if st.upstream_head:
+                for cap in caps:
+                    if cap.source.source_id != spec.id:
+                        continue
+                    changed = upstream_drift(cap, st.checkout, st.upstream_head)
+                    if changed:
+                        stale.append({"id": cap.id, "changed_files": changed})
+            out.append({**st.to_dict(), "stale_capabilities": stale})
             if as_json:
                 continue
             console.print(
@@ -281,6 +294,10 @@ def sources_sync(
                 console.print(
                     "  [yellow]Review before curating. Upstream changes never rewrite the registry automatically.[/]"
                 )
+            if stale:
+                console.print(f"  {len(stale)} curated capability(ies) changed upstream:")
+                for s in stale:
+                    console.print(f"    {s['id']}  ({len(s['changed_files'])} file(s))")
         if as_json:
             _print_json(out)
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added (source: kwp)
+- Source `kwp` (anthropics/knowledge-work-plugins, Apache-2.0) and two skills, tag-only until
+  evaluated: `kwp.incident-response` (adapted: SEV1-4 table, status-update and blameless
+  postmortem templates) and `kwp.sql-queries` (verbatim: analytical SQL per warehouse dialect).
+  The role plugins, connectors and other skills are in `docs/rejections/kwp-role-plugins.md`.
+- Content-safety rule `credential-store-read`: `validate` flags content that reads a local
+  credential store or private key (macOS keychain, secret-tool, keyring, `~/.aws/credentials`,
+  SSH private keys, `.netrc`, `.git-credentials`).
+- `sources sync` lists the curated capabilities whose upstream files changed since their own
+  pinned revision (`stale_capabilities` in `--json`).
+
 ## 0.5.1 — 2026-10-24
 
 Content from a new source, and a registry check that the content it ships is what it says.

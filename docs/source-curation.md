@@ -1,9 +1,9 @@
-# Source curation record (initial catalog 2026-10-16, last update 2026-10-24)
+# Source curation record (initial catalog 2026-10-16, last update 2026-10-25)
 
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (139)
+## Curated (141)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -40,6 +40,22 @@ overwritten by a re-run.
 | `forge.agent.backend-reviewer` | subagent (Claude Code), `project_types` backend / fullstack / service, read-only (Read, Grep, Glob) | six fixed dimensions: security, money and transactions (idempotency, atomicity, ledger), data integrity and concurrency, readiness for traffic (N+1, caching, timeouts, backpressure), API contract, clarity; evidence-backed findings with severity and "not checked" |
 | `forge.agent.frontend-reviewer` | subagent (Claude Code), `project_types` frontend / fullstack / mobile-or-desktop, read-only | seven dimensions: backend contract, how the view loads its data (request map), state and races, client security, performance, resilience and a11y, clarity; declares existing reviewer agents as equivalents so the skill's review-coverage step judges before adding |
 | `forge.skill.view-data-loading` | skill, both platforms, `project_types` frontend / fullstack / mobile-or-desktop | request discipline for a screen: request map (first paint vs enhancement vs on interaction), one request per resource, parallel independent calls, nothing secondary blocking the first render, fetch on need, dedupe / cache / cancel; written from a recurring client-project finding |
+
+### Knowledge Work Plugins (2026-10-25)
+
+Scout report on anthropics/knowledge-work-plugins (Apache-2.0, revision `33d3dea41a34`): two
+skills that fill a registry gap; the role plugins, connectors and the other engineering / data
+skills are in `rejections/kwp-role-plugins.md`. Both ship upstream's `LICENSE` as
+`LICENSE-KWP.txt`; both are tag-only until evaluated (ADR-0008).
+
+| Capability | From | Decision | Why |
+|---|---|---|---|
+| `kwp.incident-response` | kwp `engineering/skills/incident-response` | adapted (one replacement + Apache-2.0 §4(b) footer), both, tags `incident` / `oncall` / `postmortem` | SEV1-4 table, status-update and blameless postmortem templates; the registry had no incident content. The dangling `../../CONNECTORS.md` pointer becomes one line explaining `~~category` placeholders |
+| `kwp.sql-queries` | kwp `data/skills/sql-queries` | verbatim, both, tags `sql` / `analytics` / `dbt` / warehouse names | analytical SQL per dialect (Postgres, Snowflake, BigQuery, Redshift, Databricks), cohorts, funnels, dedup; complements the OLTP-side `ecc.postgres-patterns` / `mysql-patterns` |
+
+The same scouting added the `credential-store-read` content-safety rule (from upstream's
+plugin-review rubric, `.github/policy/prompt.md`) and the per-capability upstream drift in
+`sources sync` (from its per-entry SHA bumps).
 
 ### Ponytail (2026-10-24)
 
@@ -123,6 +139,9 @@ One record per item, with the reason and what would have to change, lives in
 | ponytail `skills/ponytail-audit` | the review checklist applied to a whole repo; curate when a project asks for a repo audit |
 | ponytail `hooks/ponytail-map.js` | 2,000-character codebase map at session start (reuse-first costs no search); a hook, so revisit as a workspace-authored stdlib hook once `context_load` counts hook-injected context |
 | ponytail `benchmarks/agentic/` | the design reference for the deferred evaluation engine (ADR-0002): paired arms in one run, deterministic checks with good / bad references self-tested before any API spend, LLM judges gated by a self-test and never a curation gate, geometric mean of per-task medians with a bootstrap interval |
+| kwp `.github/policy/{prompt.md,schema.json}` | an LLM plugin-review rubric with a JSON verdict (hook gating, undisclosed telemetry, description vs behaviour, cross-service credential use); use it as a curation checklist, never as a gate (an LLM does not decide what is safe) |
+| kwp `~~category` connector placeholders | tool-agnostic skills that name a category (`~~monitoring`) instead of a product; needs parameterised assets at plan time, which verbatim copies do not have |
+| kwp `data/skills/data-context-extractor` | bootstraps a company-specific data skill from the warehouse schema and analyst answers; close to `import` (ADR-0011) but needs a warehouse MCP and writes a packaged `.skill` zip |
 | superpowers `writing-plans` / `executing-plans` / `subagent-driven-development` / `using-git-worktrees` / `finishing-a-development-branch` | one chain of 6+ skills with scripts that write `.superpowers/` into the working tree; revisit as a single capability if a chain with scripts is ever allowed |
 
 ## Re-curation workflow

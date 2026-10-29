@@ -287,6 +287,41 @@ def _pt_skill(cid: str, name: str) -> Item:
     return item
 
 
+KWP_CONNECTORS_POINTER = (
+    "> If you see unfamiliar placeholders or need to check which tools are connected, "
+    "see [CONNECTORS.md](../../CONNECTORS.md).\n"
+)
+KWP_CONNECTORS_NOTE = (
+    "> `~~category` (for example `~~monitoring`, `~~chat`) means whichever tool of that "
+    "category is connected through MCP; skip those steps when none is.\n"
+)
+KWP_FOOTER = (
+    "\n\n---\n"
+    "Modified by Agent Forge from anthropics/knowledge-work-plugins {path} (Apache License 2.0, "
+    "see LICENSE-KWP.txt): the pointer to the plugin's CONNECTORS.md, which is not installed, "
+    "is replaced by a one-line explanation of `~~category` placeholders.\n"
+)
+
+
+def _kwp_skill(
+    cid: str, upstream_dir: str, replacements: list[tuple[str, str]] | None = None
+) -> Item:
+    """An anthropics/knowledge-work-plugins skill for both platforms with the Apache-2.0 text.
+
+    Apache-2.0 section 4(b): a modified file says so, hence the footer whenever `replacements`.
+    """
+    name = upstream_dir.rsplit("/", 1)[-1]
+    item = Item(cid, "kwp", [])
+    for plat in ("claude_code", "codex"):
+        base = f"{plat}/{name}"
+        item.files.append((f"{upstream_dir}/SKILL.md", f"{base}/SKILL.md"))
+        item.files.append(("LICENSE", f"{base}/LICENSE-KWP.txt"))
+        if replacements:
+            item.replacements[f"{base}/SKILL.md"] = replacements
+            item.footers[f"{base}/SKILL.md"] = KWP_FOOTER.format(path=f"{upstream_dir}/SKILL.md")
+    return item
+
+
 def _skill(
     cid: str,
     name: str,
@@ -436,6 +471,14 @@ ITEMS: list[Item] = [
     _pt_skill("ponytail.lazy-senior-dev", "ponytail"),
     _pt_skill("ponytail.shortcut-debt", "ponytail-debt"),
     _pt_skill("ponytail.review", "ponytail-review"),
+    # anthropics/knowledge-work-plugins: two skills that fill a registry gap; the rest of the
+    # catalogue is role content or duplicates (docs/rejections/kwp-role-plugins.md).
+    _kwp_skill(
+        "kwp.incident-response",
+        "engineering/skills/incident-response",
+        replacements=[(KWP_CONNECTORS_POINTER, KWP_CONNECTORS_NOTE)],
+    ),
+    _kwp_skill("kwp.sql-queries", "data/skills/sql-queries"),
     # Karpathy guidelines: verbatim skill. The always-on CLAUDE.md/AGENTS.md section
     # (karpathy.principles) is adapted by hand from upstream CLAUDE.md, not copied here.
     Item(

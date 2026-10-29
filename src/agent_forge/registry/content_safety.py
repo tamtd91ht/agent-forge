@@ -52,6 +52,19 @@ RULES: dict[str, tuple[re.Pattern[str], str]] = {
         ),
         "looks like a real credential",
     ),
+    # Reading a credential store is how a token leaves the service it belongs to (scouting of
+    # anthropics/knowledge-work-plugins, `.github/policy/prompt.md`); the reviewer judges
+    # whether the destination is the same service.
+    "credential-store-read": (
+        re.compile(
+            r"\bsecurity\s+find-(generic|internet)-password\b|\bsecret-tool\s+lookup\b"
+            r"|\bcmdkey\s+/list\b|\bkeytar\b|\bkeyring\.get_password\b"
+            r"|~/\.aws/credentials\b|\.ssh/id_(rsa|dsa|ecdsa|ed25519)\b(?!\.pub)"
+            r"|~/\.claude/\.credentials|~/\.(netrc|git-credentials)\b",
+            re.IGNORECASE,
+        ),
+        "reads a local credential store or private key",
+    ),
     "instruction-override": (
         re.compile(
             r"\b(ignore|disregard|forget)\s+(all\s+|any\s+)?(the\s+)?(previous|prior|above|earlier|"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 
 from agent_forge.models.capability import Capability
 from agent_forge.sources.manager import SourceManager
@@ -62,3 +63,28 @@ def verify_capability_provenance(cap: Capability, manager: SourceManager) -> Pro
     return ProvenanceResult(
         cap.id, src.source_id, src.revision, True, rev_ok, present_paths, missing_paths
     )
+
+
+def upstream_drift(cap: Capability, checkout: Path, target: str) -> list[str] | None:
+    """Files under `cap.source.paths` that changed between the curated revision and `target`.
+
+    None when the capability has no revision or paths, or the revision is not in the checkout.
+    Read-only: `git diff --name-only`, nothing is checked out.
+    """
+    src = cap.source
+    if not src.revision or not src.paths:
+        return None
+    if src.revision == target:
+        return []
+    proc = subprocess.run(
+        ["git", "diff", "--name-only", src.revision, target, "--", *src.paths],
+        cwd=str(checkout),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None
+    return [line for line in proc.stdout.splitlines() if line]

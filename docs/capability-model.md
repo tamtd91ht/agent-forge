@@ -52,7 +52,8 @@ The directory name must equal `id`. JSON Schema: `registry/schema/capability.sch
 6. `agent-forge validate` must report 0 errors; `pytest tests/unit/test_registry.py` runs the
    real-registry checks. It also runs the **content-safety scan**
    (`registry/content_safety.py`): pipe-to-shell, broad deletes, `sudo`/`chmod 777`, global
-   config writes, embedded credentials, instruction overrides. Each finding is an error until
+   config writes, embedded credentials, reads of local credential stores or private keys,
+   instruction overrides. Each finding is an error until
    `review.acknowledged_findings` explains it (a defensive example is fine; an unexplained one
    is not). The scan is a review aid, not proof of safety.
 7. Above `low` risk, write `review.risk_rationale`. Pin integrity with

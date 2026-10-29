@@ -105,3 +105,19 @@ sources:
       - "skills/ponytail/SKILL.md carries level-switch lines that depend on the mode-tracker hook; AGENTS.md is the level-free body upstream checks against it (scripts/check-rule-copies.js)."
       - "ponytail-gain and ponytail-help describe the plugin runtime and the benchmark: not curated."
     redistribution_notes: "MIT (c) 2026 DietrichGebert; keep LICENSE. The core SKILL.md declares license: MIT in its frontmatter."
+
+  - id: kwp
+    name: Knowledge Work Plugins (Anthropic)
+    url: https://github.com/anthropics/knowledge-work-plugins
+    license: Apache-2.0
+    default_branch: main
+    pinned_revision: 33d3dea41a341b341d4f5da2e8801ae0c89be2b8  # 2026-10-21; no release tags
+    trust: untrusted
+    homepage: https://github.com/anthropics/knowledge-work-plugins
+    notes:
+      - "Role-based plugin marketplace for Cowork / Claude Code: skills + remote http MCP configs (.mcp.json, some with OAuth client ids); no hooks."
+      - "Installs via `claude plugin marketplace add` / `plugin install` (user-level plugin config): never run."
+      - "Skills use `~~category` connector placeholders and link ../../CONNECTORS.md, which dangles after a project-scoped install: adapt or skip."
+      - "Code only in bio-research/*/scripts and data/skills/data-context-extractor/scripts: not curated."
+      - ".github/policy/{prompt.md,schema.json} is an LLM plugin-review rubric: reviewer input only, never a gate."
+    redistribution_notes: "Apache-2.0 at the root and per Anthropic plugin; ship the LICENSE and mark modified files (section 4b). partner-built/* mixes MIT (Apollo, Tribe AI, Slack, Zoom) and Apache-2.0 (common-room): check per directory."

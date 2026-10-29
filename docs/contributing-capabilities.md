@@ -72,7 +72,7 @@ looks installed and does nothing.
 |---|---|---|
 | Manifest schema, `extra: forbid`, id = directory, semver | `validate` | any field is unknown or malformed |
 | `source.revision` is a 40-hex SHA; provenance | `validate` (local, with checkouts) | revision or paths are not in the checkout |
-| Content safety (pipe-to-shell, broad deletes, sudo, credentials, instruction overrides) | `validate` | a finding is not acknowledged with a reason |
+| Content safety (pipe-to-shell, broad deletes, sudo, credentials, credential-store reads, instruction overrides) | `validate` | a finding is not acknowledged with a reason |
 | Licence notice present, `redistribution_ok: true` for curated | `validate` | notice file missing |
 | Relative links, skill-to-skill calls, dependency cycles and version constraints | `validate` | any broken |
 | Integrity pin matches assets | `validate`, `pin_integrity.py --check` (own CI job) | assets changed after pinning |
