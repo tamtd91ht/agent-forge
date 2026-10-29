@@ -27,8 +27,8 @@ bold style direction" rules). Accessibility, security and performance rules stil
 
 - Colours, radii, shadows and fonts come from tokens or scale utilities only; no raw
   `#hex` / `rgb()` / `hsl()`, no arbitrary `rounded-[..px]` / `p-[..px]` / `text-[..px]`.
-- One solid green create / submit action per view; every other action is outline,
-  tertiary or ghost.
+- One solid action per view (green for create / submit, ink `primary` otherwise); every
+  other action is outline, tertiary or ghost.
 - Use the screen pattern for the type: list, dashboard, quick-create modal, detail.
 - Every data block has a skeleton, an in-place empty text and an error with retry or a
   copyable code.

@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased
+
+### Added (source: workspace)
+- `forge.agent.ui-reviewer`: visual UI reviewer that drives the running app through the
+  Playwright MCP at three widths and both themes, with a read-only audit script (contrast,
+  off-scale radii and font sizes, unlabeled controls, small targets, solid actions, overflow),
+  a focus-ring walk and console errors. Optional: it depends on `mcp.playwright`.
+- Eval task `examples/nextjs-ts/tasks/orders-list-ui.yaml`: an orders screen whose offline
+  acceptance script checks house-style adherence (semantic tokens instead of raw colours or the
+  default palette, a defined success token on the create action, an empty state).
+
+### Changed
+- `forge.skill.omicx-ui` 1.2.0: patterns from the integration and settings modules (page header
+  with tabs, master-detail list, usage card, settings column, setup wizard, centred empty list),
+  the solid primary action for non-create main actions, and the matching kit button variant.
+- `forge.rule.omicx-ui` 1.0.1: the one-solid-action rule names the primary variant.
+
+### Fixed
+- `agent-forge-eval`: tool output is decoded as UTF-8; on Windows the default code page made
+  the reader thread fail and dropped tokens and cost for runs whose output had non-ASCII text.
+  The README shows the working `--tool-args=--flag=value` form.
+
+### Evaluation
+- `docs/evaluation/results/20261029-forge.rule.omicx-ui-nextjs-ts.md`: orders-list-ui, 3 runs
+  per arm, baseline 0/3, candidate 3/3 (Wilson 95% 0.44-1.00), verdict `improved`; reviewer
+  notes list the confound (whole recommended set installed) and what the runs produced.
+
 ## 0.7.0 — 2026-10-29
 
 The house UI style becomes the default for UI work: a path-scoped rule, a reference component

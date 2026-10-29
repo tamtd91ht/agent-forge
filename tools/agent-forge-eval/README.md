@@ -28,8 +28,11 @@ plain verdict: `improved` (candidate's lower bound above the baseline's rate), `
 pip install -e tools/agent-forge-eval            # or: uv pip install -e tools/agent-forge-eval
 agent-forge-eval tasks --fixture examples/python-fastapi
 agent-forge-eval run --fixture examples/python-fastapi --capability ecc.tdd-workflow \
-    --tool claude --runs 3 --tool-args --permission-mode acceptEdits
+    --tool claude --runs 3 --tool-args=--permission-mode=acceptEdits
 ```
+
+Pass each tool argument as `--tool-args=--flag=value`: argparse rejects a bare value that
+starts with `--`.
 
 Results land in `docs/evaluation/results/<date>-<capability>-<fixture>.{json,md}`. Copy the
 summary numbers into the capability's `review.evidence` (see `docs/evaluation.md`) when a

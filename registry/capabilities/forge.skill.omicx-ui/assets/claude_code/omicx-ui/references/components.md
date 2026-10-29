@@ -9,6 +9,8 @@ Sizes in px; colours are token names from [tokens.css](tokens.css). "sm" is the 
 | Variant | Spec | Example |
 |---|---|---|
 | Solid create | sm h32 px12 r10 / md h36 px16 r12; bg `success`, text white 14/600 | Thêm mới, submit |
+| Solid primary | as solid create but bg `primary`, text `primary-foreground`; only when the main action is not a create | Tải tệp lên (upload) |
+| Text action | 14/500 `success` text, no border, inline next to a group title | Thêm phòng ban |
 | Outline success | 1 px `success` border, text `success` 14/500, no fill | Tải lên (import) |
 | Outline neutral | 1 px `border`, text `primary` 14/500 | Bố cục, Chỉnh sửa, Xem đầy đủ |
 | Tertiary | bg `default` (`#e7eaf0` / `#253a55`), text `primary` 14/500 | Đóng |

@@ -1,6 +1,6 @@
 {
   "reviewed": "2026-10-23",
-  "notes": "Field-test fixture (2026-10-23): a monorepo with a Spring Boot + Spring Data MongoDB + Kafka service, a Vert.x + Elasticsearch Java client + MongoDB driver + Kafka service, a Next.js app with Playwright, Kubernetes manifests under deploy/k8s, Terraform under infra and a compose file. All thirteen stack indicators must be detected (java, typescript, terraform, docker, spring, vertx, elasticsearch, mongodb, kafka, kubernetes, nextjs, react, playwright); the README names Hibernate / JPA / Redis as documentation only and none of them may be detected. Reviewed decisions: ecc.jpa-patterns is NOT recommended (Spring without a JPA / Hibernate dependency; it is gated on the jpa integration since 1.1.0); ecc.kubernetes-patterns IS recommended from the manifests (gated on the kubernetes detection since 1.1.0); the stack skills forge.skill.{mongodb,elasticsearch,vertx}-patterns follow their integrations; the event_driven pack follows Kafka; both reviewer subagents apply (backend + fullstack web); forge.skill.backend-review is for Codex/Copilot/Gemini only, so it is not_applicable on claude_code here. 2026-10-29: +forge.skill.omicx-ui (house UI style for the web/mobile part), +forge.hook.design-token-guard (Node, warns on raw colour literals in UI files). +forge.rule.omicx-ui (path-scoped house-style rule, 0 always-loaded).",
+  "notes": "Field-test fixture (2026-10-23): a monorepo with a Spring Boot + Spring Data MongoDB + Kafka service, a Vert.x + Elasticsearch Java client + MongoDB driver + Kafka service, a Next.js app with Playwright, Kubernetes manifests under deploy/k8s, Terraform under infra and a compose file. All thirteen stack indicators must be detected (java, typescript, terraform, docker, spring, vertx, elasticsearch, mongodb, kafka, kubernetes, nextjs, react, playwright); the README names Hibernate / JPA / Redis as documentation only and none of them may be detected. Reviewed decisions: ecc.jpa-patterns is NOT recommended (Spring without a JPA / Hibernate dependency; it is gated on the jpa integration since 1.1.0); ecc.kubernetes-patterns IS recommended from the manifests (gated on the kubernetes detection since 1.1.0); the stack skills forge.skill.{mongodb,elasticsearch,vertx}-patterns follow their integrations; the event_driven pack follows Kafka; both reviewer subagents apply (backend + fullstack web); forge.skill.backend-review is for Codex/Copilot/Gemini only, so it is not_applicable on claude_code here. 2026-10-29: +forge.skill.omicx-ui (house UI style for the web/mobile part), +forge.hook.design-token-guard (Node, warns on raw colour literals in UI files). +forge.rule.omicx-ui (path-scoped house-style rule, 0 always-loaded). +forge.agent.ui-reviewer optional (depends on mcp.playwright, which needs approval).",
   "languages": [
     "java",
     "javascript",
@@ -77,6 +77,7 @@
   ],
   "optional": [
     "ecc.agent.code-reviewer",
+    "forge.agent.ui-reviewer",
     "mcp.playwright"
   ]
 }

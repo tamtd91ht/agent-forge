@@ -2,7 +2,7 @@ schema_version: "1"
 id: forge.rule.omicx-ui
 name: OMICX house UI style rule (path-scoped)
 description: Path-scoped rule that loads whenever a UI file (TSX/JSX, Vue, Svelte, Astro, HTML, CSS/SCSS/Less, Dart) is in play - points the agent at the omicx-ui skill and its reference kit, states that the house style wins over generic aesthetic guidance for look and layout (a project's own established design system wins over both), and lists the six rules checked in review.
-version: 1.0.0
+version: 1.0.1
 kind: rule
 category: design.ui
 purpose: Makes the house style the default without relying on the skill's description to trigger - a request like "build the orders screen" does not mention design, so the agent would otherwise improvise a look or follow the generic "pick a bold style direction" advice of other web rules.
@@ -29,6 +29,18 @@ review:
   notes:
     - "Skip ground (covered): a project whose own instructions already name a design system and its precedence."
     - "Codex and Gemini have no path-scoped rules; there the omicx-ui skill (by description) and the frontend reviewer carry the style."
+  evidence:
+    - date: "2026-10-29"
+      fixture: examples/nextjs-ts
+      tool: claude 2.1.312
+      runs: 3
+      tasks: 1
+      baseline_pass_rate: 0.0
+      candidate_pass_rate: 1.0
+      candidate_ci95: [0.439, 1.0]
+      verdict: improved
+      report: docs/evaluation/results/20261029-forge.rule.omicx-ui-nextjs-ts.md
+      decided_by: TamTD
 applicability:
   project_types: [frontend, fullstack, mobile-or-desktop]
   tags: [frontend, mobile, ui, design-system, rules]
@@ -59,5 +71,5 @@ risk: low
 benefit_score: 6
 maintenance_cost: 1
 integrity:
-  assets_sha256: 47c83117cc25d4cee9eaf79a38555eb4e5aa76dd0877d1feee0000e2c88e482f
+  assets_sha256: eefdcad2e8dd676f860e5eeedddcba1e700f0d6a7611838e80d77c04ad4ee9b1
   pinned_at: "2026-10-29"

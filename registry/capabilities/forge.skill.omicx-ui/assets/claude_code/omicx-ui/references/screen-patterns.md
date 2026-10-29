@@ -107,6 +107,69 @@ Tạo lúc 11:27 14/10/2026 · (Đ) Tôi   Cập nhật 11:27 14/10/2026 · (Đ)
   context and a menu; overdue items show a `danger` badge with the relative age.
 - Header quick actions create related records without leaving the page.
 
+## Page header with tabs (module pages)
+
+Most module pages that are not the module's main list open with a page header: title 22/28
+bold, one-line muted description, then underline tabs for the page's sub-views ("Webhooks |
+Lịch sử gửi", "Danh sách | Vai trò | Ca làm việc | Lịch sử thay đổi"), then the list card.
+Sibling categories of one object type use pill tabs under the description instead
+("Chăm sóc khách hàng | Công việc | Lịch hẹn | Cơ hội").
+
+## Master-detail list
+
+A narrow left column (≈200 px) holds a tree or group list (organisation, folders) with an
+inline text action in `success` ("Thêm phòng ban"); the right side is the normal list card
+filtered by the selection. Role badges use a tinted fill of their colour (owner: `danger`
+text on a 10 % `danger` fill), not a solid one.
+
+## Usage / metrics card
+
+Above a usage-billed list: a card with the metric name and period in 12 px muted
+("Credit · 10/2026"), the big value (22 bold), a line or bar chart across the card, a legend
+below, and on the right a period navigator (`‹ Tháng 10/2026 ›`, next disabled for the
+current period) plus a segmented switch for the metric ("Credit | Sản lượng").
+
+## Settings page
+
+Settings render as one centred column (`max-w-147` ≈ 588 px, 88 px top and bottom padding,
+32 px between sections), never full width:
+
+```text
+                 Tổng quan                                  (22/28 bold)
+                 Manage general information … (14 muted)
+
+                 Thông tin doanh nghiệp                     (16/600)
+                 ┌───────────────────────────────────────────────┐
+                 │ (T)  TamTD                       [Chỉnh sửa] │  r16, p16, border
+                 │      tamtd.omicx.one ⧉                        │
+                 │ 👥 1 người dùng   📅 Tạo từ 28/07/2026        │
+                 │ ───────────────────────────────────────────── │
+                 │ Chủ sở hữu hiện tại: Bạn                      │
+                 └───────────────────────────────────────────────┘
+                 Khu vực
+                 ┌───────────────────────────────────────────────┐
+                 │ [icon] (UTC +07:00) Asia/Ho_Chi_Minh [Chỉnh sửa]│
+                 └───────────────────────────────────────────────┘
+```
+
+Each section is read-only with its own outline "Chỉnh sửa" button (edit one section at a
+time, in a modal or in place); a 36 px icon box leads each row.
+
+## Setup wizard
+
+First-time setup of a feature (for example a switchboard) is one centred column with
+numbered steps ("1. Chọn khu vực tổng đài", "2. Thông tin"). Later steps stay visible but
+muted until the earlier step is answered. Choices are tiles in a two-column grid, grouped
+under small muted group labels (countries); each tile shows an icon, the name and live
+state on the right (latency `118ms` with a `warning` dot, "Mất kết nối" with a `danger`
+dot, `•••` while measuring), so the user picks on facts, not names.
+
+## Empty list
+
+Inside a list card, the empty state is centred in the table body: an optional 24 px muted
+icon above "Chưa có dữ liệu" / "Không có dữ liệu" in 14 px muted; the toolbar and the create
+action stay visible.
+
 ## Feedback
 
 - Toast for the result of an action; errors include the machine code and a copy action.

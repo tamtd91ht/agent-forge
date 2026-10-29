@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cx } from "./cx";
 
-export type ButtonVariant = "create" | "outline" | "outline-success" | "tertiary" | "ghost" | "danger";
+export type ButtonVariant = "create" | "primary" | "outline" | "outline-success" | "tertiary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md";
 
 const base =
@@ -18,6 +18,8 @@ const sizes: Record<ButtonSize, string> = {
 const variants: Record<ButtonVariant, string> = {
   // The one solid action of a view: create / submit.
   create: "bg-success text-white font-semibold hover:bg-success/80",
+  // The one solid action when it is not a create (upload, connect): ink fill, inverts in dark mode.
+  primary: "bg-primary text-primary-foreground font-semibold hover:bg-primary/85",
   outline: "border border-tertiary text-primary hover:bg-quaternary",
   "outline-success": "border border-success text-success hover:bg-success/10",
   tertiary: "bg-default text-primary hover:bg-default/70",

@@ -1,0 +1,208 @@
+{
+  "meta": {
+    "harness_version": "0.1.0",
+    "date": "2026-10-29T05:11:15+00:00",
+    "fixture": "nextjs-ts",
+    "capability": "forge.rule.omicx-ui",
+    "tool": "claude",
+    "tool_args": [
+      "--permission-mode=acceptEdits"
+    ],
+    "runs": 3,
+    "tasks": [
+      "orders-list-ui"
+    ],
+    "agent_forge_version": "agent-forge 0.7.0"
+  },
+  "summary": {
+    "arms": {
+      "baseline": {
+        "runs": 3,
+        "passed": 0,
+        "pass_rate": 0.0,
+        "ci95": [
+          0.0,
+          0.561
+        ],
+        "regressions": null,
+        "timeouts": 0,
+        "mean_wall_seconds": 47.6,
+        "mean_tokens_out": 5197.0,
+        "mean_cost_usd": 0.2717,
+        "mean_changed_files": 2.0
+      },
+      "candidate": {
+        "runs": 3,
+        "passed": 3,
+        "pass_rate": 1.0,
+        "ci95": [
+          0.439,
+          1.0
+        ],
+        "regressions": null,
+        "timeouts": 0,
+        "mean_wall_seconds": 102.7,
+        "mean_tokens_out": 10950.5,
+        "mean_cost_usd": 0.8209,
+        "mean_changed_files": 7.0
+      }
+    },
+    "categories": {
+      "feature": {
+        "baseline": {
+          "runs": 3,
+          "passed": 0,
+          "pass_rate": 0.0,
+          "ci95": [
+            0.0,
+            0.561
+          ],
+          "regressions": null,
+          "timeouts": 0,
+          "mean_wall_seconds": 47.6,
+          "mean_tokens_out": 5197.0,
+          "mean_cost_usd": 0.2717,
+          "mean_changed_files": 2.0
+        },
+        "candidate": {
+          "runs": 3,
+          "passed": 3,
+          "pass_rate": 1.0,
+          "ci95": [
+            0.439,
+            1.0
+          ],
+          "regressions": null,
+          "timeouts": 0,
+          "mean_wall_seconds": 102.7,
+          "mean_tokens_out": 10950.5,
+          "mean_cost_usd": 0.8209,
+          "mean_changed_files": 7.0
+        }
+      }
+    },
+    "verdict": {
+      "status": "improved",
+      "delta_pass_rate": 1.0,
+      "baseline": 0.0,
+      "candidate": 1.0,
+      "note": "confidence intervals are Wilson 95%; with few runs they are wide by design"
+    }
+  },
+  "records": [
+    {
+      "task_id": "orders-list-ui",
+      "category": "feature",
+      "arm": "baseline",
+      "run": 1,
+      "passed": false,
+      "acceptance_exit": 1,
+      "regression_passed": null,
+      "tool": {
+        "exit_code": 0,
+        "wall_seconds": 49.40135720001126,
+        "tokens_in": 12,
+        "tokens_out": 5478,
+        "cost_usd": 0.2766558,
+        "timed_out": false,
+        "raw_tail": "dget\":0},\"by_type\":{}},\"safety_stops\":0,\"is_error\":false,\"num_turns\":10,\"subtype\":\"success\",\"api_error_status\":null,\"result\":\"I added the Orders page at `app/orders/page.tsx` and the sample data in `lib/orders.ts`. I haven't run it: `node_modules` isn't installed, so there's been no typecheck, build or browser check yet.\\n\\n**One thing to fix before the styling will show:** Tailwind is listed in `package.json` but never set up. There's no `tailwind.config`, no PostCSS config, and no global CSS file with the `@tailwind` directives imported in `app/layout.tsx`. Until that's added, the page will render unstyled. I left it alone because it changes the whole app, not just this page. I can add it if you want.\\n\\n**What's in it:**\\n- **`lib/orders.ts`**: the order type, 8 sample orders, a VND formatter (e.g. `1.250.000 \u00e2\u201a\u00ab`) and a filter function the page uses.\\n- **Search** matches order ID or customer name and ignores case and Vietnamese accents, so \\\"nguyen\\\" finds \\\"Nguy\u00e1\u00bb\u2026n V\u00c4\u0192n An\\\".\\n- **Status filter**: a dropdown with All, Pending, Paid and Cancelled.\\n- **Table**: totals are right-aligned, statuses show as coloured badges, it scrolls sideways on narrow screens, and a \\\"Showing X of Y orders\\\" count sits underneath.\\n- **Empty state**: when filters hide everything, it says \\\"No orders match your filters\\\" with a **Clear filters** button. If there are no orders at all, it says \\\"No orders yet\\\" with a **Create the first order** button.\\n- **New order button**: the stub just logs to the console, with a TODO.\\n\\nThe page is a client component because the search and filter run in the browser. It imports with a relative path (`../../lib/orders`) because `tsconfig.json` has no `@/` path alias.\\n\\nTo check it, run `npm install && npm run dev` and open `/orders`.\",\"ttft_ms\":1007,\"type\":\"result\",\"duration_ms\":45876,\"uuid\":\"84a46880-6bbe-4ef6-94a9-acf7369492fd\",\"ttft_stream_ms\":758,\"time_to_request_ms\":84,\"first_content_frame_ms\":758,\"queued_turn_count\":0,\"result_index\":0}\n"
+      },
+      "changed_files": 2
+    },
+    {
+      "task_id": "orders-list-ui",
+      "category": "feature",
+      "arm": "baseline",
+      "run": 2,
+      "passed": false,
+      "acceptance_exit": 1,
+      "regression_passed": null,
+      "tool": {
+        "exit_code": 0,
+        "wall_seconds": 47.946709399999236,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost_usd": null,
+        "timed_out": false,
+        "raw_tail": ""
+      },
+      "changed_files": 2
+    },
+    {
+      "task_id": "orders-list-ui",
+      "category": "feature",
+      "arm": "baseline",
+      "run": 3,
+      "passed": false,
+      "acceptance_exit": 1,
+      "regression_passed": null,
+      "tool": {
+        "exit_code": 0,
+        "wall_seconds": 45.59826710000925,
+        "tokens_in": 14,
+        "tokens_out": 4916,
+        "cost_usd": 0.26666900000000004,
+        "timed_out": false,
+        "raw_tail": "pth_limit\":0,\"concurrency_limit\":0,\"budget\":0},\"by_type\":{}},\"safety_stops\":0,\"is_error\":false,\"num_turns\":10,\"subtype\":\"success\",\"api_error_status\":null,\"result\":\"I've added the Orders page and the sample data, but none of it has been run or type-checked: dependencies aren't installed (there's no `node_modules`).\\n\\nTailwind isn't set up in this project yet. `tailwindcss` is listed in `package.json`, but there's no `tailwind.config`, no PostCSS config, and no CSS file with the `@tailwind` directives imported in `app/layout.tsx`. Until those exist, the classes on the page do nothing and it will look unstyled. I can wire that up if you want.\\n\\n**What I added:**\\n- **`lib/orders.ts`** has the `Order` type (status is `pending | paid | cancelled`) and 8 sample orders with Vietnamese customer names and totals in VND. It also has:\\n  - `formatVND`, which displays totals like `1.250.000 \u00e2\u201a\u00ab`.\\n  - `filterOrders`, which matches on order ID or customer name. The search ignores case and Vietnamese accents, so typing \\\"nguyen\\\" finds \\\"Nguy\u00e1\u00bb\u2026n\\\".\\n- **`app/orders/page.tsx`** is the page itself, with:\\n  - A header with an \\\"N of M orders\\\" count and a **+ New order** button. The button only logs to the console for now, with a TODO.\\n  - A search box and a status dropdown (All, Pending, Paid, Cancelled).\\n  - A table with ID, customer, total and a coloured status badge, which scrolls sideways on narrow screens.\\n  - An empty state: when a search or filter hides every order, it explains why and offers **Clear filters**. With no orders at all, it offers **+ New order** instead.\\n\\nThe page imports the data with a relative path (`../../lib/orders`) because `tsconfig.json` has no `@/` path alias.\\n\\nTo check it, run `npm install`, then `npm run dev`, and open `/orders`.\",\"ttft_ms\":1148,\"type\":\"result\",\"duration_ms\":42341,\"uuid\":\"f30c72d7-eb50-40ca-9865-d60ee9572a89\",\"ttft_stream_ms\":975,\"time_to_request_ms\":107,\"first_content_frame_ms\":975,\"queued_turn_count\":0,\"result_index\":0}\n"
+      },
+      "changed_files": 2
+    },
+    {
+      "task_id": "orders-list-ui",
+      "category": "feature",
+      "arm": "candidate",
+      "run": 1,
+      "passed": true,
+      "acceptance_exit": 0,
+      "regression_passed": null,
+      "tool": {
+        "exit_code": 0,
+        "wall_seconds": 99.29887890000828,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost_usd": null,
+        "timed_out": false,
+        "raw_tail": ""
+      },
+      "changed_files": 7
+    },
+    {
+      "task_id": "orders-list-ui",
+      "category": "feature",
+      "arm": "candidate",
+      "run": 2,
+      "passed": true,
+      "acceptance_exit": 0,
+      "regression_passed": null,
+      "tool": {
+        "exit_code": 0,
+        "wall_seconds": 103.7103744000051,
+        "tokens_in": 30,
+        "tokens_out": 11126,
+        "cost_usd": 0.8424380000000002,
+        "timed_out": false,
+        "raw_tail": "mat.\\n- **`app/orders/page.tsx`**: the page itself. It passes the sample orders to `app/orders/OrdersList.tsx`, which holds the interactive part:\\n  - a header with the title and a count of the orders shown\\n  - a search box that matches order ID or customer name, ignoring case and Vietnamese accents (\\\"nguyen\\\" finds \\\"Nguy\u00e1\u00bb\u2026n\\\")\\n  - a status dropdown (All / Pending / Paid / Cancelled)\\n  - a green **New order** button whose `onClick` is a stub with a TODO\\n  - a table with ID, customer, a right-aligned total and a coloured status label\\n  - **Empty state:** if nothing matches, the table shows \\\"No orders match your search or filter.\\\" with a **Clear filters** button. If there are no orders at all, it says \\\"No orders yet.\\\"\\n\\n**Tailwind setup (you didn't ask for this):** `tailwindcss` was in `package.json` but never set up, so no Tailwind classes would have applied. I added `tailwind.config.js`, `postcss.config.js` and `app/globals.css`, and imported the CSS in `app/layout.tsx`. The colours, corner radii and dark-mode values come from the project's house style guide (the omicx-ui skill).\\n\\n**Decisions you may want to change:**\\n- **English text:** the page text is English to match `lang=\\\"en\\\"` and your request. The house style puts Vietnamese first for Vietnamese products, so tell me if you'd rather have \\\"Th\u00c3\u00aam m\u00e1\u00bb\u203ai\\\" and similar.\\n- **No loading or error states:** the data is fixed sample data, so there is nothing to wait for or fail. They'll be needed once orders come from an API.\\n- **Filters not in the URL:** search and status reset when the page reloads and can't be shared as a link. That's easy to add if you want it.\\n- **No test for the page itself:** testing the component would need React Testing Library and jsdom, which aren't installed.\",\"ttft_ms\":1577,\"type\":\"result\",\"duration_ms\":100119,\"uuid\":\"8eb3ee43-8cf4-4079-bd87-ff018bb9621c\",\"ttft_stream_ms\":928,\"time_to_request_ms\":100,\"first_content_frame_ms\":928,\"queued_turn_count\":0,\"result_index\":0}\n"
+      },
+      "changed_files": 7
+    },
+    {
+      "task_id": "orders-list-ui",
+      "category": "feature",
+      "arm": "candidate",
+      "run": 3,
+      "passed": true,
+      "acceptance_exit": 0,
+      "regression_passed": null,
+      "tool": {
+        "exit_code": 0,
+        "wall_seconds": 104.99084579999908,
+        "tokens_in": 24,
+        "tokens_out": 10775,
+        "cost_usd": 0.7994584000000001,
+        "timed_out": false,
+        "raw_tail": " function is in `lib/orders.ts` with tests in `lib/orders.test.ts`.\\n- **Table:** order, customer, status (a coloured dot: amber pending, green paid, grey cancelled) and total, formatted like `1.250.000 \u00e2\u201a\u00ab`. A count next to the title shows how many orders match.\\n- **New order button:** a green button whose `onClick` is an empty stub.\\n- **Empty state:** when nothing matches it says \\\"No orders match your filters\\\", suggests trying a different search, and offers a \\\"Clear filters\\\" button. If there were no orders at all it would say \\\"No orders yet\\\".\\n\\n**Other files I changed**\\n- **Tailwind setup:** the project listed Tailwind as a dependency but had no config, so I added `tailwind.config.js`, `postcss.config.js` and `app/globals.css`, and imported the CSS in `app/layout.tsx`.\\n- **Styling:** I followed the project's house UI style. All colours are defined once in `globals.css`, and the page also works in dark mode if a `dark` class is added to `<html>`.\\n- **Page structure:** `app/orders/page.tsx` loads the data on the server and passes it to `app/orders/OrdersView.tsx`, which handles the search and filter.\\n\\n**Before using it**\\n- **PostCSS:** the config only loads Tailwind. If `next build` complains that PostCSS is missing, run `npm i -D postcss`.\\n- **Verify:** run `npm install`, then `npx vitest run` and `npm run dev`, and open `/orders`.\\n\\n**Decisions for you**\\n- **Language:** the text is in English because the existing app is (`lang=\\\"en\\\"`, \\\"Storefront\\\"). The house style prefers Vietnamese for Vietnamese products (e.g. \\\"Th\u00c3\u00aam m\u00e1\u00bb\u203ai\\\" for the create button), and the labels are all in one place if you want to switch.\\n- **Loading and error states:** I left these out because the data is static. They'll be needed once orders come from an API.\",\"ttft_ms\":1438,\"type\":\"result\",\"duration_ms\":101434,\"uuid\":\"b1ff2880-a4d9-4baa-9c25-e46ce4dbcf93\",\"ttft_stream_ms\":954,\"time_to_request_ms\":92,\"first_content_frame_ms\":954,\"queued_turn_count\":0,\"result_index\":0}\n"
+      },
+      "changed_files": 7
+    }
+  ]
+}

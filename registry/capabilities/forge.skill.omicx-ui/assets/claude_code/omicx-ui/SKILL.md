@@ -32,7 +32,8 @@ is the source of truth for that look; `references/` holds the full detail.
 2. **One ink colour that inverts.** `primary` is navy in light mode and white in dark mode.
    Active navigation, the active tab and the current page fill with it.
 3. **Green means create.** The single solid CTA of a view (`Thêm mới`, submit) is `success`
-   green. Cyan `accent` is for focus rings, links and upgrade prompts, not for the main CTA.
+   green; when the main action is not a create (upload, connect) it is a solid `primary`
+   (ink) button instead. Cyan `accent` is for focus rings, links and upgrade prompts.
 4. **Dense but breathable.** 14 px body, 32 px toolbar controls, 36 px form fields, ~64 px
    table rows; 20 px card and 24 px dialog radii soften the density.
 5. **Progressive disclosure.** Quick actions show the minimum (required fields, three
@@ -82,6 +83,9 @@ control 32, field 36, table header 36.
   lists with a segmented dimension switch).
 - **Quick-create modal:** 468 px, required fields only, autofocus the first field,
   "show full form" disclosure, footer `Close (tertiary)` + `Create (green)`.
+- **Settings:** one centred 588 px column, sections of read-only cards each with its own
+  "Chỉnh sửa"; **setup wizard:** numbered steps, later steps muted until answered, choice
+  tiles that show live state.
 - **Detail page:** header (avatar, name, status chip, stage with age, quick actions, owner,
   Edit) · three columns: key/value info · tabs with timeline and composer · related-object
   rail of collapsible sections with counts, `+` and a menu.
@@ -92,7 +96,8 @@ control 32, field 36, table header 36.
    theme constant). Hex values live only in the token / theme file. Radii, spacing and font
    sizes use the scale utilities (`rounded-card`, `p-4`, `text-title`), not arbitrary
    `rounded-[20px]` / `p-[14px]` / `text-[22px]` values.
-2. One solid CTA per view, in `success`; every other action is outline, tertiary or ghost.
+2. One solid CTA per view (`success` for create, `primary` otherwise); every other action is
+   outline, tertiary or ghost.
 3. Focus is always visible: 2 px `accent` ring; never `outline: none` without a replacement.
 4. Every data-bound block has loading (skeleton), empty ("Chưa có dữ liệu" style, in place)
    and error states; errors show a copyable code in a toast, not only prose.

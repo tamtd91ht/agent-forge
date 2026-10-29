@@ -1,0 +1,63 @@
+schema_version: "1"
+id: forge.agent.ui-reviewer
+name: Visual UI reviewer subagent (Playwright)
+description: Subagent that opens the running app in a real browser through the Playwright MCP and reviews what users see - each touched route at 390, 768 and 1440 px, light and dark - against the omicx-ui house style or the project's own design system, with a measured audit (contrast, off-scale radii and font sizes, unlabeled controls, small targets, solid actions, horizontal overflow), a focus-ring walk and console errors. Read-only in the app; local or user-named staging URLs only.
+version: 1.0.0
+kind: agent
+category: agents.review
+purpose: Static review cannot see a table that scrolls sideways on a phone, a label that vanishes in dark mode or a focus ring that was styled away; this agent looks at the rendered screen and backs every finding with a screenshot or a measured value.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-29"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored companion of forge.skill.omicx-ui and forge.agent.frontend-reviewer
+    (code-level). Tools are Read, Grep, Glob and the Playwright MCP browser tools only - no
+    Bash, no Edit. The embedded audit script reads computed styles and bounding boxes and
+    returns JSON; it was run against the OMICX web app (customer list, desktop, dark) before
+    curation, where it measured 24 ms and surfaced real findings (unlabeled icon buttons,
+    white on success green at 2.05:1) after the false positives it first produced (active pill
+    tab counted as a CTA, gradient text, decorative separators, pill-shaped hairlines) were
+    removed. The prompt confines it to localhost, *.localhost / *.test or a staging URL the
+    user named, forbids submitting, saving, deleting or typing credentials, and stops when the
+    MCP is missing.
+  risk_rationale: "Drives a browser through the Playwright MCP (which downloads browsers via npx on first use). Read-only by instruction, local or user-named URLs only; the MCP itself is gated by approve --mcp and Claude Code's server trust prompt."
+  notes:
+    - "Depends on mcp.playwright, so it is planned only where that server is (frontend / fullstack) and inherits its approval gate; it is never installed silently."
+    - "Skip ground (covered): a project with its own visual-regression suite (Playwright screenshots, Chromatic, Percy) and an accessibility scan in CI."
+    - "The audit is a measuring aid, not a gate: third-party widgets and deliberate deviations are judged by the agent and reported with their reason."
+applicability:
+  project_types: [frontend, fullstack]
+  tags: [review, frontend, ui, accessibility, visual, browser, agents]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/ui-reviewer.md
+    dest: .claude/agents/ui-reviewer.md
+    merge: create_only
+dependencies: ["mcp.playwright", "forge.skill.omicx-ui >=1.1.0"]
+equivalents:
+  - kind: agent
+    name_patterns: ["ui.*review", "visual.*review", "design.*review", "a11y.*audit", "screenshot"]
+    content_patterns: ["browser_take_screenshot", "visual regression", "contrast ratio"]
+    description: an existing visual / design review subagent
+validation:
+  - type: frontmatter
+    path: .claude/agents/ui-reviewer.md
+    params: { required: [name, description, tools] }
+permissions: [drives_browser]
+network: required
+risk: medium
+benefit_score: 6
+maintenance_cost: 2
+integrity:
+  assets_sha256: 527cb37e0de1a1499b2fe30d8a4d769ec9eb5dc23f614755cf863b50a8f8bfde
+  pinned_at: "2026-10-29"

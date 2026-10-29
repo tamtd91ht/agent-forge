@@ -1,0 +1,59 @@
+id: orders-list-ui
+category: feature
+prompt: |
+  Add an Orders page at app/orders/page.tsx for the storefront admin. Put sample orders in a
+  new lib/orders.ts (id, customer, total in VND, status: pending | paid | cancelled) and show
+  them in a table with a search box, a status filter, a button to create a new order (an
+  onClick stub is fine) and a proper empty state when nothing matches. Style it with Tailwind.
+budget_seconds: 900
+acceptance:
+  # House-style adherence, judged statically and offline (no npm install): the page exists
+  # and works as asked, colours come from semantic tokens instead of raw values or Tailwind's
+  # default palette, a success token is defined once in a theme file and the create action
+  # uses it, and the table has an empty state.
+  files:
+    ui-style.acceptance.mjs: |
+      import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+      import { join } from "node:path";
+
+      const fail = [];
+      const walk = (dir) =>
+        !existsSync(dir) ? [] : readdirSync(dir).flatMap((n) => {
+          const p = join(dir, n);
+          if (n === "node_modules" || n.startsWith(".")) return [];
+          return statSync(p).isDirectory() ? walk(p) : [p];
+        });
+      const files = [...walk("app"), ...walk("components"), ...walk("src"), ...walk("lib"), ...walk("styles")];
+      const ui = files.filter((f) => /\.(tsx|jsx)$/.test(f));
+      const read = (f) => readFileSync(f, "utf8");
+
+      if (!existsSync("app/orders/page.tsx")) fail.push("app/orders/page.tsx is missing");
+      if (!existsSync("lib/orders.ts")) fail.push("lib/orders.ts is missing");
+
+      const HEX = /(?<![\w&#/])#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])/i;
+      const FUNC = /\b(?:rgba?|hsla?)\(\s*[\d.]/i;
+      const PALETTE = /\b(?:bg|text|border|ring|from|to|via|fill|stroke|outline|divide|placeholder)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/;
+      for (const f of ui) {
+        read(f).split(/\r?\n/).forEach((line, i) => {
+          if (HEX.test(line) || FUNC.test(line)) fail.push(`${f}:${i + 1} raw colour literal`);
+          if (PALETTE.test(line)) fail.push(`${f}:${i + 1} default-palette colour utility instead of a semantic token`);
+        });
+      }
+
+      const theme = [...files, ...["tailwind.config.ts", "tailwind.config.js", "tailwind.config.mjs"].filter(existsSync)]
+        .filter((f) => /\.(css|scss)$|tailwind\.config|theme|tokens/i.test(f))
+        .map(read)
+        .join("\n");
+      if (!/--success\s*:|\bsuccess\s*:/.test(theme)) fail.push("no success token defined in a theme / token file");
+
+      const page = existsSync("app/orders/page.tsx") ? read("app/orders/page.tsx") : "";
+      const pageAndParts = [page, ...ui.filter((f) => /components|orders/i.test(f)).map(read)].join("\n");
+      if (!/\b(?:bg-success|var\(--success\))/.test(pageAndParts)) fail.push("the create action does not use the success token");
+      if (!/length\s*===\s*0|\.length\s*<\s*1|!\s*\w+\.length/.test(pageAndParts)) fail.push("no empty-state branch for the table");
+
+      if (fail.length) {
+        console.error(fail.slice(0, 20).join("\n"));
+        process.exit(1);
+      }
+      console.log("ui-style: ok");
+  command: node ui-style.acceptance.mjs

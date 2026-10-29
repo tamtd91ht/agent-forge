@@ -179,3 +179,16 @@ def test_cli_run_scripted_writes_report(tmp_path: Path, real_workspace, capsys) 
     assert doc["summary"]["verdict"]["status"] == "incomplete"
     assert cli.main(["tasks", "--fixture", str(fx)]) == 0
     assert "fix-add" in capsys.readouterr().out
+
+
+def test_tool_output_is_decoded_as_utf8(tmp_path: Path) -> None:
+    """Claude prints UTF-8 (Vietnamese text in the result); decoding it with the Windows default
+    code page used to raise in the reader thread and drop the usage line."""
+    from agent_forge_eval.harness import _run_tool
+
+    usage = '{"result": "Đã thêm trang đơn hàng", "usage": {"output_tokens": 42}, "total_cost_usd": 0.5}'
+    script = f"import sys; sys.stdout.buffer.write({usage.encode('utf-8')!r})"
+    res = _run_tool([sys.executable, "-c", script], tmp_path, 30)
+    assert res.exit_code == 0
+    assert "Đã thêm" in res.raw_tail
+    assert res.tokens_out == 42 and res.cost_usd == 0.5

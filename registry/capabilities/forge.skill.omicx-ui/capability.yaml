@@ -2,7 +2,7 @@ schema_version: "1"
 id: forge.skill.omicx-ui
 name: OMICX UI (house style for web and mobile screens)
 description: The house UI/UX style taken from the OMICX web app - light and dark design tokens (navy ink, cyan focus, green create CTA, surfaces, radii, shadows, Inter type scale), measured component specs, a reference React + Tailwind v4 component kit, screen patterns (app shell, list, dashboard, quick-create modal, detail page, feedback), review rules and the mapping to Tailwind v3/v4, HeroUI, shadcn, MUI, Ant Design, Vuetify, React Native and Flutter.
-version: 1.1.0
+version: 1.2.0
 kind: skill
 category: design.ui
 purpose: Gives every web or mobile project the same proven look and interaction model instead of whatever the agent improvises - one token set for both themes, one way to lay out a list, a dashboard, a form and a detail page, and a short list of rules the frontend reviewer can check.
@@ -31,6 +31,7 @@ review:
     - "Skip ground (covered): a project with its own established design system keeps its brand colours and fonts; the skill says so in step 0 and still contributes structure, patterns and rules."
     - "Complements uiux.guidelines (generic accessibility and UX checklist) and ecc.frontend-a11y; this one decides the look. The installed directory is named omicx-ui so it does not match uiux.guidelines' design-system equivalent pattern."
     - "1.1.0 (2026-10-29): references/kit/ - reference React + TypeScript + Tailwind v4 components (type-checked strict against TypeScript 5.9 / @types/react 19 before curation; tests/unit/test_design_token_guard_hook.py keeps them clean under the token guard); tokens.css @theme gains card / dialog radii, card / float / popup shadows, the title text size and the remaining semantic colours."
+    - "1.2.0 (2026-10-29): patterns from the integration and settings modules - page header with tabs, master-detail list, usage / metrics card, settings column, setup wizard, centred empty list; solid primary (ink) action when the main action is not a create, text action; Button kit gains the primary variant."
     - "forge.agent.frontend-reviewer checks rules from section 4 (dimension 8) and forge.hook.design-token-guard flags raw colour literals; both work without this skill."
 applicability:
   project_types: [frontend, fullstack, mobile-or-desktop]
@@ -67,5 +68,5 @@ risk: low
 benefit_score: 7
 maintenance_cost: 2
 integrity:
-  assets_sha256: c2a06cbe70aba48b19afad1656ae8f8ec2f76ac592c64d428c941acfc9fe7019
+  assets_sha256: a44dbab2c0e34a2921096ac52a4022d3d55331cdefe13491e47ae6d66397c547
   pinned_at: "2026-10-29"
