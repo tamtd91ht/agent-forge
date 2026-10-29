@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 — 2026-10-29
+
+The house UI style can now be checked on the running app and has its first measured evidence.
 
 ### Added (source: workspace)
 - `forge.agent.ui-reviewer`: visual UI reviewer that drives the running app through the
