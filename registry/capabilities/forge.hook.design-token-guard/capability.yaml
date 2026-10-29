@@ -1,0 +1,57 @@
+schema_version: "1"
+id: forge.hook.design-token-guard
+name: Design token guard (Node hook)
+description: PostToolUse hook that warns the agent when an Edit/Write/MultiEdit puts a raw colour literal (#hex, rgb(), hsl()) into a UI source file (JS/TS/JSX/TSX, Vue, Svelte, Astro, CSS/SCSS/Less) instead of a design token, and names the matching OMICX token for known values. Token and theme files, tests, stories and CSS custom-property declarations are skipped. Dependency-free Node script.
+version: 1.0.0
+kind: hook
+category: quality.hooks
+purpose: Keeps colours in one place so light and dark themes and the house style (forge.skill.omicx-ui) stay consistent - the most common way a UI drifts is a component that hard-codes a hex value copied from a mock-up.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-29"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored companion of forge.skill.omicx-ui. Dependency-free Node script (Node is
+    present wherever the hook applies: JavaScript / TypeScript web or mobile projects); no
+    network, no file reads or writes, no child processes. It inspects only the text in the
+    hook payload (`content`, `new_string`, `edits[].new_string`) and exits 2 on PostToolUse,
+    which reaches the agent as a warning without undoing the edit. Skips token / theme /
+    globals files, configs, tests, stories, build output, comment lines and `--custom-property`
+    declarations; a `design-token-ok` marker on a line is the stateless escape hatch. Fails open
+    on a malformed payload or any exception. Merged into .claude/settings.json as a JSON
+    fragment; requires `approve --hooks`.
+  risk_rationale: "Runs a short Node process after every Edit/Write/MultiEdit; can only warn (PostToolUse), never blocks or modifies files. Payload only, no network; gated by approve --hooks."
+  notes:
+    - "Known bypass shared by every Edit/Write hook: a Bash tool call that writes the file (`tee`, `>`, `sed -i`, `cp`) is not seen by this hook."
+    - "Named colours (red, white) and colours built at runtime are not detected; the frontend reviewer's design-system dimension covers what a pattern cannot."
+    - "Skip ground (covered): a project that already enforces tokens with a stylelint / ESLint rule (for example stylelint-declaration-strict-value or color-no-hex) does not need it."
+applicability:
+  project_types: [frontend, fullstack, mobile-or-desktop]
+  languages: [javascript, typescript]
+  tags: [frontend, ui, design-system, css, hooks, quality]
+platforms: [claude_code]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/scripts
+    dest: .claude/hooks/agent-forge
+    merge: create_only
+  - platform: claude_code
+    source: claude_code/hooks.json
+    dest: .claude/settings.json
+    merge: json_merge
+    section_id: forge-design-token-guard
+removal: delete_managed_files
+risk: medium
+benefit_score: 5
+maintenance_cost: 1
+integrity:
+  assets_sha256: d1037699ea5f593467b148ec9c3b9db20a972b1da2db35238c6157d22a0b9967
+  pinned_at: "2026-10-29"

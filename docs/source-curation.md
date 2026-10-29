@@ -1,9 +1,9 @@
-# Source curation record (initial catalog 2026-10-16, last update 2026-10-25)
+# Source curation record (initial catalog 2026-10-16, last update 2026-10-29)
 
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (141)
+## Curated (143)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -38,8 +38,20 @@ overwritten by a re-run.
 | Capability | Decision | Why |
 |---|---|---|
 | `forge.agent.backend-reviewer` | subagent (Claude Code), `project_types` backend / fullstack / service, read-only (Read, Grep, Glob) | six fixed dimensions: security, money and transactions (idempotency, atomicity, ledger), data integrity and concurrency, readiness for traffic (N+1, caching, timeouts, backpressure), API contract, clarity; evidence-backed findings with severity and "not checked" |
-| `forge.agent.frontend-reviewer` | subagent (Claude Code), `project_types` frontend / fullstack / mobile-or-desktop, read-only | seven dimensions: backend contract, how the view loads its data (request map), state and races, client security, performance, resilience and a11y, clarity; declares existing reviewer agents as equivalents so the skill's review-coverage step judges before adding |
+| `forge.agent.frontend-reviewer` | subagent (Claude Code), `project_types` frontend / fullstack / mobile-or-desktop, read-only | eight dimensions: backend contract, how the view loads its data (request map), state and races, client security, performance, resilience and a11y, clarity, design-system conformance (1.1.0); declares existing reviewer agents as equivalents so the skill's review-coverage step judges before adding |
 | `forge.skill.view-data-loading` | skill, both platforms, `project_types` frontend / fullstack / mobile-or-desktop | request discipline for a screen: request map (first paint vs enhancement vs on interaction), one request per resource, parallel independent calls, nothing secondary blocking the first render, fetch on need, dedupe / cache / cancel; written from a recurring client-project finding |
+
+### OMICX house style (2026-10-29)
+
+Workspace-authored from a review of the OMICX web app (the maintainers' own product): tokens
+read from its shipped CSS in both themes, components measured on the list, dashboard,
+quick-create modal and detail screens. It is the default look proposed to every web or mobile
+project; a project with an established brand keeps its colours and fonts.
+
+| Capability | Decision | Why |
+|---|---|---|
+| `forge.skill.omicx-ui` | skill, all four platforms, `project_types` frontend / fullstack / mobile-or-desktop | light and dark tokens (`references/tokens.css`, Tailwind v4 `@theme`), measured component specs, screen patterns (shell, list, dashboard, quick-create, detail, feedback), ten review rules, mapping to Tailwind v3, HeroUI, shadcn, MUI, Ant Design, Vuetify, React Native, Flutter |
+| `forge.hook.design-token-guard` | Node PostToolUse hook, same project types + JavaScript / TypeScript | warns (never blocks) when an edit writes a raw `#hex` / `rgb()` / `hsl()` into a UI file instead of a token, naming the OMICX token for known values; token / theme files, tests, stories and `--custom-property` lines skipped; `design-token-ok` marker for deliberate literals |
 
 ### Knowledge Work Plugins (2026-10-25)
 

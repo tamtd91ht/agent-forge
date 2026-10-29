@@ -1,0 +1,70 @@
+schema_version: "1"
+id: forge.skill.omicx-ui
+name: OMICX UI (house style for web and mobile screens)
+description: The house UI/UX style taken from the OMICX web app - light and dark design tokens (navy ink, cyan focus, green create CTA, surfaces, radii, shadows, Inter type scale), measured component specs, screen patterns (app shell, list, dashboard, quick-create modal, detail page, feedback), review rules and the mapping to Tailwind v3/v4, HeroUI, shadcn, MUI, Ant Design, Vuetify, React Native and Flutter.
+version: 1.0.0
+kind: skill
+category: design.ui
+purpose: Gives every web or mobile project the same proven look and interaction model instead of whatever the agent improvises - one token set for both themes, one way to lay out a list, a dashboard, a form and a detail page, and a short list of rules the frontend reviewer can check.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-29"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored from a review of the OMICX web app (the maintainers' own product):
+    tokens read from the shipped CSS bundles and computed styles in both themes, components
+    measured on the customer list, overview dashboard, quick-create modal and customer detail
+    page. Known quirks of the source (typo class names, duplicated theme blocks, !important
+    dark overrides) are not carried over. Pure markdown plus one CSS file, no scripts, hooks
+    or MCP. Applies to every project the scanner marks frontend, fullstack or
+    mobile-or-desktop, so /agent-forge-upgrade proposes it whenever a web or mobile part is
+    detected; on-demand (model-invoked by its description), 0 always-loaded beyond name +
+    description.
+  notes:
+    - "Skip ground (covered): a project with its own established design system keeps its brand colours and fonts; the skill says so in step 0 and still contributes structure, patterns and rules."
+    - "Complements uiux.guidelines (generic accessibility and UX checklist) and ecc.frontend-a11y; this one decides the look. The installed directory is named omicx-ui so it does not match uiux.guidelines' design-system equivalent pattern."
+    - "forge.agent.frontend-reviewer checks rules from section 4 (dimension 8) and forge.hook.design-token-guard flags raw colour literals; both work without this skill."
+applicability:
+  project_types: [frontend, fullstack, mobile-or-desktop]
+  tags: [frontend, mobile, ui, ux, design-system, css, tailwind, theme]
+platforms: [claude_code, codex, copilot, gemini]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/omicx-ui
+    dest: .claude/skills/omicx-ui
+    merge: create_only
+  - platform: codex
+    source: codex/omicx-ui
+    dest: .agents/skills/omicx-ui
+    merge: create_only
+  - platform: copilot
+    source: claude_code/omicx-ui
+    dest: .github/skills/omicx-ui
+    merge: create_only
+  - platform: gemini
+    source: claude_code/omicx-ui
+    dest: .gemini/skills/omicx-ui
+    merge: create_only
+equivalents:
+  - kind: skill
+    name_patterns: ["omicx-ui", "omicx-design", "omicx-style"]
+    content_patterns: ["--surface-quaternary", "#1e3150"]
+    description: the OMICX house style already installed under another name
+validation:
+  - type: frontmatter
+    path: .claude/skills/omicx-ui/SKILL.md
+    params: { required: [name, description] }
+risk: low
+benefit_score: 7
+maintenance_cost: 2
+integrity:
+  assets_sha256: 89d38bad001b51fed7f9dbeac4df97ea9fcfc43d8e0bed036b4d505acabf80f9
+  pinned_at: "2026-10-29"

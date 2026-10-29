@@ -1,8 +1,8 @@
 schema_version: "1"
 id: forge.agent.frontend-reviewer
 name: Frontend reviewer subagent
-description: Read-only subagent that reviews web and mobile client changes in any framework on seven fixed dimensions - contract with the backend, how the view loads its data (duplicates, waterfalls, blocking spinners), state and race conditions, client-side security, rendering performance, resilience and accessibility states, clarity and tests - and reports evidence-backed findings with severity and a request map for the touched view.
-version: 1.0.0
+description: Read-only subagent that reviews web and mobile client changes in any framework on eight fixed dimensions - contract with the backend, how the view loads its data (duplicates, waterfalls, blocking spinners), state and race conditions, client-side security, rendering performance, resilience and accessibility states, clarity and tests, design-system conformance - and reports evidence-backed findings with severity and a request map for the touched view.
+version: 1.1.0
 kind: agent
 category: agents.review
 purpose: Keeps client code honest about the two things that break most often in practice - the contract with the backend and the way a screen fetches its data - with the same checklist every time, independent of the author.
@@ -21,6 +21,7 @@ review:
     Workspace-authored, framework-neutral review checklist for clients. Frontmatter uses documented fields only (name, description, tools "Read, Grep, Glob"); read-only, no Bash. Applies to frontend, fullstack and mobile-or-desktop projects. Dimension 2 applies the request-map discipline of forge.skill.view-data-loading (named, not required: the reviewer works without it). Declares an existing reviewer subagent as an equivalent so the skill judges coverage before adding one.
   notes:
     - "Pairs with forge.agent.backend-reviewer on fullstack projects; the two share the output format so findings read the same across the stack."
+    - "1.1.0 (2026-10-29): dimension 8, design-system conformance - tokens instead of raw colours, one primary action, screen pattern, focus, light and dark; judged against the project's own design system, else the omicx-ui house style (forge.skill.omicx-ui, named, not required)."
 applicability:
   project_types: [frontend, fullstack, mobile-or-desktop]
   tags: [review, frontend, mobile, api, performance, agents]
@@ -44,5 +45,5 @@ risk: low
 benefit_score: 7
 maintenance_cost: 1
 integrity:
-  assets_sha256: 4c0094179f7a3a1547c5371d4c704ae0d9329c52feef7679b7e2c7732b6b8610
-  pinned_at: "2026-10-21"
+  assets_sha256: f66b42fc43f51fd44cb90a1ef36e39f25e54257ed486f8a9a3fe860eb4455377
+  pinned_at: "2026-10-29"

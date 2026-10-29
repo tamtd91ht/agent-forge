@@ -53,6 +53,7 @@ def test_reviewers_are_read_only_agents_with_the_fixed_dimensions() -> None:
                 "Performance and readiness",
                 "Resilience and accessibility",
                 "Clarity and tests",
+                "Design system conformance",
             ),
         ),
     ):

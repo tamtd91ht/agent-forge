@@ -13,6 +13,16 @@
 - `sources sync` lists the curated capabilities whose upstream files changed since their own
   pinned revision (`stale_capabilities` in `--json`).
 
+### Added (source: workspace)
+- `forge.skill.omicx-ui`: the house UI/UX style from the OMICX web app - light and dark design
+  tokens, component specs, screen patterns and review rules, with mappings for the common UI
+  stacks; proposed to every frontend, fullstack or mobile-or-desktop project.
+- `forge.hook.design-token-guard`: Node PostToolUse hook that warns when an edit writes a raw
+  colour literal into a UI file instead of a design token.
+
+### Changed
+- `forge.agent.frontend-reviewer` 1.1.0: eighth dimension, design-system conformance.
+
 ## 0.5.1 — 2026-10-24
 
 Content from a new source, and a registry check that the content it ships is what it says.
