@@ -30,11 +30,11 @@ anything is written; it never falls back to an unpinned branch. To pin a release
 back), set the version first:
 
 ```bash
-AGENT_FORGE_VERSION=v0.5.1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh)"
+AGENT_FORGE_VERSION=v0.6.0 bash -c "$(curl -fsSL https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.sh)"
 ```
 
 ```powershell
-$env:AGENT_FORGE_VERSION = 'v0.5.1'; irm https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.ps1 | iex
+$env:AGENT_FORGE_VERSION = 'v0.6.0'; irm https://raw.githubusercontent.com/tamtd91ht/agent-forge/main/install.ps1 | iex
 ```
 
 `AF doctor` shows which release is installed and how it was verified
@@ -70,8 +70,8 @@ Teams that do not want a Python environment of their own can run a release throu
 [uv](https://docs.astral.sh/uv/) or pipx; both create an isolated environment:
 
 ```bash
-uvx --from "git+https://github.com/tamtd91ht/agent-forge@v0.5.1" agent-forge --version
-pipx install "git+https://github.com/tamtd91ht/agent-forge@v0.5.1"
+uvx --from "git+https://github.com/tamtd91ht/agent-forge@v0.6.0" agent-forge --version
+pipx install "git+https://github.com/tamtd91ht/agent-forge@v0.6.0"
 ```
 
 Then `agent-forge init --workspace ~/.agent-forge` once, and `agent-forge setup` in a

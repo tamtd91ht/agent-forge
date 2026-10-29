@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.5.1"
+__version__ = "0.6.0"
 PLAN_SCHEMA_VERSION = "1"
 CAPABILITY_SCHEMA_VERSION = "1"
 TRANSACTION_SCHEMA_VERSION = "1"

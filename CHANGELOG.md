@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-29
+
+A house UI style for every web or mobile project, content from a new source, and a
+credential-store safety rule.
 
 ### Added (source: kwp)
 - Source `kwp` (anthropics/knowledge-work-plugins, Apache-2.0) and two skills, tag-only until
