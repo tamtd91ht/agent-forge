@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-10-29
+
+The house UI style becomes the default for UI work: a path-scoped rule, a reference component
+kit and a token guard that also covers the radius, spacing and type scales.
 
 ### Added (source: workspace)
 - `forge.rule.omicx-ui`: path-scoped rule that loads with UI files, routes UI work to the
