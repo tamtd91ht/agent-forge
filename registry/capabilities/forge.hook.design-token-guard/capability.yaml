@@ -1,8 +1,8 @@
 schema_version: "1"
 id: forge.hook.design-token-guard
 name: Design token guard (Node hook)
-description: PostToolUse hook that warns the agent when an Edit/Write/MultiEdit puts a raw colour literal (#hex, rgb(), hsl()) into a UI source file (JS/TS/JSX/TSX, Vue, Svelte, Astro, CSS/SCSS/Less) instead of a design token, and names the matching OMICX token for known values. Token and theme files, tests, stories and CSS custom-property declarations are skipped. Dependency-free Node script.
-version: 1.0.0
+description: PostToolUse hook that warns the agent when an Edit/Write/MultiEdit puts a value that bypasses the design tokens into a UI source file (JS/TS/JSX/TSX, Vue, Svelte, Astro, CSS/SCSS/Less) - a raw colour literal (#hex, rgb(), hsl()), a Tailwind arbitrary radius / spacing / font size (rounded-[13px], p-[7px], text-[15px]) or a hard-coded font-family - and names the matching OMICX token or scale step. Token and theme files, tests, stories and CSS custom-property declarations are skipped. Dependency-free Node script.
+version: 1.1.0
 kind: hook
 category: quality.hooks
 purpose: Keeps colours in one place so light and dark themes and the house style (forge.skill.omicx-ui) stay consistent - the most common way a UI drifts is a component that hard-codes a hex value copied from a mock-up.
@@ -31,6 +31,7 @@ review:
   notes:
     - "Known bypass shared by every Edit/Write hook: a Bash tool call that writes the file (`tee`, `>`, `sed -i`, `cp`) is not seen by this hook."
     - "Named colours (red, white) and colours built at runtime are not detected; the frontend reviewer's design-system dimension covers what a pattern cannot."
+    - "1.1.0 (2026-10-29): also flags Tailwind arbitrary radius / padding / margin / gap / space / font-size values in px and a literal font-family, with the matching scale utility (rounded-card, p-3, text-title); layout sizes (w-[468px], max-h-[85vh]), transforms and var()-based arbitrary values pass."
     - "Skip ground (covered): a project that already enforces tokens with a stylelint / ESLint rule (for example stylelint-declaration-strict-value or color-no-hex) does not need it."
 applicability:
   project_types: [frontend, fullstack, mobile-or-desktop]
@@ -53,5 +54,5 @@ risk: medium
 benefit_score: 5
 maintenance_cost: 1
 integrity:
-  assets_sha256: d1037699ea5f593467b148ec9c3b9db20a972b1da2db35238c6157d22a0b9967
+  assets_sha256: a0bb89f60f4f036c0f03f1f2f5b4fade2528e2f2ffd040ad883f37975191efb0
   pinned_at: "2026-10-29"

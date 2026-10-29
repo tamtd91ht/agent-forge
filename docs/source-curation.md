@@ -3,7 +3,7 @@
 Principle: small, verified, low-duplication. Every item below was read in the checkout at the
 recorded revision. "Verbatim" means byte-identical to upstream.
 
-## Curated (143)
+## Curated (144)
 
 ### Stack-specific ECC content (0.4.0, 89 capabilities)
 
@@ -50,8 +50,9 @@ project; a project with an established brand keeps its colours and fonts.
 
 | Capability | Decision | Why |
 |---|---|---|
-| `forge.skill.omicx-ui` | skill, all four platforms, `project_types` frontend / fullstack / mobile-or-desktop | light and dark tokens (`references/tokens.css`, Tailwind v4 `@theme`), measured component specs, screen patterns (shell, list, dashboard, quick-create, detail, feedback), ten review rules, mapping to Tailwind v3, HeroUI, shadcn, MUI, Ant Design, Vuetify, React Native, Flutter |
-| `forge.hook.design-token-guard` | Node PostToolUse hook, same project types + JavaScript / TypeScript | warns (never blocks) when an edit writes a raw `#hex` / `rgb()` / `hsl()` into a UI file instead of a token, naming the OMICX token for known values; token / theme files, tests, stories and `--custom-property` lines skipped; `design-token-ok` marker for deliberate literals |
+| `forge.skill.omicx-ui` | skill, all four platforms, `project_types` frontend / fullstack / mobile-or-desktop | light and dark tokens (`references/tokens.css`, Tailwind v4 `@theme`), measured component specs, reference React + Tailwind v4 kit (`references/kit/`, 1.1.0), screen patterns (shell, list, dashboard, quick-create, detail, feedback), ten review rules, mapping to Tailwind v3, HeroUI, shadcn, MUI, Ant Design, Vuetify, React Native, Flutter |
+| `forge.hook.design-token-guard` | Node PostToolUse hook, same project types + JavaScript / TypeScript | warns (never blocks) when an edit writes a raw `#hex` / `rgb()` / `hsl()`, an arbitrary Tailwind radius / spacing / font size or a literal `font-family` into a UI file instead of a token, naming the OMICX token or scale step (1.1.0); token / theme files, tests, stories and `--custom-property` lines skipped; `design-token-ok` marker for deliberate literals |
+| `forge.rule.omicx-ui` | path-scoped rule (Claude Code, Cursor, Copilot), same project types, depends on the skill | loads only with UI files (0 always-loaded); routes UI work to the skill and kit, and settles look-and-layout precedence: the project's own design system, then the house style, then generic aesthetic rules (ecc.rules.web `design-quality.md` bans the traits that define it) |
 
 ### Knowledge Work Plugins (2026-10-25)
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added (source: workspace)
+- `forge.rule.omicx-ui`: path-scoped rule that loads with UI files, routes UI work to the
+  `omicx-ui` skill and its kit, and gives the house style precedence over generic aesthetic
+  rules for look and layout (a project's own design system still wins).
+
+### Changed
+- `forge.skill.omicx-ui` 1.1.0: reference React + TypeScript + Tailwind v4 component kit
+  (`references/kit/`: app shell, list toolbar, table, pagination, KPI tile, section card,
+  segmented control, quick-create modal, detail layout, states); more `@theme` tokens.
+- `forge.hook.design-token-guard` 1.1.0: also flags Tailwind arbitrary radius / spacing /
+  font-size values and a literal `font-family`, naming the scale step to use.
+
 ## 0.6.0 — 2026-10-29
 
 A house UI style for every web or mobile project, content from a new source, and a

@@ -1,0 +1,63 @@
+schema_version: "1"
+id: forge.rule.omicx-ui
+name: OMICX house UI style rule (path-scoped)
+description: Path-scoped rule that loads whenever a UI file (TSX/JSX, Vue, Svelte, Astro, HTML, CSS/SCSS/Less, Dart) is in play - points the agent at the omicx-ui skill and its reference kit, states that the house style wins over generic aesthetic guidance for look and layout (a project's own established design system wins over both), and lists the six rules checked in review.
+version: 1.0.0
+kind: rule
+category: design.ui
+purpose: Makes the house style the default without relying on the skill's description to trigger - a request like "build the orders screen" does not mention design, so the agent would otherwise improvise a look or follow the generic "pick a bold style direction" advice of other web rules.
+status: curated
+provenance: workspace
+source:
+  source_id: workspace
+license:
+  spdx: MIT
+  attribution: "Agent Forge maintainers"
+  redistribution_ok: true
+review:
+  reviewed_at: "2026-10-29"
+  reviewer: agent-forge maintainers
+  rationale: >-
+    Workspace-authored companion of forge.skill.omicx-ui (1,501 bytes). `paths:` frontmatter
+    means it attaches only to matching files, so context_chars is 0 (ADR-0003); Copilot gets
+    it as an `applyTo` instruction and Cursor as an auto-attached rule through the adapters.
+    Resolves a real conflict: ecc.rules.web's design-quality.md (recommended to the same
+    projects) bans "safe gray-on-white with one accent", "sidebar + cards + charts" dashboards,
+    uniform radii and default font stacks - the defining traits of the house style. The
+    precedence paragraph settles look and layout only; ECC's accessibility, security and
+    performance rules still apply.
+  notes:
+    - "Skip ground (covered): a project whose own instructions already name a design system and its precedence."
+    - "Codex and Gemini have no path-scoped rules; there the omicx-ui skill (by description) and the frontend reviewer carry the style."
+applicability:
+  project_types: [frontend, fullstack, mobile-or-desktop]
+  tags: [frontend, mobile, ui, design-system, rules]
+platforms: [claude_code, cursor, copilot]
+install_strategy: file_copy
+destinations:
+  - platform: claude_code
+    source: claude_code/omicx-ui.md
+    dest: .claude/rules/omicx-ui.md
+    merge: create_only
+  - platform: cursor
+    source: claude_code/omicx-ui.md
+    dest: .cursor/rules/omicx-ui.mdc
+    merge: create_only
+  - platform: copilot
+    source: claude_code/omicx-ui.md
+    dest: .github/instructions/omicx-ui.instructions.md
+    merge: create_only
+dependencies: ["forge.skill.omicx-ui >=1.1.0"]
+equivalents:
+  - kind: rule
+    name_patterns: ["omicx-ui", "omicx"]
+    description: the OMICX house-style rule already present
+  - kind: instruction
+    content_patterns: ["omicx-ui", "OMICX house (UI )?style"]
+    description: project instructions that already route UI work to the house style
+risk: low
+benefit_score: 6
+maintenance_cost: 1
+integrity:
+  assets_sha256: 47c83117cc25d4cee9eaf79a38555eb4e5aa76dd0877d1feee0000e2c88e482f
+  pinned_at: "2026-10-29"

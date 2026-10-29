@@ -100,6 +100,47 @@ def test_report_is_capped() -> None:
     assert r.returncode == 2 and r.stderr.count("  line ") == 8
 
 
+@pytest.mark.parametrize(
+    ("text", "hint"),
+    [
+        ('<div className="rounded-[20px] p-4" />', "use rounded-card"),
+        ('<div className="rounded-[13px]" />', "use the radius scale"),
+        ('<div className="md:px-[12px]" />', "use px-3 (4 px grid)"),
+        ('<div className="gap-[7px]" />', "off the 4 px spacing grid"),
+        ('<h1 className="text-[22px] font-bold" />', "use text-title"),
+        (".title { font-family: Roboto, sans-serif; }", "use the font token"),
+    ],
+)
+def test_arbitrary_scale_values_and_font_family_warn(text: str, hint: str) -> None:
+    r = _run({"file_path": "src/components/X.tsx", "content": text})
+    assert r.returncode == 2, text
+    assert hint in r.stderr, r.stderr
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '<div className="w-[468px] max-h-[85vh] active:scale-[.97]" />',
+        '<tr className="shadow-[inset_0_-1px_0_0_var(--border)]" />',
+        '<div className="top-[4px] -mt-[2px]" />',
+        ".a { font-family: var(--font-sans); } .b { font-family: inherit; }",
+        '<div className="rounded-card p-6 text-title" />',
+    ],
+)
+def test_layout_values_and_token_utilities_pass(text: str) -> None:
+    r = _run({"file_path": "src/components/X.tsx", "content": text})
+    assert r.returncode == 0, (text, r.stderr)
+
+
+KIT = REAL_REGISTRY / "capabilities/forge.skill.omicx-ui/assets/claude_code/omicx-ui/references/kit"
+
+
+@pytest.mark.parametrize("path", sorted(KIT.glob("*.ts*")), ids=lambda p: p.name)
+def test_reference_kit_follows_its_own_rule(path) -> None:
+    r = _run({"file_path": f"src/components/ui/{path.name}", "content": path.read_text("utf-8")})
+    assert r.returncode == 0, r.stderr
+
+
 @pytest.mark.parametrize("payload", ["", "not json", "[]", '{"tool_input": 5}', "{}"])
 def test_malformed_payload_fails_open(payload: str) -> None:
     assert _run(payload).returncode == 0

@@ -121,22 +121,36 @@
    border-tertiary, rounded-medium … exactly as the OMICX codebase does. */
 @theme inline {
   --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
   --color-indigo: var(--indigo);
+  --color-yellow: var(--yellow);
   --color-secondary: var(--muted);
+  --color-muted: var(--muted);
   --color-tertiary: var(--border);
+  --color-border: var(--border);
   --color-quaternary: var(--surface-quaternary);
+  --color-default: var(--default);
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-overlay: var(--overlay);
   --color-foreground: var(--foreground);
   --radius-tiny: 6px;
   --radius-small: 8px;
   --radius-medium: 10px;
   --radius-large: 12px;
   --radius-extra: 16px;
+  --radius-card: 20px;
+  --radius-dialog: 24px;
+  --shadow-card: var(--shadow-soft);
+  --shadow-float: var(--shadow-common);
+  --shadow-popup: var(--shadow-overlay);
+  --text-title: 22px;
+  --text-title--line-height: 28px;
   --font-sans: Inter, Geist, ui-sans-serif, system-ui, sans-serif;
 }
 

@@ -16,8 +16,9 @@ is the source of truth for that look; `references/` holds the full detail.
    Tailwind v4 `@theme`, a component library theme (HeroUI, MUI, Ant Design, shadcn, Vuetify,
    React Native / Flutter theme constants).
 2. **No design system yet** (new project, new app, prototype): adopt
-   [references/tokens.css](references/tokens.css) wholesale and build components to
-   [references/components.md](references/components.md).
+   [references/tokens.css](references/tokens.css) wholesale and copy the components you
+   need from [references/kit/](references/kit/README.md) (React + Tailwind v4); in other
+   stacks build them to [references/components.md](references/components.md).
 3. **An established brand already exists:** keep its brand colours and fonts, and still
    apply the structure here - semantic roles, the radius and type scales, the component
    anatomy, the screen patterns and the UX rules. Map roles, do not paste hex values.
@@ -88,7 +89,9 @@ control 32, field 36, table header 36.
 ## 4. Rules that are checked in review
 
 1. No raw colour literals in components: use a token (CSS variable, Tailwind theme colour,
-   theme constant). Hex values live only in the token / theme file.
+   theme constant). Hex values live only in the token / theme file. Radii, spacing and font
+   sizes use the scale utilities (`rounded-card`, `p-4`, `text-title`), not arbitrary
+   `rounded-[20px]` / `p-[14px]` / `text-[22px]` values.
 2. One solid CTA per view, in `success`; every other action is outline, tertiary or ghost.
 3. Focus is always visible: 2 px `accent` ring; never `outline: none` without a replacement.
 4. Every data-bound block has loading (skeleton), empty ("Chưa có dữ liệu" style, in place)
@@ -122,6 +125,10 @@ control 32, field 36, table header 36.
   building or reviewing a component.
 - [references/screen-patterns.md](references/screen-patterns.md) - app shell, list,
   dashboard, quick-create, detail and feedback layouts. Read when building a new screen.
+- [references/kit/](references/kit/README.md) - reference React + TypeScript + Tailwind v4
+  components (app shell, list toolbar and table, pagination, KPI tile, section card,
+  segmented control, quick-create modal and fields, detail layout, states). Read before
+  writing a component for a new screen; copy and adapt rather than rewrite.
 - [references/stack-mapping.md](references/stack-mapping.md) - how to express the tokens in
   Tailwind v3, MUI, Ant Design, shadcn, Vuetify, React Native and Flutter. Read when the
   project does not use Tailwind v4.
